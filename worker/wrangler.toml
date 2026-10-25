@@ -6,6 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 # Hemmeligheder sættes med "npx wrangler secret put", aldrig her:
 #   ANTHROPIC_API_KEY  - nøglen fra console.anthropic.com
 #   ACCESS_CODE        - en adgangskode, som siden skal sende med
+#   ELEVENLABS_API_KEY - nøglen fra elevenlabs.io, til oplæsning af svar
 
 # Workers AI: Whisper laver tale om til tekst (Quest-browseren har ikke selv talegenkendelse)
 [ai]
@@ -13,3 +14,4 @@ binding = "AI"
 
 [vars]
 ALLOWED_ORIGINS = "https://rasmoney-ai.github.io,http://localhost:8123"
+ELEVENLABS_VOICE_ID = "xj6X4BCUsv9oxohm1E8o"   # stemmen fra lydfilerne (ikke hemmelig)

@@ -266,7 +266,7 @@ function labelTex(text,color,opts={}){
     lines.forEach((l,i)=>ctx.fillText(l,w/2,y0+i*lh));
   });
 }
-const APP_VERSION = "v7";   // vises på startskærmen og pulten, så man kan se, om brillen har den nye version
+const APP_VERSION = "v8";   // vises på startskærmen og pulten, så man kan se, om brillen har den nye version
 let askStatus="";
 function navTex(i){ // forløbsbjælke i områdefarver + trinnummer + statuslinje til Spørg
   return canvasTexture(1500,520,(ctx,w,h)=>{
@@ -1072,18 +1072,28 @@ function sayAnswer(text,isError=false){
   u.onend=u.onerror=()=>{ if(askState==="speak") setAsk("idle"); };
   if(!isError) setAsk("speak"); speechSynthesis.speak(u);
 }
+async function playAnswer(text,code){ // svaret læses op med ElevenLabs via workeren; false = brug browserstemmen
+  try{
+    const r=await fetch(WORKER_URL+"/tts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,code})});
+    if(!r.ok) return false;
+    const url=URL.createObjectURL(await r.blob());
+    stopSpeech(); player=new Audio(url);
+    player.onended=()=>{ URL.revokeObjectURL(url); if(askState==="speak") setAsk("idle"); };
+    setAsk("speak"); await player.play(); return true;
+  }catch{ return false; }
+}
 async function askClaude(q){
   if(!WORKER_URL){ sayAnswer("Claude er ikke sat op endnu.",true); return; }
   const code=accessCode(); if(!code){ sayAnswer("Der mangler en adgangskode. Åbn siden uden VR og tryk på Spørg for at skrive den.",true); return; }
   setAsk("think");
   try{
     const r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({question:q,step:cur,history:askHistory,lang:daVoice?"da":"en",code})});
+      body:JSON.stringify({question:q,step:cur,history:askHistory,lang:"da",code})});
     const d=await r.json().catch(()=>({}));
     if(r.status===401) try{ localStorage.removeItem("fagrummet-kode"); }catch{}
     if(!r.ok || !d.answer){ sayAnswer(d.error||"Der skete en fejl.",true); return; }
     askHistory=[...askHistory,{q,a:d.answer}].slice(-6);
-    sayAnswer(d.answer);
+    if(!(await playAnswer(d.answer,code))) sayAnswer(d.answer);
   }catch{ sayAnswer("Jeg kunne ikke få forbindelse til Claude.",true); }
 }
 async function recordQuestion(code){

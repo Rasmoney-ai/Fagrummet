@@ -58,13 +58,34 @@ async function transcribe(request, env, headers) {
   }
 }
 
+const MAX_TTS = 2500;   // tegn pr. oplæsning
+
+// Oplæsning: Claudes svar læses op med ElevenLabs (Quest-browseren har ingen stemme).
+async function speech(request, env, headers) {
+  let body;
+  try { body = await request.json(); } catch { return json({ error: "Ugyldig forespørgsel." }, 400, headers); }
+  if (!env.ACCESS_CODE || body.code !== env.ACCESS_CODE) return json({ error: "Forkert adgangskode." }, 401, headers);
+  if (!env.ELEVENLABS_API_KEY || !env.ELEVENLABS_VOICE_ID) return json({ error: "Oplæsning er ikke sat op." }, 501, headers);
+  const text = String(body.text || "").trim().slice(0, MAX_TTS);
+  if (!text) return json({ error: "Ingen tekst." }, 400, headers);
+  const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${env.ELEVENLABS_VOICE_ID}?output_format=mp3_44100_64`, {
+    method: "POST",
+    headers: { "xi-api-key": env.ELEVENLABS_API_KEY, "Content-Type": "application/json", Accept: "audio/mpeg" },
+    body: JSON.stringify({ text, model_id: "eleven_flash_v2_5", language_code: "da" }),
+  });
+  if (!r.ok) return json({ error: `Oplæsningen fejlede (${r.status}).` }, 502, headers);
+  return new Response(r.body, { headers: { ...headers, "Content-Type": "audio/mpeg" } });
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
     const headers = cors(origin, env);
     if (request.method === "OPTIONS") return new Response(null, { headers });
     if (request.method !== "POST") return json({ error: "Brug POST." }, 405, headers);
-    if (new URL(request.url).pathname === "/stt") return transcribe(request, env, headers);
+    const path = new URL(request.url).pathname;
+    if (path === "/stt") return transcribe(request, env, headers);
+    if (path === "/tts") return speech(request, env, headers);
 
     let body;
     try { body = await request.json(); } catch { return json({ error: "Ugyldig forespørgsel." }, 400, headers); }
