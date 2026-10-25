@@ -1,0 +1,11 @@
+name = "fagrummet-claude"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Hemmeligheder sættes med "npx wrangler secret put", aldrig her:
+#   ANTHROPIC_API_KEY  - nøglen fra console.anthropic.com
+#   ACCESS_CODE        - en adgangskode, som siden skal sende med
+
+[vars]
+ALLOWED_ORIGINS = "https://rasmoney-ai.github.io,http://localhost:8123"

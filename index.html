@@ -59,6 +59,10 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 button.primary{background:var(--ink);color:var(--night);border-color:var(--ink)}
 button[aria-pressed="false"]{color:var(--muted)}
 .controls button{min-width:96px}
+button.ask{background:var(--rose);color:var(--night);border-color:var(--rose)}
+button.ask.busy{background:transparent;color:var(--rose);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.55}}
+@media (prefers-reduced-motion: reduce){ button.ask.busy{animation:none} }
 .nav{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;border-top:1px solid var(--line);padding-top:10px}
 .nav button{font-size:13px;padding:6px 10px;background:transparent}
 .nav button[data-area="hub"]{color:var(--core)}
@@ -120,9 +124,10 @@ button[aria-pressed="false"]{color:var(--muted)}
     <!-- Navigationspult i VR: lav og foran, så modellerne er frit synlige (skjult på skærm, hvor HTML-panelet bruges) -->
     <a-entity id="vrPanelWrap" position="0 0.95 -1.25" rotation="-40 0 0" scale="0.6 0.6 0.6" visible="false">
       <a-plane id="vrPanel" width="1.8" height="0.62" material="shader: flat; transparent: true; side: double"></a-plane>
-      <a-plane class="klik vrbtn" data-action="prev" position="-0.58 -0.1 0.01" width="0.52" height="0.22" material="shader: flat; transparent: true"></a-plane>
-      <a-plane class="klik vrbtn" data-action="replay" position="0 -0.1 0.01" width="0.52" height="0.22" material="shader: flat; transparent: true"></a-plane>
-      <a-plane class="klik vrbtn" data-action="next" position="0.58 -0.1 0.01" width="0.52" height="0.22" material="shader: flat; transparent: true"></a-plane>
+      <a-plane class="klik vrbtn" data-action="prev" position="-0.63 -0.1 0.01" width="0.4" height="0.22" material="shader: flat; transparent: true"></a-plane>
+      <a-plane class="klik vrbtn" data-action="replay" position="-0.21 -0.1 0.01" width="0.4" height="0.22" material="shader: flat; transparent: true"></a-plane>
+      <a-plane class="klik vrbtn" data-action="next" position="0.21 -0.1 0.01" width="0.4" height="0.22" material="shader: flat; transparent: true"></a-plane>
+      <a-plane class="klik vrbtn" data-action="ask" position="0.63 -0.1 0.01" width="0.4" height="0.22" material="shader: flat; transparent: true"></a-plane>
     </a-entity>
   </a-entity>
 </a-scene>
@@ -141,6 +146,7 @@ button[aria-pressed="false"]{color:var(--muted)}
       <button id="prev" type="button">Forrige</button>
       <button id="replay" type="button">Hør igen</button>
       <button id="next" type="button" class="primary">Næste</button>
+      <button id="ask" type="button" class="ask">Spørg</button>
     </div>
     <span class="right"><span class="count" id="count">1 / 24</span><button id="tts" type="button" aria-pressed="true">Lyd til</button></span>
   </div>
@@ -975,6 +981,7 @@ const AUDIO = Object.fromEntries(STEPS.map((_,i)=>[i,`audio/${String(i+1).padSta
 let player=null;
 function speak(t){
   if(player){ player.pause(); player=null; }
+  if(typeof askState!=="undefined" && askState==="speak") setAsk("idle");
   if(!ttsOn) return;
   if(AUDIO[cur]){ if("speechSynthesis" in window) speechSynthesis.cancel(); player=new Audio(AUDIO[cur]); player.play().catch(()=>{}); return; }
   if(!("speechSynthesis" in window)) return;
@@ -991,8 +998,9 @@ function moveRig(area){
   if(lc && !$("scene").is("vr-mode")){ lc.pitchObject.rotation.x=0; lc.yawObject.rotation.y=0; }
 }
 function vrButtons(){
-  const labels={prev:"Forrige",next:"Næste",replay:"Hør igen"};
-  document.querySelectorAll(".vrbtn").forEach(b=>applyTexture(b,labelTex(labels[b.dataset.action],"#eef1ff",{w:520,h:200,size:72})));
+  const labels={prev:"Forrige",next:"Næste",replay:"Hør igen",ask:ASK_LABEL[askState]};
+  document.querySelectorAll(".vrbtn").forEach(b=>{ const a=b.dataset.action;
+    applyTexture(b,labelTex(labels[a],a==="ask"?"#e8638c":"#eef1ff",{w:400,h:220,size:64})); });
 }
 function go(i){
   i=Math.max(0,Math.min(STEPS.length-1,i)); const s=STEPS[i], prevArea=cur>=0?STEPS[cur].area:null; cur=i;
@@ -1022,6 +1030,60 @@ STEPS.forEach((s,k)=>{ const b=document.createElement("button"); b.type="button"
   b.setAttribute("aria-label",`Trin ${k+1}: ${s.title}`); b.title=s.title; b.onclick=()=>go(k); $("progress").appendChild(b); });
 document.addEventListener("keydown",e=>{ if($("start").hidden){ if(e.key==="ArrowRight") go(cur+1); if(e.key==="ArrowLeft") go(cur-1);} });
 
+/* ---------- Spørg Claude undervejs ----------
+   Tale bliver til tekst i browseren, workeren spørger Claude med hele fagplanen, og svaret læses op med browserstemmen. */
+const WORKER_URL = "https://fagrummet-claude.rasmus-79e.workers.dev";   // Cloudflare-workeren (mappen worker/)
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const ASK_LABEL = {idle:"Spørg", listen:"Lytter …", think:"Tænker …", speak:"Stop svar"};
+let askState="idle", recog=null, askHistory=[];
+function setAsk(state){
+  askState=state; $("ask").textContent=ASK_LABEL[state]; $("ask").classList.toggle("busy",state!=="idle"); vrButtons();
+}
+function accessCode(){
+  let c=null; try{ c=localStorage.getItem("fagrummet-kode"); }catch{}
+  if(!c && !scene.is("vr-mode")){ c=prompt("Adgangskode til Claude:"); if(c) try{ localStorage.setItem("fagrummet-kode",c); }catch{} }
+  return c;
+}
+function stopSpeech(){ if(player){ player.pause(); player=null; } if("speechSynthesis" in window) speechSynthesis.cancel(); }
+function sayAnswer(text){
+  stopSpeech();
+  if(!("speechSynthesis" in window)){ setAsk("idle"); return; }
+  const u=new SpeechSynthesisUtterance(text); u.lang=daVoice?"da-DK":"en-US"; if(daVoice) u.voice=daVoice;
+  u.onend=u.onerror=()=>{ if(askState==="speak") setAsk("idle"); };
+  setAsk("speak"); speechSynthesis.speak(u);
+}
+async function askClaude(q){
+  if(!WORKER_URL){ sayAnswer("Claude er ikke sat op endnu."); return; }
+  const code=accessCode(); if(!code){ sayAnswer("Der mangler en adgangskode. Åbn siden uden VR og tryk på Spørg for at skrive den."); return; }
+  setAsk("think");
+  try{
+    const r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({question:q,step:cur,history:askHistory,lang:daVoice?"da":"en",code})});
+    const d=await r.json().catch(()=>({}));
+    if(r.status===401) try{ localStorage.removeItem("fagrummet-kode"); }catch{}
+    if(!r.ok || !d.answer){ sayAnswer(d.error||"Der skete en fejl."); return; }
+    askHistory=[...askHistory,{q,a:d.answer}].slice(-6);
+    sayAnswer(d.answer);
+  }catch{ sayAnswer("Jeg kunne ikke få forbindelse til Claude."); }
+}
+function onAsk(){
+  if(askState==="speak"){ stopSpeech(); setAsk("idle"); return; }
+  if(askState==="listen"){ if(recog) recog.stop(); return; }
+  if(askState==="think") return;
+  stopSpeech();
+  if(!SR){
+    if(scene.is("vr-mode")){ sayAnswer("Talegenkendelse findes ikke i denne browser."); return; }
+    const q=prompt("Skriv dit spørgsmål:"); if(q && q.trim()) askClaude(q.trim()); return;
+  }
+  let heard="";
+  recog=new SR(); recog.lang="da-DK"; recog.interimResults=false; recog.maxAlternatives=1;
+  recog.onresult=e=>{ heard=e.results[0][0].transcript; $("hint").textContent="Du spurgte: "+heard; };
+  recog.onerror=e=>{ if(e.error==="not-allowed"||e.error==="service-not-allowed") heard=""; };
+  recog.onend=()=>{ recog=null; if(heard) askClaude(heard); else setAsk("idle"); };
+  setAsk("listen"); recog.start();
+}
+$("ask").onclick=onAsk;
+
 /* ---------- Start ---------- */
 function begin(withSound){ $("start").hidden=true; setTts(withSound); go(0); }
 const scene=$("scene");
@@ -1032,7 +1094,7 @@ function init(){
   buildHub(); buildA(); buildB(); buildC(); buildBeams(); buildStars(); vrButtons();
   for(const v of Object.values(VIS)){ const stop=()=>{ if(shown!==v.dataset.key) v.pause(); }; v.hasLoaded ? stop() : v.addEventListener("loaded",stop,{once:true}); }
   document.querySelectorAll(".vrbtn").forEach(b=>b.addEventListener("click",()=>{
-    const a=b.dataset.action; if(a==="prev") go(cur-1); else if(a==="next") go(cur===STEPS.length-1?0:cur+1); else $("replay").onclick();
+    const a=b.dataset.action; if(a==="prev") go(cur-1); else if(a==="next") go(cur===STEPS.length-1?0:cur+1); else if(a==="ask") onAsk(); else $("replay").onclick();
   }));
   scene.addEventListener("click",e=>{ const t=e.target && e.target.closest && e.target.closest("[data-goto]"); if(t && !t.closest("#nav")) go(+t.dataset.goto); });
   scene.addEventListener("enter-vr",()=>{ $("vrPanelWrap").setAttribute("visible",true); $("card").hidden=true; });

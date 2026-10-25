@@ -3,3 +3,7 @@
 proever/
 node_modules/
 .claude/
+worker/node_modules/
+worker/.wrangler/
+worker/.dev.vars
+worker/dist/

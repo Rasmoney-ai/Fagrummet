@@ -1,0 +1,124 @@
+Undervisningsministeriet
+Andet udkast: Fagplan for teknologiforståelse (valgfag)
+Juni 2026
+Undervisningsministeriet
+
+4
+2
+
+Fagplanens indhold
+
+Folkeskolens formål
+
+3
+
+Fagets formål
+
+4
+
+Fagets karakter
+
+5
+
+Fagets indhold
+
+5
+
+Undervisning og evaluering
+
+11
+
+Om andet udkast til fagplaner
+21 fagudvalg skriver udkast til folkeskolens fagplaner i perioden 2024-2027. Udkastene bliver offentliggjort undervejs i udviklingsprocessen, og dermed før de er færdige, så blandt andre lærere og fag- og videnspersoner over hele landet kan læse med, give feedback og bidrage til at kvalificere udkastene.
+Denne version af fagplanen er andet udkast til fagplanen.
+I efteråret 2026 afprøver de skoler, som har tilmeldt sig udviklingsprogrammet udkast til fagplaner og giver feedback til fagudvalgene. På baggrund af blandt andet feedback fra skolerne justerer fagudvalgene fagplanerne, som træder i kraft i skoleåret 2027/2028.
+Læs mere på uvm.dk/fagfornyelsen.
+
+3
+Folkeskolens formål
+§ 1. Folkeskolen skal i samarbejde med forældrene give eleverne kundskaber og færdigheder, der: forbereder dem til videre uddannelse og giver dem lyst til at lære mere, gør dem fortrolige med dansk kultur og historie, giver dem forståelse for andre lande og kulturer, bidrager til deres forståelse for menneskets samspil med naturen og fremmer den enkelte elevs alsidige udvikling. Stk. 2. Folkeskolen skal udvikle arbejdsmetoder og skabe rammer for oplevelse, fordybelse og virkelyst, så eleverne udvikler erkendelse og fantasi og får tillid til egne muligheder og baggrund for at tage stilling og handle. Stk. 3. Folkeskolen skal forberede eleverne til deltagelse, medansvar, rettigheder og pligter i et samfund med frihed og folkestyre. Skolens virke skal derfor være præget af åndsfrihed, ligeværd og demokrati.
+
+4
+Fagets formål
+Stk. 1. Teknologiforståelse fremmer elevernes praktiske kundskaber og giver dem forudsætninger for at agere myndigt og engageret i forhold til de digitale teknologier, de møder i verden. Teknologiforståelses genstandsfelt og særlige fokus er derfor digitale teknologier i elevernes liv og den verden, der omgiver dem.
+Stk. 2. Undervisningen i teknologiforståelse kendetegnes ved, at eleverne arbejder praktisk og kreativt med at udtrykke sig med og om digitale teknologier. Arbejdsformerne er varierende, engagerende og deltagelsesfremmende. Eleverne møder kreative og tekniske udfordringer, som de håndterer gennem gentagne forsøg og ved at opbygge alsidige erfaringer. Eleverne inddrages i indholdsmæssige valg, så det faglige indhold kan tage afsæt i elevernes egne erfaringer med digitale teknologier.
+Stk. 3. Teknologiforståelse giver eleverne forudsætninger for at skabe, omskabe eller modvirke forskellige digitale teknologier og til myndigt at tage stilling til teknologiernes betydning for mennesker og verden. Teknologiforståelse forbereder herved eleverne til deltagelse i og medansvar for et frit og demokratisk samfund med digitale teknologier.
+
+5
+Fagets karakter
+Teknologiforståelse er et praktisk fag, hvor eleverne beskæftiger sig med samspillet og den gensidige påvirkning mellem mennesker og digitale teknologier samt betydningen heraf for menneskers liv og verden omkring dem.
+Faget integrerer kernestof fra natur-, samfunds-, og humanvidenskaberne samt tekniske og æstetiske håndværksfag. Digitale teknologier som genstandsfelt rummer forhold fra alle disse referencefag, der i undervisningen udgør én sammenhængende faglighed.
+Grundantagelsen i teknologiforståelse er, at digitale teknologier ikke er neutrale. De skaber nye handle- og udtryksmuligheder, der kan bruges kreativt og konstruktivt. Samtidig former teknologierne, hvordan mennesker tænker og handler, hvilket kræver kritisk forståelse og omtanke. Teknologierne er formet af en bestemt kultur og historie, de indeholder bestemte intentioner, og de bygger på et særligt materielt grundlag, hvilket tilsammen skaber både muligheder og udfordringer.
+Fagets karakter kan opsummeres i tre grundlæggende erkendeformer: At forstå ved selv at skabe digitale teknologier, at forstå ved at omskabe eller modvirke, hvad andre har skabt, og at forstå ved at nytænke og forestille sig alternativer.
+
+6
+Fagets indhold
+Fagets trinforløb og indholdsområder
+Teknologiforståelse er organiseret i 1 trinforløb: 7.-8. eller 8.-9. klassetrin.
+Teknologiforståelse har tre indholdsområder. Indholdet beskrevet i indholdsområderne udgør fagets kernestof.
+• Digital kreativitet og design handler om at skabe digitale artefakter gennem iterative processer, der indeholder kreative metoder og designvalg. Her arbejdes der med digitale teknologier som ting, mennesker skaber ud fra egne intentioner.
+• Programmering og modellering handler om de konstruktive lag bag digitale teknologier og om programmering som sprog og fagligt håndværk. Her arbejdes der med digital teknologi som et materielt grundlag, der former, indlejrer og forstærker menneskelige perspektiver og handlinger i verden.
+• Undersøgelse og stillingtagen handler om at undersøge og tage stilling til den gensidige påvirkning mellem mennesker og digitale teknologier. Her arbejdes der med digitale teknologier som fænomener, der rummer et samspil mellem menneskelige og tekniske forhold.
+Sammenhæng mellem indholdsområder
+Alle indholdsområderne omhandler samspillet mellem digitale teknologier, mennesker og verden fra forskellige perspektiver og med forskellige prioriteter. De er gensidigt supplerende, og de tilbyder forskellige muligheder for læring og fordybelse. Undervisningen kan have særligt fokus på ét indholdsområde, men vil ofte inddrage elementer og erfaringer fra de øvrige.
+
+7
+Figur 1: Sammenhæng mellem indholdsområderne i teknologiforståelse
+Trinforløb: 7.-8. eller 8.-9. klassetrin
+Indholdsområde: Digital kreativitet og design Undervisningen sigter mod, at eleverne arbejder kreativt med at skabe digitale artefakter, herunder produkter og kreative udtryk, der har betydning for dem selv, andre mennesker eller verden. Kreative processer Eleverne udvikler kundskaber igennem kreative processer med digitale teknologier. Processerne omfatter både design, hvor eleverne skaber for at udfylde behov eller løse problemer, og mere åbne tilgange, hvor eleverne udforsker, eksperimenterer eller provokerer. Herigennem udvikler eleverne kundskaber til selv at skabe artefakter eller påvirke fænomener samt indsigt i betydningen af de designvalg, som andre har taget i eksisterende digitale teknologier. Undervisningen omfatter • designprocesser for at skabe digitale artefakter, der kan udfylde et behov eller løse et
+problem for mennesker eller verden • innovation og entreprenørskab i relation til samfundsproblemer eller erhvervslivet • undersøgelse af teknologiens materielle betingelser og udtryksmuligheder igennem krea-
+tive processer og eksperimenter • udvikling af kreative eller æstetiske digitale produkter, der viser noget om teknologiens
+muligheder, rolle eller betydning.
+
+8
+Kreative metoder Eleverne anvender en eller flere kreative metoder i deres arbejde. De taler sammen om deres proces og betydningen af de anvendte metoder, og de begrunder deres valg, løsninger og intentioner ud fra egne undersøgelser eller afprøvninger.
+Undervisningen omfatter • indramning af proces, herunder hvilken kontekst de digitale artefakter skal virke i, hvilke
+intentioner og grundantagelser, der arbejdes ud fra, hvilke ressourcer der er til rådighed, samt hvordan processen gribes an • afprøvninger, hvor erfaringer fra forrige iteration informerer næste skridt i processen og medfører eventuelle justeringer • metoder til kreativitet, herunder spekulation og kreative benspænd, der åbner for nye og alternative løsninger og udtryk • benspænd, der knytter sig til digitale teknologier som materiale, herunder at artefakter skal kunne skifte mellem forskellige tilstande ud fra input, det modtager fra omgivelserne.
+Mål • Eleverne arbejder iterativt med at skabe digitale artefakter og andre kreative produkter. I
+arbejdet indgår afprøvninger, udvikling og tilpasning af intentioner, anvendelse af kreative metoder og argumentation for egne valg.
+Indholdsområde: Programmering og modellering Undervisningen sigter mod, at eleverne opøver håndværksmæssige kundskaber i selv at skabe digitale teknologier og derigennem opnår indsigt i teknologiens materielle grundlag og betingelser.
+Eleverne arbejder med tre af de konstruktive lag, der indgår i digitale teknologier: materielt grundlag, programmering og computerforståelse samt modellering. Disse tre lag fungerer i samspil, de bygger videre på hinanden, og de tilbyder eleverne forskellige indsigter og muligheder i deres praktiske arbejde. På alle lag arbejder eleverne praktisk med data og algoritmer som centrale komponenter i digitale teknologier.
+Materielt grundlag I det første lag arbejder eleverne med digitale teknologiers materielle grundlag og deres systemiske samspil med andre teknologier og verden omkring. Eleverne arbejder især med den elektronik, der ligger til grund for digitale teknologier, og de får egne praktiske erfaringer med indsamling, opbevaring og behandling af data om verden.
+Undervisningen omfatter • at afprøve og udforske programmerbar elektronik • anvendelse af sensorer og andre teknologier, der kan tage input fra brugere eller verden
+og give output tilbage i form af signaler og symboler • praktiske erfaringer med, hvordan digitale data ser ud, hvordan de laves, og hvordan de
+gemmes.
+Programmering og computerforståelse I andet lag arbejder eleverne med forskellige måder at kommunikere og interagere med den logik, der ligger bag digitale teknologier, og som betinger teknologiens virkemåde og de
+
+9
+handlemuligheder, der knytter sig hertil. Herigennem udvikler eleverne også håndværksmæssige kundskaber i programmering som sprog og fagligt værktøj.
+Undervisningen omfatter • programmeringsbegreber, herunder algoritmer, variable og kontrolstrukturer samt simple
+datatyper som tal, tekst og sand/falsk-værdier • praktiske og analoge programmeringstilgange • programmering i et udvalgt programmeringssprog, herunder undersøgelse af muligheder
+og begrænsninger ved det valgte sprog • fejlfinding med fokus på både logiske fejl og syntaksfejl samt omfavnelse af fejl som na-
+turlige og uundgåelige • programmering med generativ kunstig intelligens som værktøj, herunder undersøgelse af
+muligheder for indsigt i programmeringsvalg og design ved denne programmeringsform.
+Modellering I det tredje lag anvender eleverne modellering til at beskrive de forhold i verden, der behandles som del af programmeringen, samt betydningen heraf. Eleverne bliver bevidste om, at programmer altid bygger på modeller og modelleringsvalg, der aldrig er neutrale, men baserer sig på bestemte perspektiver og antagelser, der kan være fejlagtige eller indeholde bias.
+Undervisningen omfatter • brug af modelleringsværktøjer og -tilgange, herunder grafiske diagrammer • datagørelse og datamodellering, herunder forsimplinger og abstraktioner af forhold i ver-
+den, så de kan repræsenteres som data i et program • sammenligninger af modeller med hinanden og med verden, herunder afprøvning og un-
+dersøgelse af egne modelleringsvalg og bias.
+Mål • Eleverne bruger programmering som sprog og værktøj til at skabe digitale artefakter. I ar-
+bejdet anvender de programmeringsbegreber, når de afprøver løsninger og diskuterer fejl og tilpasninger. • Eleverne undersøger modellers perspektiver og bias. Det gør de ved at tegne diagrammer og afprøve sammenhænge og samspil mellem egne modeller og verden.
+Indholdsområde: Undersøgelse og stillingtagen Undervisningen sigter mod, at eleverne undersøger samspillet og den gensidige påvirkning mellem mennesker og digitale teknologier i form af digitale fænomener, der danner grundlag for elevernes egen stillingtagen.
+I undervisningen arbejder eleverne med, hvordan mennesker bruger digitale teknologier i bestemte kontekster, og hvordan teknologierne omvendt er med til at forme både brugen og konteksten.
+Eleverne arbejder primært med digitale fænomener fra eget hverdagsliv, herunder fænomener, hvor kunstig intelligens indgår. Eleverne møder i undervisningen også fænomener uden for deres egen erfaringshorisont, der har betydning for andre mennesker eller verden.
+
+10
+Menneskers brug og brugskontekst Undervisningen har fokus på de menneskelige sider af fænomenerne, herunder brugspraksis samt de sociale eller kulturelle sammenhænge, hvori brugen foregår.
+Undervisningen omfatter • kortlægning af digitale fænomener i elevernes hverdagsliv, der har betydning for daglige
+gøremål, fællesskaber eller indhentning af informationer om verden • brugsstudier med fokus på at afdække afstanden mellem udviklernes intenderede brug
+og brugernes faktiske og ønskværdige brug • brugseksperimenter, herunder eksperimenter med at brug af alternative teknologier og
+ikke-brug af digitale teknologier.
+Teknologiens rolle og intention Eleverne undersøger, hvordan de digitale teknologier, der indgår i fænomenet, er opbygget og fungerer, herunder samspillet mellem data, algoritmer og menneskelig brugspraksis. Eleverne afmaskerer tekniske designvalg gennem praktiske eksperimenter og undersøgelser, der giver dem egne indtryk og erfaringer med den modellering og de intentioner og perspektiver, der er indbygget i teknologien.
+Undervisningen omfatter • åbne og nysgerrige undersøgelser af, hvordan teknologien er opbygget og fungerer • eksperimenter med at afmaskere algoritmer, herunder om der indgår deterministiske,
+adaptive eller generative algoritmer • eksperimenter med at afmaskere datagørelse og modelleringsvalg, herunder om der pro-
+duceres og anvendes digitale dobbeltgængere • afprøvning af teknologier, der bygger på andre tekniske designvalg eller indlejrer andre
+værdier eller intentioner.
+Stillingtagen I undervisningen forbinder eleverne deres praktiske undersøgelse med principielle diskussioner om teknologiens rolle, der hjælper dem til gradvist at opbygge egen stillingtagen og inspirerer dem til nye handlinger og eksperimenter. Eleverne møder perspektiver på teknologien, der ligger uden for deres egen erfaringshorisont, og som stimulerer deres fantasi, forestillingsevne og kritiske bevidsthed om teknologiens rolle og betydning, og som omsættes i nye og konkrete handlinger.
+Undervisningen omfatter • aktuelle samfundsdebatter om teknologiens rolle og betydning • perspektivering til teknologiforestillinger eller historiske eksempler • inddragelse af etiske og filosofiske spørgsmål.
+Mål • Eleverne undersøger digitale fænomener i egne hverdagsliv. • Eleverne tager stilling til digitale fænomeners betydning for mennesker eller verden. Det
+gør de gradvist på baggrund af egne praktiske undersøgelser og i relation til perspektiver på teknologien, der ligger uden for deres egne erfaringer.
+
+11
+Undervisning og evaluering
+Her indsættes i de endelige fagplaner et afsnit, der beskriver få overordnede principper for undervisning og evaluering i faget. Afsnittet har til hensigt at understøtte de lokale pædagogiske og didaktiske refleksioner over undervisningen. Afsnittet afprøves i tre udkast til fagplaner (dansk, matematik og historie) med henblik på at få tilbageløb fra praksis. Herefter færdiggøres afsnittet i samtlige fagplaner.
+
+
