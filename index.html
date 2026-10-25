@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none !important}</style>
 <title>Fagrummet: teknologiforståelse</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -244,7 +245,8 @@ function canvasTexture(w,h,draw){
 }
 function applyTexture(el,tex){
   const set=()=>{const m=el.getObject3D("mesh"); if(!m) return false; m.material.map=tex; m.material.transparent=true; m.material.needsUpdate=true; return true;};
-  if(!set()) el.addEventListener("object3dset",()=>set(),{once:true});
+  // vent til entiteten er indlæst, ellers erstatter material-komponenten materialet og teksturen forsvinder
+  if(!el.hasLoaded || !set()) el.addEventListener("loaded",()=>set(),{once:true});
 }
 function labelTex(text,color,opts={}){
   const w=opts.w||1024,h=opts.h||200,size=opts.size||74;
@@ -326,7 +328,7 @@ function buildCore(){
 /* ---------- Station A: Digital kreativitet og design ---------- */
 function stationBase(id,area){
   const p=POS[area];
-  const g=el("a-entity",{id,position:`${p.x} 0 ${p.z}`,rotation:`0 ${yawTo({x:0,z:0},p)+180} 0`});
+  const g=el("a-entity",{id,position:`${p.x} 0 ${p.z}`,rotation:`0 ${yawTo({x:0,z:0},p)} 0`});
   el("a-cylinder",{radius:2.6,height:0.12,position:"0 0.06 0",material:mat("#161c36")},g);
   el("a-ring",{"radius-inner":2.65,"radius-outer":2.75,rotation:"-90 0 0",position:"0 0.02 0",
     material:`shader: flat; color: ${AREAS[area].color}; opacity: 0.7; transparent: true`},g);
@@ -495,7 +497,7 @@ function pickVoice(){
 }
 if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
 /* Færdige lydfiler (fx ElevenLabs) pr. trin: AUDIO[trinnummer] = "url". Findes en fil, bruges den i stedet for browserstemmen. */
-const AUDIO = {};
+const AUDIO = {0:"audio/01.mp3", 1:"audio/02.mp3", 2:"audio/03.mp3", 3:"audio/04.mp3", 4:"audio/05.mp3", 5:"audio/06.mp3", 6:"audio/07.mp3", 7:"audio/08.mp3", 8:"audio/09.mp3", 9:"audio/10.mp3", 10:"audio/11.mp3", 11:"audio/12.mp3", 12:"audio/13.mp3", 13:"audio/14.mp3", 14:"audio/15.mp3", 15:"audio/16.mp3", 16:"audio/17.mp3", 17:"audio/18.mp3", 18:"audio/19.mp3", 19:"audio/20.mp3", 20:"audio/21.mp3", 21:"audio/22.mp3", 22:"audio/23.mp3", 23:"audio/24.mp3"};
 let player=null;
 function speak(t){
   if(player){ player.pause(); player=null; }
