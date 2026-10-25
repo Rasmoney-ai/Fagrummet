@@ -60,7 +60,21 @@ async function transcribe(request, env, headers) {
 
 const MAX_TTS = 2500;   // tegn pr. oplæsning
 
-// Oplæsning: Claudes svar læses op med ElevenLabs (Quest-browseren har ingen stemme).
+// ElevenLabs: tekst -> mp3. previous gør tonefaldet sammenhængende, når et svar læses op i bidder.
+async function ttsFetch(env, text, previous = "") {
+  return fetch(`https://api.elevenlabs.io/v1/text-to-speech/${env.ELEVENLABS_VOICE_ID}?output_format=mp3_44100_64`, {
+    method: "POST",
+    headers: { "xi-api-key": env.ELEVENLABS_API_KEY, "Content-Type": "application/json", Accept: "audio/mpeg" },
+    body: JSON.stringify({ text, model_id: "eleven_flash_v2_5", language_code: "da", ...(previous ? { previous_text: previous.slice(-1000) } : {}) }),
+  });
+}
+function toBase64(buffer) {
+  const bytes = new Uint8Array(buffer); let binary = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(binary);
+}
+
+// Oplæsning af en hel tekst (bruges, hvis siden ikke kan modtage svaret i bidder).
 async function speech(request, env, headers) {
   let body;
   try { body = await request.json(); } catch { return json({ error: "Ugyldig forespørgsel." }, 400, headers); }
@@ -68,17 +82,97 @@ async function speech(request, env, headers) {
   if (!env.ELEVENLABS_API_KEY || !env.ELEVENLABS_VOICE_ID) return json({ error: "Oplæsning er ikke sat op." }, 501, headers);
   const text = String(body.text || "").trim().slice(0, MAX_TTS);
   if (!text) return json({ error: "Ingen tekst." }, 400, headers);
-  const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${env.ELEVENLABS_VOICE_ID}?output_format=mp3_44100_64`, {
-    method: "POST",
-    headers: { "xi-api-key": env.ELEVENLABS_API_KEY, "Content-Type": "application/json", Accept: "audio/mpeg" },
-    body: JSON.stringify({ text, model_id: "eleven_flash_v2_5", language_code: "da" }),
-  });
+  const r = await ttsFetch(env, text);
   if (!r.ok) return json({ error: `Oplæsningen fejlede (${r.status}).` }, 502, headers);
   return new Response(r.body, { headers: { ...headers, "Content-Type": "audio/mpeg" } });
 }
 
+function buildRequest(body) {
+  const question = String(body.question || "").trim().slice(0, MAX_QUESTION);
+  const step = SPEAK[Number(body.step)];
+  const messages = [];
+  for (const turn of (Array.isArray(body.history) ? body.history : []).slice(-MAX_HISTORY)) {
+    if (!turn || !turn.q || !turn.a) continue;
+    messages.push({ role: "user", content: String(turn.q).slice(0, MAX_QUESTION) });
+    messages.push({ role: "assistant", content: String(turn.a).slice(0, 4000) });
+  }
+  const context = step ? `Læreren står ved trin ${step.nr} i rundvisningen: "${step.tekst.split(". ")[0]}".` : "";
+  messages.push({ role: "user", content: `${context} Svar på dansk.
+
+Spørgsmål: ${question}`.trim() });
+  return {
+    question,
+    params: {
+      model: "claude-opus-5-5",
+      max_tokens: 2000,
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      output_config: { effort: "low" },
+      system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
+      messages,
+    },
+  };
+}
+function claudeError(error) {
+  if (error instanceof Anthropic.AuthenticationError) return "API-nøglen virker ikke.";
+  if (error instanceof Anthropic.RateLimitError) return "For mange spørgsmål lige nu. Prøv igen om lidt.";
+  if (error instanceof Anthropic.APIError) return `Claude svarede med fejl ${error.status}.`;
+  return "Kunne ikke nå Claude.";
+}
+const REFUSAL = "Det kan jeg desværre ikke svare på.";
+
+// Hvor langt et stykke tekst skal være, før det sendes til oplæsning. Første bid er kort, så lyden starter hurtigt.
+function cutPoint(text, first) {
+  const min = first ? 30 : 140, re = /[.!?:;](\s|$)/g; let m, cut = -1;
+  while ((m = re.exec(text))) { if (m.index + 1 >= min) { cut = m.index + 1; break; } }
+  if (cut < 0 && text.length > 320) { const c = text.lastIndexOf(", "); if (c > min) cut = c + 1; }
+  return cut;
+}
+
+// Svar i bidder: Claudes tekst streames, hver sætning eller to læses op med det samme,
+// og siden får lyden som linjer af JSON (ndjson) i den rigtige rækkefølge.
+function answerStream(body, env, headers, ctx) {
+  const { params } = buildRequest(body);
+  const { readable, writable } = new TransformStream();
+  const writer = writable.getWriter(), enc = new TextEncoder();
+  const send = obj => writer.write(enc.encode(JSON.stringify(obj) + "\n"));
+  const canSpeak = !!(env.ELEVENLABS_API_KEY && env.ELEVENLABS_VOICE_ID);
+
+  const work = (async () => {
+    let full = "", pending = "", spoken = "", order = Promise.resolve();
+    const speakChunk = text => {
+      const previous = spoken; spoken += (spoken ? " " : "") + text;
+      const audio = canSpeak ? ttsFetch(env, text, previous).then(r => r.ok ? r.arrayBuffer() : null).catch(() => null) : Promise.resolve(null);
+      order = order.then(async () => { const buf = await audio; await send({ type: "chunk", text, audio: buf ? toBase64(buf) : null }); });
+    };
+    try {
+      const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+      const stream = client.beta.messages.stream(params);
+      for await (const event of stream) {
+        if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+          full += event.delta.text; pending += event.delta.text;
+          let cut;
+          while ((cut = cutPoint(pending, !spoken)) > 0) { speakChunk(pending.slice(0, cut).trim()); pending = pending.slice(cut); }
+        }
+      }
+      const final = await stream.finalMessage();
+      if (final.stop_reason === "refusal" && !full.trim()) { full = REFUSAL; pending = REFUSAL; }
+      if (pending.trim()) speakChunk(pending.trim());
+      await order;
+      await send({ type: "done", answer: full.trim() });
+    } catch (error) {
+      await order.catch(() => {});
+      await send({ type: "error", error: claudeError(error) });
+    } finally {
+      await writer.close();
+    }
+  })();
+  ctx.waitUntil(work);
+  return new Response(readable, { headers: { ...headers, "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store" } });
+}
+
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const origin = request.headers.get("Origin") || "";
     const headers = cors(origin, env);
     if (request.method === "OPTIONS") return new Response(null, { headers });
@@ -90,43 +184,16 @@ export default {
     let body;
     try { body = await request.json(); } catch { return json({ error: "Ugyldig forespørgsel." }, 400, headers); }
     if (!env.ACCESS_CODE || body.code !== env.ACCESS_CODE) return json({ error: "Forkert adgangskode." }, 401, headers);
+    if (!String(body.question || "").trim()) return json({ error: "Tomt spørgsmål." }, 400, headers);
+    if (path === "/stream") return answerStream(body, env, headers, ctx);
 
-    const question = String(body.question || "").trim().slice(0, MAX_QUESTION);
-    if (!question) return json({ error: "Tomt spørgsmål." }, 400, headers);
-    const step = SPEAK[Number(body.step)] ;
-    const english = body.lang === "en";
-
-    const messages = [];
-    for (const turn of (Array.isArray(body.history) ? body.history : []).slice(-MAX_HISTORY)) {
-      if (!turn || !turn.q || !turn.a) continue;
-      messages.push({ role: "user", content: String(turn.q).slice(0, MAX_QUESTION) });
-      messages.push({ role: "assistant", content: String(turn.a).slice(0, 4000) });
-    }
-    const context = step ? `Læreren står ved trin ${step.nr} i rundvisningen: "${step.tekst.split(". ")[0]}".` : "";
-    const language = english ? "Answer in English, because the reading voice is English." : "Svar på dansk.";
-    messages.push({ role: "user", content: `${context} ${language}\n\nSpørgsmål: ${question}`.trim() });
-
-    const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
     try {
-      const response = await client.beta.messages.create({
-        model: "claude-opus-5-5",
-        max_tokens: 2000,
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",
-        output_config: { effort: "low" },
-        system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
-        messages,
-      });
-      if (response.stop_reason === "refusal") {
-        return json({ answer: english ? "Sorry, I can't answer that one." : "Det kan jeg desværre ikke svare på." }, 200, headers);
-      }
+      const response = await new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }).beta.messages.create(buildRequest(body).params);
+      if (response.stop_reason === "refusal") return json({ answer: REFUSAL }, 200, headers);
       const answer = response.content.filter(b => b.type === "text").map(b => b.text).join(" ").trim();
-      return json({ answer, usage: response.usage }, 200, headers);
+      return json({ answer }, 200, headers);
     } catch (error) {
-      if (error instanceof Anthropic.AuthenticationError) return json({ error: "API-nøglen virker ikke." }, 502, headers);
-      if (error instanceof Anthropic.RateLimitError) return json({ error: "For mange spørgsmål lige nu. Prøv igen om lidt." }, 429, headers);
-      if (error instanceof Anthropic.APIError) return json({ error: `Claude svarede med fejl ${error.status}.` }, 502, headers);
-      return json({ error: "Kunne ikke nå Claude." }, 502, headers);
+      return json({ error: claudeError(error) }, 502, headers);
     }
   },
 };
