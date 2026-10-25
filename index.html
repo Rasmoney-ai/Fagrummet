@@ -1031,11 +1031,14 @@ STEPS.forEach((s,k)=>{ const b=document.createElement("button"); b.type="button"
 document.addEventListener("keydown",e=>{ if($("start").hidden){ if(e.key==="ArrowRight") go(cur+1); if(e.key==="ArrowLeft") go(cur-1);} });
 
 /* ---------- Spørg Claude undervejs ----------
-   Tale bliver til tekst i browseren, workeren spørger Claude med hele fagplanen, og svaret læses op med browserstemmen. */
+   Spørgsmålet optages med mikrofonen, workeren laver det om til tekst (Whisper) og spørger Claude med hele fagplanen,
+   og svaret læses op med browserstemmen. Quest-browseren har ikke selv talegenkendelse, derfor optagelsen. */
 const WORKER_URL = "https://fagrummet-claude.rasmus-79e.workers.dev";   // Cloudflare-workeren (mappen worker/)
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const ASK_LABEL = {idle:"Spørg", listen:"Lytter …", think:"Tænker …", speak:"Stop svar"};
-let askState="idle", recog=null, askHistory=[];
+const ASK_LABEL = {idle:"Spørg", listen:"Send", think:"Tænker …", speak:"Stop svar"};
+const CAN_RECORD = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+const MAX_RECORD_MS = 20000;
+let askState="idle", recog=null, rec=null, recTimer=null, askHistory=[];
 function setAsk(state){
   askState=state; $("ask").textContent=ASK_LABEL[state]; $("ask").classList.toggle("busy",state!=="idle"); vrButtons();
 }
@@ -1043,6 +1046,12 @@ function accessCode(){
   let c=null; try{ c=localStorage.getItem("fagrummet-kode"); }catch{}
   if(!c && !scene.is("vr-mode")){ c=prompt("Adgangskode til Claude:"); if(c) try{ localStorage.setItem("fagrummet-kode",c); }catch{} }
   return c;
+}
+function beep(freq,dur=0.14){ // kort tone, når optagelsen starter og stopper
+  try{ const ctx=beep.ctx||(beep.ctx=new (window.AudioContext||window.webkitAudioContext)());
+    const o=ctx.createOscillator(), g=ctx.createGain(); o.frequency.value=freq;
+    g.gain.setValueAtTime(0.18,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+    o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime+dur); }catch{}
 }
 function stopSpeech(){ if(player){ player.pause(); player=null; } if("speechSynthesis" in window) speechSynthesis.cancel(); }
 function sayAnswer(text){
@@ -1066,26 +1075,65 @@ async function askClaude(q){
     sayAnswer(d.answer);
   }catch{ sayAnswer("Jeg kunne ikke få forbindelse til Claude."); }
 }
+async function recordQuestion(code){
+  setAsk("listen");
+  let stream;
+  try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}); }
+  catch{ sayAnswer("Jeg kan ikke bruge mikrofonen. Giv siden lov til at bruge mikrofonen, og prøv igen."); return; }
+  const type=["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg"].find(t=>MediaRecorder.isTypeSupported(t))||"";
+  const chunks=[];
+  rec=new MediaRecorder(stream,type?{mimeType:type}:{});
+  rec.ondataavailable=e=>{ if(e.data && e.data.size) chunks.push(e.data); };
+  rec.onstop=async()=>{
+    clearTimeout(recTimer); stream.getTracks().forEach(t=>t.stop()); beep(520);
+    const blob=new Blob(chunks,{type:rec.mimeType||type||"audio/webm"}); rec=null;
+    if(blob.size<1500){ sayAnswer("Jeg hørte ikke noget. Prøv igen."); return; }
+    setAsk("think"); $("hint").textContent="Lytter til optagelsen …";
+    try{
+      const r=await fetch(WORKER_URL+"/stt",{method:"POST",headers:{"X-Code":code,"Content-Type":blob.type},body:blob});
+      const d=await r.json().catch(()=>({}));
+      if(r.status===401) try{ localStorage.removeItem("fagrummet-kode"); }catch{}
+      if(!r.ok || !d.text){ sayAnswer(d.error||"Jeg hørte ikke noget. Prøv igen."); return; }
+      $("hint").textContent="Du spurgte: "+d.text;
+      askClaude(d.text);
+    }catch{ sayAnswer("Jeg kunne ikke få forbindelse."); }
+  };
+  rec.start(); beep(880); $("hint").textContent="Lytter … tryk Send, når du er færdig";
+  recTimer=setTimeout(()=>{ if(rec && rec.state==="recording") rec.stop(); },MAX_RECORD_MS);
+}
 function onAsk(){
-  if(askState==="speak"){ stopSpeech(); setAsk("idle"); return; }
-  if(askState==="listen"){ if(recog) recog.stop(); return; }
-  if(askState==="think") return;
-  stopSpeech();
-  if(!SR){
-    if(scene.is("vr-mode")){ sayAnswer("Talegenkendelse findes ikke i denne browser."); return; }
-    const q=prompt("Skriv dit spørgsmål:"); if(q && q.trim()) askClaude(q.trim()); return;
-  }
-  let heard="";
-  recog=new SR(); recog.lang="da-DK"; recog.interimResults=false; recog.maxAlternatives=1;
-  recog.onresult=e=>{ heard=e.results[0][0].transcript; $("hint").textContent="Du spurgte: "+heard; };
-  recog.onerror=e=>{ if(e.error==="not-allowed"||e.error==="service-not-allowed") heard=""; };
-  recog.onend=()=>{ recog=null; if(heard) askClaude(heard); else setAsk("idle"); };
-  setAsk("listen"); recog.start();
+  try{
+    if(askState==="speak"){ stopSpeech(); setAsk("idle"); return; }
+    if(askState==="listen"){ if(rec && rec.state==="recording") rec.stop(); else if(recog) recog.stop(); return; }
+    if(askState==="think") return;
+    stopSpeech();
+    if(!WORKER_URL){ sayAnswer("Claude er ikke sat op endnu."); return; }
+    const code=accessCode(); if(!code){ sayAnswer("Der mangler en adgangskode. Åbn siden uden VR og tryk på Spørg for at skrive den."); return; }
+    if(CAN_RECORD){ recordQuestion(code); return; }
+    if(SR){
+      let heard="";
+      recog=new SR(); recog.lang="da-DK"; recog.interimResults=false; recog.maxAlternatives=1;
+      recog.onresult=e=>{ heard=e.results[0][0].transcript; $("hint").textContent="Du spurgte: "+heard; };
+      recog.onend=()=>{ recog=null; if(heard) askClaude(heard); else sayAnswer("Jeg hørte ikke noget. Prøv igen."); };
+      setAsk("listen"); recog.start(); return;
+    }
+    if(scene.is("vr-mode")){ sayAnswer("Denne browser kan hverken optage eller genkende tale."); return; }
+    const q=prompt("Skriv dit spørgsmål:"); if(q && q.trim()) askClaude(q.trim());
+  }catch(e){ sayAnswer("Der skete en fejl: "+(e && e.message || e)); }
 }
 $("ask").onclick=onAsk;
+function prepareAsk(){ // første gang: adgangskode og lov til mikrofonen, mens vi stadig er uden for VR
+  if(!WORKER_URL) return;
+  let c=null; try{ c=localStorage.getItem("fagrummet-kode"); }catch{}
+  if(c) return;
+  c=prompt("Adgangskode til Spørg Claude (Annuller for at springe over):");
+  if(!c) return;
+  try{ localStorage.setItem("fagrummet-kode",c); }catch{}
+  if(CAN_RECORD) navigator.mediaDevices.getUserMedia({audio:true}).then(st=>st.getTracks().forEach(t=>t.stop())).catch(()=>{});
+}
 
 /* ---------- Start ---------- */
-function begin(withSound){ $("start").hidden=true; setTts(withSound); go(0); }
+function begin(withSound){ prepareAsk(); $("start").hidden=true; setTts(withSound); go(0); }
 const scene=$("scene");
 function init(){
   APP_TEX=appTex(); MAP_TEX=mapTex(); SHADOW_TEX=shadowTex(); buildSky();

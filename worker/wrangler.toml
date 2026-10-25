@@ -7,5 +7,9 @@ compatibility_flags = ["nodejs_compat"]
 #   ANTHROPIC_API_KEY  - nøglen fra console.anthropic.com
 #   ACCESS_CODE        - en adgangskode, som siden skal sende med
 
+# Workers AI: Whisper laver tale om til tekst (Quest-browseren har ikke selv talegenkendelse)
+[ai]
+binding = "AI"
+
 [vars]
 ALLOWED_ORIGINS = "https://rasmoney-ai.github.io,http://localhost:8123"

@@ -30,12 +30,33 @@ function cors(origin, env) {
   return {
     "Access-Control-Allow-Origin": allowed.includes(origin) ? origin : allowed[0],
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, X-Code",
     "Vary": "Origin",
   };
 }
 const json = (body, status, headers) =>
   new Response(JSON.stringify(body), { status, headers: { ...headers, "Content-Type": "application/json; charset=utf-8" } });
+
+const MAX_AUDIO = 4 * 1024 * 1024;   // bytes, ca. et minuts optagelse
+
+// Tale til tekst: siden sender den optagne lyd, Whisper på Workers AI svarer med teksten.
+async function transcribe(request, env, headers) {
+  if (!env.ACCESS_CODE || request.headers.get("X-Code") !== env.ACCESS_CODE) return json({ error: "Forkert adgangskode." }, 401, headers);
+  const bytes = new Uint8Array(await request.arrayBuffer());
+  if (!bytes.length) return json({ error: "Ingen lyd modtaget." }, 400, headers);
+  if (bytes.length > MAX_AUDIO) return json({ error: "Optagelsen er for lang." }, 413, headers);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  try {
+    const result = await env.AI.run("@cf/openai/whisper-large-v3-turbo", {
+      audio: btoa(binary), language: "da",
+      initial_prompt: "Spørgsmål om faget teknologiforståelse, fagplanen, programmering, modellering og digitale fænomener.",
+    });
+    return json({ text: (result.text || "").trim() }, 200, headers);
+  } catch (error) {
+    return json({ error: "Kunne ikke forstå lyden." }, 502, headers);
+  }
+}
 
 export default {
   async fetch(request, env) {
@@ -43,6 +64,7 @@ export default {
     const headers = cors(origin, env);
     if (request.method === "OPTIONS") return new Response(null, { headers });
     if (request.method !== "POST") return json({ error: "Brug POST." }, 405, headers);
+    if (new URL(request.url).pathname === "/stt") return transcribe(request, env, headers);
 
     let body;
     try { body = await request.json(); } catch { return json({ error: "Ugyldig forespørgsel." }, 400, headers); }
