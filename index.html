@@ -82,6 +82,7 @@ button[aria-pressed="true"]{border-color:var(--teal);color:var(--teal)}
 .start p{font-size:17px;line-height:1.5;color:var(--muted);margin:0;max-width:56ch}
 .start .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .start button.primary{font-size:16px;padding:12px 18px}
+.start button.vr{font-size:16px;padding:12px 18px;background:var(--teal);color:var(--night);border-color:var(--teal)}
 
 @media (max-width:560px){
   .card{max-height:48vh;padding:14px}
@@ -151,10 +152,11 @@ button[aria-pressed="true"]{border-color:var(--teal);color:var(--teal)}
   <div class="start-inner">
     <div class="eyebrow">Valgfag · andet udkast til fagplan · juni 2026</div>
     <h2><span>Teknologiforståelse</span><span class="a">skabe</span><span class="b">programmere</span><span class="c">tage stilling</span></h2>
-    <p>Gå rundt i fagets tre indholdsområder. Hvert område har sin egen station med modeller, og en dansk stemme fortæller undervejs. Brug mus eller touch på skærmen, eller tryk "VR" nederst til højre med et headset.</p>
+    <p>Gå rundt i fagets tre indholdsområder. Hvert område har sin egen station med modeller, og en dansk stemme fortæller undervejs. Brug mus eller touch på skærmen. Med et headset trykker du "Gå ind i VR".</p>
     <div class="row">
       <button class="primary" id="go" type="button">Start rundvisningen</button>
       <button id="goSilent" type="button">Start uden lyd</button>
+      <button id="goVR" type="button" class="vr" hidden>Gå ind i VR</button>
     </div>
   </div>
 </div>
@@ -558,6 +560,9 @@ function init(){
   scene.addEventListener("enter-vr",()=>{ $("vrPanelWrap").setAttribute("visible",true); $("card").hidden=true; });
   scene.addEventListener("exit-vr",()=>{ $("vrPanelWrap").setAttribute("visible",false); $("card").hidden=false; });
   $("go").onclick=()=>begin(true); $("goSilent").onclick=()=>begin(false);
+  // VR-knap på startskærmen, kun når browseren kan køre immersive VR (fx Quest Browser)
+  $("goVR").onclick=()=>{ begin(true); scene.enterVR(); };
+  if(navigator.xr && navigator.xr.isSessionSupported) navigator.xr.isSessionSupported("immersive-vr").then(ok=>{ $("goVR").hidden=!ok; }).catch(()=>{});
 }
 const ready=()=> (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(init);
 if(scene.hasLoaded) ready(); else scene.addEventListener("loaded",ready);
