@@ -154,7 +154,7 @@ button.ask.busy{background:transparent;color:var(--rose);animation:pulse 1.2s ea
 
 <div class="start" id="start">
   <div class="start-inner">
-    <div class="eyebrow">Valgfag · andet udkast til fagplan · juni 2026</div>
+    <div class="eyebrow">Valgfag · andet udkast til fagplan · juni 2026 · <span id="ver"></span></div>
     <h2><span>Teknologiforståelse</span><span class="a">skabe</span><span class="b">programmere</span><span class="c">tage stilling</span></h2>
     <p>Gå rundt i fagets tre indholdsområder. Hvert område har sin egen station med modeller, og en dansk stemme fortæller undervejs. Brug mus eller touch på skærmen. Med et headset trykker du "Gå ind i VR".</p>
     <div class="row">
@@ -266,7 +266,9 @@ function labelTex(text,color,opts={}){
     lines.forEach((l,i)=>ctx.fillText(l,w/2,y0+i*lh));
   });
 }
-function navTex(i){ // forløbsbjælke i områdefarver + trinnummer
+const APP_VERSION = "v7";   // vises på startskærmen og pulten, så man kan se, om brillen har den nye version
+let askStatus="";
+function navTex(i){ // forløbsbjælke i områdefarver + trinnummer + statuslinje til Spørg
   return canvasTexture(1500,520,(ctx,w,h)=>{
     ctx.fillStyle="rgba(20,26,48,0.94)"; roundRect(ctx,8,8,w-16,h-16,40); ctx.fill();
     ctx.strokeStyle="#2a3358"; ctx.lineWidth=6; ctx.stroke();
@@ -275,6 +277,9 @@ function navTex(i){ // forløbsbjælke i områdefarver + trinnummer
       roundRect(ctx,x0+k*(sw+gap),k===i?44:56,sw,k===i?48:24,8); ctx.fill(); });
     ctx.globalAlpha=1; ctx.fillStyle="#eef1ff"; ctx.font='500 52px "JetBrains Mono", monospace'; ctx.textAlign="right"; ctx.textBaseline="middle";
     ctx.fillText(`${i+1} / ${n}`,w-60,70);
+    ctx.font='500 30px "JetBrains Mono", monospace'; ctx.fillStyle="#6b7299"; ctx.fillText(APP_VERSION,w-60,128);
+    if(askStatus){ ctx.textAlign="left"; ctx.fillStyle="#e8638c"; ctx.font='600 46px "Source Sans 3", sans-serif';
+      const lines=wrap(ctx,askStatus,w-300).slice(0,2); lines.forEach((l,k)=>ctx.fillText(l,70,150+k*50)); }
   });
 }
 function glowTex(c){
@@ -1039,8 +1044,13 @@ const ASK_LABEL = {idle:"Spørg", listen:"Send", think:"Tænker …", speak:"Sto
 const CAN_RECORD = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
 const MAX_RECORD_MS = 20000;
 let askState="idle", recog=null, rec=null, recTimer=null, askHistory=[];
+const ASK_STATUS = {idle:"", listen:"Lytter … tryk Send, når du er færdig", think:"Tænker …", speak:"Svarer …"};
+function setStatus(t){
+  askStatus=t; $("hint").textContent=t||"Træk for at se dig om · ← → skifter trin";
+  if(cur>=0) applyTexture($("vrPanel"),navTex(cur));
+}
 function setAsk(state){
-  askState=state; $("ask").textContent=ASK_LABEL[state]; $("ask").classList.toggle("busy",state!=="idle"); vrButtons();
+  askState=state; setStatus(ASK_STATUS[state]); $("ask").textContent=ASK_LABEL[state]; $("ask").classList.toggle("busy",state!=="idle"); vrButtons();
 }
 function accessCode(){
   let c=null; try{ c=localStorage.getItem("fagrummet-kode"); }catch{}
@@ -1054,32 +1064,33 @@ function beep(freq,dur=0.14){ // kort tone, når optagelsen starter og stopper
     o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime+dur); }catch{}
 }
 function stopSpeech(){ if(player){ player.pause(); player=null; } if("speechSynthesis" in window) speechSynthesis.cancel(); }
-function sayAnswer(text){
+function sayAnswer(text,isError=false){
   stopSpeech();
-  if(!("speechSynthesis" in window)){ setAsk("idle"); return; }
+  const canSpeak=("speechSynthesis" in window) && speechSynthesis.getVoices().length>0;
+  if(isError || !canSpeak){ setAsk("idle"); setStatus((canSpeak?"":"Kan ikke læse op. ")+text); if(!canSpeak) return; }
   const u=new SpeechSynthesisUtterance(text); u.lang=daVoice?"da-DK":"en-US"; if(daVoice) u.voice=daVoice;
   u.onend=u.onerror=()=>{ if(askState==="speak") setAsk("idle"); };
-  setAsk("speak"); speechSynthesis.speak(u);
+  if(!isError) setAsk("speak"); speechSynthesis.speak(u);
 }
 async function askClaude(q){
-  if(!WORKER_URL){ sayAnswer("Claude er ikke sat op endnu."); return; }
-  const code=accessCode(); if(!code){ sayAnswer("Der mangler en adgangskode. Åbn siden uden VR og tryk på Spørg for at skrive den."); return; }
+  if(!WORKER_URL){ sayAnswer("Claude er ikke sat op endnu.",true); return; }
+  const code=accessCode(); if(!code){ sayAnswer("Der mangler en adgangskode. Åbn siden uden VR og tryk på Spørg for at skrive den.",true); return; }
   setAsk("think");
   try{
     const r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({question:q,step:cur,history:askHistory,lang:daVoice?"da":"en",code})});
     const d=await r.json().catch(()=>({}));
     if(r.status===401) try{ localStorage.removeItem("fagrummet-kode"); }catch{}
-    if(!r.ok || !d.answer){ sayAnswer(d.error||"Der skete en fejl."); return; }
+    if(!r.ok || !d.answer){ sayAnswer(d.error||"Der skete en fejl.",true); return; }
     askHistory=[...askHistory,{q,a:d.answer}].slice(-6);
     sayAnswer(d.answer);
-  }catch{ sayAnswer("Jeg kunne ikke få forbindelse til Claude."); }
+  }catch{ sayAnswer("Jeg kunne ikke få forbindelse til Claude.",true); }
 }
 async function recordQuestion(code){
   setAsk("listen");
   let stream;
   try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}); }
-  catch{ sayAnswer("Jeg kan ikke bruge mikrofonen. Giv siden lov til at bruge mikrofonen, og prøv igen."); return; }
+  catch{ sayAnswer("Jeg kan ikke bruge mikrofonen. Giv siden lov til at bruge mikrofonen, og prøv igen.",true); return; }
   const type=["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg"].find(t=>MediaRecorder.isTypeSupported(t))||"";
   const chunks=[];
   rec=new MediaRecorder(stream,type?{mimeType:type}:{});
@@ -1087,46 +1098,46 @@ async function recordQuestion(code){
   rec.onstop=async()=>{
     clearTimeout(recTimer); stream.getTracks().forEach(t=>t.stop()); beep(520);
     const blob=new Blob(chunks,{type:rec.mimeType||type||"audio/webm"}); rec=null;
-    if(blob.size<1500){ sayAnswer("Jeg hørte ikke noget. Prøv igen."); return; }
-    setAsk("think"); $("hint").textContent="Lytter til optagelsen …";
+    if(blob.size<1500){ sayAnswer("Jeg hørte ikke noget. Prøv igen.",true); return; }
+    setAsk("think"); setStatus("Skriver spørgsmålet ned …");
     try{
       const r=await fetch(WORKER_URL+"/stt",{method:"POST",headers:{"X-Code":code,"Content-Type":blob.type},body:blob});
       const d=await r.json().catch(()=>({}));
       if(r.status===401) try{ localStorage.removeItem("fagrummet-kode"); }catch{}
-      if(!r.ok || !d.text){ sayAnswer(d.error||"Jeg hørte ikke noget. Prøv igen."); return; }
-      $("hint").textContent="Du spurgte: "+d.text;
-      askClaude(d.text);
-    }catch{ sayAnswer("Jeg kunne ikke få forbindelse."); }
+      if(!r.ok || !d.text){ sayAnswer(d.error||"Jeg hørte ikke noget. Prøv igen.",true); return; }
+      askClaude(d.text); setStatus("Du spurgte: "+d.text);
+    }catch{ sayAnswer("Jeg kunne ikke få forbindelse.",true); }
   };
-  rec.start(); beep(880); $("hint").textContent="Lytter … tryk Send, når du er færdig";
+  rec.start(); beep(880);
   recTimer=setTimeout(()=>{ if(rec && rec.state==="recording") rec.stop(); },MAX_RECORD_MS);
 }
 function onAsk(){
   try{
+    if(askState==="idle") setStatus("Starter …");
     if(askState==="speak"){ stopSpeech(); setAsk("idle"); return; }
     if(askState==="listen"){ if(rec && rec.state==="recording") rec.stop(); else if(recog) recog.stop(); return; }
     if(askState==="think") return;
     stopSpeech();
-    if(!WORKER_URL){ sayAnswer("Claude er ikke sat op endnu."); return; }
-    const code=accessCode(); if(!code){ sayAnswer("Der mangler en adgangskode. Åbn siden uden VR og tryk på Spørg for at skrive den."); return; }
+    if(!WORKER_URL){ sayAnswer("Claude er ikke sat op endnu.",true); return; }
+    const code=accessCode(); if(!code){ sayAnswer("Der mangler en adgangskode. Åbn siden uden VR og tryk på Spørg for at skrive den.",true); return; }
     if(CAN_RECORD){ recordQuestion(code); return; }
     if(SR){
       let heard="";
       recog=new SR(); recog.lang="da-DK"; recog.interimResults=false; recog.maxAlternatives=1;
       recog.onresult=e=>{ heard=e.results[0][0].transcript; $("hint").textContent="Du spurgte: "+heard; };
-      recog.onend=()=>{ recog=null; if(heard) askClaude(heard); else sayAnswer("Jeg hørte ikke noget. Prøv igen."); };
+      recog.onend=()=>{ recog=null; if(heard) askClaude(heard); else sayAnswer("Jeg hørte ikke noget. Prøv igen.",true); };
       setAsk("listen"); recog.start(); return;
     }
-    if(scene.is("vr-mode")){ sayAnswer("Denne browser kan hverken optage eller genkende tale."); return; }
+    if(scene.is("vr-mode")){ sayAnswer("Denne browser kan hverken optage eller genkende tale.",true); return; }
     const q=prompt("Skriv dit spørgsmål:"); if(q && q.trim()) askClaude(q.trim());
-  }catch(e){ sayAnswer("Der skete en fejl: "+(e && e.message || e)); }
+  }catch(e){ sayAnswer("Der skete en fejl: "+(e && e.message || e),true); }
 }
 $("ask").onclick=onAsk;
 function prepareAsk(){ // første gang: adgangskode og lov til mikrofonen, mens vi stadig er uden for VR
   if(!WORKER_URL) return;
   let c=null; try{ c=localStorage.getItem("fagrummet-kode"); }catch{}
   if(c) return;
-  c=prompt("Adgangskode til Spørg Claude (Annuller for at springe over):");
+  try{ c=prompt("Adgangskode til Spørg Claude (Annuller for at springe over):"); }catch{ c=null; }
   if(!c) return;
   try{ localStorage.setItem("fagrummet-kode",c); }catch{}
   if(CAN_RECORD) navigator.mediaDevices.getUserMedia({audio:true}).then(st=>st.getTracks().forEach(t=>t.stop())).catch(()=>{});
@@ -1136,6 +1147,7 @@ function prepareAsk(){ // første gang: adgangskode og lov til mikrofonen, mens 
 function begin(withSound){ prepareAsk(); $("start").hidden=true; setTts(withSound); go(0); }
 const scene=$("scene");
 function init(){
+  $("ver").textContent=APP_VERSION;
   APP_TEX=appTex(); MAP_TEX=mapTex(); SHADOW_TEX=shadowTex(); buildSky();
   const floor=el("a-plane",{rotation:"-90 0 0",width:80,height:80,material:"shader: flat; color: #ffffff"});
   applyTexture(floor,(()=>{const t=canvasTexture(128,128,(c,w,h)=>{c.fillStyle="#0e1428";c.fillRect(0,0,w,h);c.strokeStyle="#1a2247";c.lineWidth=2;c.strokeRect(0,0,w,h);}); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(40,40); return t;})());
