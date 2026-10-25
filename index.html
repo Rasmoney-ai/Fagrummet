@@ -106,9 +106,9 @@ button[aria-pressed="true"]{border-color:var(--teal);color:var(--teal)}
   xr-mode-ui="enabled: true"
   vr-mode-ui="enabled: true">
 
-  <a-entity light="type: ambient; color: #8a93c9; intensity: 0.7"></a-entity>
-  <a-entity light="type: directional; color: #ffffff; intensity: 0.9" position="3 8 4"></a-entity>
-  <a-entity light="type: point; color: #c9d1ff; intensity: 1.2; distance: 9" position="0 2.4 0"></a-entity>
+  <a-entity light="type: hemisphere; color: #c9d1ff; groundColor: #2a1f3d; intensity: 0.9"></a-entity>
+  <a-entity light="type: directional; color: #ffffff; intensity: 1.0" position="3 8 6"></a-entity>
+  <a-entity light="type: directional; color: #f2a541; intensity: 0.35" position="-6 3 -4"></a-entity>
 
   <a-entity id="world"></a-entity>
 
@@ -116,8 +116,8 @@ button[aria-pressed="true"]{border-color:var(--teal);color:var(--teal)}
     <a-entity id="cam" camera position="0 1.6 0" look-controls="pointerLockEnabled: false; reverseMouseDrag: false"></a-entity>
     <a-entity laser-controls="hand: right; model: false" raycaster="objects: .klik; lineColor: #f2a541; lineOpacity: 0.8"></a-entity>
     <a-entity laser-controls="hand: left; model: false" raycaster="objects: .klik; lineColor: #4fd1c5; lineOpacity: 0.8"></a-entity>
-    <!-- Tekstpanel i VR (skjult på skærm, hvor HTML-kortet bruges) -->
-    <a-entity id="vrPanelWrap" position="1.25 1.45 -2.1" rotation="0 -22 0" visible="false">
+    <!-- Tekstpanel i VR som en lille pult nede til venstre, så modellerne er frit synlige (skjult på skærm, hvor HTML-kortet bruges) -->
+    <a-entity id="vrPanelWrap" position="-1.15 1.15 -1.5" rotation="-25 38 0" scale="0.72 0.72 0.72" visible="false">
       <a-plane id="vrPanel" width="1.8" height="1.2" material="shader: flat; transparent: true; side: double"></a-plane>
       <a-plane class="klik vrbtn" data-action="prev" position="-0.6 -0.78 0" width="0.52" height="0.2" material="shader: flat; transparent: true"></a-plane>
       <a-plane class="klik vrbtn" data-action="tts" position="0 -0.78 0" width="0.52" height="0.2" material="shader: flat; transparent: true"></a-plane>
@@ -127,7 +127,7 @@ button[aria-pressed="true"]{border-color:var(--teal);color:var(--teal)}
 </a-scene>
 </div>
 
-<div class="hint" id="hint">Træk for at se dig om · Klik på modeller og skilte · ← → skifter trin</div>
+<div class="hint" id="hint">Træk for at se dig om · ← → skifter trin</div>
 
 <section class="card" id="card" aria-live="polite">
   <div class="meta"><span class="chip" id="chip">Kernen</span><span class="count" id="count">1 / 24</span></div>
@@ -169,72 +169,74 @@ const AREAS = {
   b:{name:"Programmering og modellering", color:"#4fd1c5"},
   c:{name:"Undersøgelse og stillingtagen", color:"#e8638c"}
 };
+/* vis = den scene, der vises på trinnet. focus = de lag i tårnet (område b), der fremhæves. */
 const STEPS = [
- {area:"hub", title:"Velkommen", hl:["core"],
+ {area:"hub", title:"Velkommen", vis:"welcome",
   text:"Teknologiforståelse bliver et nyt toårigt praktisk/musisk valgfag fra skoleåret 2027/28, i 7.-8. eller 8.-9. klasse. Det, du ser her, bygger på andet udkast til fagplanen fra juni 2026. Skolerne i udviklingsprogrammet afprøver udkastet i efteråret, og derefter justerer fagudvalget det."},
- {area:"hub", title:"Fagets formål", hl:["coreSphere"],
+ {area:"hub", title:"Fagets formål", vis:"purpose",
   text:"Faget skal give eleverne praktiske kundskaber og gøre dem i stand til at handle myndigt og engageret over for de digitale teknologier, de møder. Eleverne arbejder praktisk og kreativt med at udtrykke sig både med og om digitale teknologier, og de inddrages i valg af indhold, så undervisningen tager afsæt i deres egne erfaringer."},
- {area:"hub", title:"Grundantagelsen", hl:["coreSphere"],
+ {area:"hub", title:"Grundantagelsen", vis:"premise",
   text:"Digitale teknologier er ikke neutrale. De åbner nye måder at handle og udtrykke sig på, men de former også, hvordan mennesker tænker og handler. Hver teknologi er præget af en kultur og en historie, af bestemte intentioner og af et materielt grundlag."},
- {area:"hub", title:"Tre erkendeformer", hl:["orbits"],
+ {area:"hub", title:"Tre erkendeformer", vis:"forms",
   text:"Fagets karakter samles i tre måder at forstå på. Man forstår ved selv at skabe digitale teknologier: den ravgule form. Man forstår ved at omskabe eller modvirke det, andre har skabt: den rosa form. Og man forstår ved at nytænke og forestille sig alternativer: den turkise trådform. De kredser alle om den samme kerne."},
- {area:"hub", title:"Tre indholdsområder", hl:["beams"], beams:true,
+ {area:"hub", title:"Tre indholdsområder", vis:"areas", beams:true,
   text:"Andet udkast har tre indholdsområder: Digital kreativitet og design, Programmering og modellering samt Undersøgelse og stillingtagen. Råudkastet fra september 2025 havde fire. Digitale fænomener er ikke længere et område for sig. Nu er de det, eleverne undersøger i det tredje område. Lysstrålerne viser vej til de tre stationer."},
 
- {area:"a", title:"Digital kreativitet og design", hl:["stA"],
+ {area:"a", title:"Digital kreativitet og design", vis:"aIntro",
   text:"Her skaber eleverne digitale artefakter, produkter og kreative udtryk, der betyder noget for dem selv, for andre eller for verden. Teknologi ses her som noget, mennesker skaber ud fra egne intentioner."},
- {area:"a", title:"Kreative processer", hl:["spiral"],
+ {area:"a", title:"Kreative processer", vis:"aProcess",
   text:"Processerne spænder fra design, hvor man løser et problem eller udfylder et behov, til mere åbne tilgange, hvor man udforsker, eksperimenterer eller provokerer. Undervisningen omfatter designprocesser, innovation og entreprenørskab, undersøgelse af teknologiens materielle betingelser og æstetiske produkter, der siger noget om teknologiens rolle."},
- {area:"a", title:"Iteration", hl:["spiral"],
+ {area:"a", title:"Iteration", vis:"aIter",
   text:"Spiralen viser iteration. Hver afprøvning giver erfaringer, der former næste version. Prototypen bliver ikke kun mere færdig. Intentionen bliver også skarpere undervejs, fordi eleverne tilpasser den ud fra det, de opdager."},
- {area:"a", title:"Kreative metoder", hl:["spiral","stateCube"],
+ {area:"a", title:"Kreative metoder", vis:"aMethods",
   text:"Eleverne indrammer processen: hvilken kontekst artefaktet skal virke i, hvilke intentioner de arbejder ud fra, hvilke ressourcer der er, og hvordan de griber det an. De bruger kreativitetsmetoder som spekulation og benspænd, og de begrunder deres valg ud fra egne afprøvninger."},
- {area:"a", title:"Et digitalt benspænd", hl:["stateCube"],
+ {area:"a", title:"Et digitalt benspænd", vis:"aConstraint",
   text:"Ét benspænd hører særligt til det digitale materiale. Artefaktet skal kunne skifte mellem forskellige tilstande ud fra det input, det får fra omgivelserne. Prøv det selv: klik på terningen til højre, og se den skifte tilstand."},
- {area:"a", title:"Målet for området", hl:["stA"],
+ {area:"a", title:"Målet for området", vis:"aGoal",
   text:"Eleverne arbejder iterativt med at skabe digitale artefakter og andre kreative produkter. I arbejdet indgår afprøvninger, udvikling og tilpasning af intentioner, brug af kreative metoder og argumentation for egne valg."},
 
- {area:"b", title:"Programmering og modellering", hl:["dataFlow"],
+ {area:"b", title:"Programmering og modellering", vis:"bIntro",
   text:"Her opøver eleverne håndværket i selv at skabe digitale teknologier og får indsigt i teknologiens materielle grundlag. Området er bygget af tre konstruktive lag, der bygger videre på hinanden. Data og algoritmer går igen på alle tre lag. Se strømmen af data op gennem tårnet."},
- {area:"b", title:"Lag 1: Materielt grundlag", hl:["lag1"],
+ {area:"b", title:"Lag 1: Materielt grundlag", vis:"bLag1", focus:["lag1"],
   text:"Nederst ligger elektronikken. Eleverne afprøver programmerbar elektronik og bruger sensorer, der tager input fra brugere eller verden og giver output tilbage som signaler og symboler. De får praktiske erfaringer med, hvordan digitale data ser ud, hvordan de laves, og hvordan de gemmes."},
- {area:"b", title:"Lag 2: Programmering og computerforståelse", hl:["lag2"],
+ {area:"b", title:"Lag 2: Programmering og computerforståelse", vis:"bLag2", focus:["lag2"],
   text:"I midten arbejder eleverne med logikken bag teknologien: algoritmer, variable, kontrolstrukturer og simple datatyper som tal, tekst og sand eller falsk. De programmerer både analogt og i et udvalgt sprog. De øver fejlfinding af både logiske fejl og syntaksfejl, og fejl ses som naturlige og uundgåelige."},
- {area:"b", title:"Generativ AI som værktøj", hl:["aiSpark","lag2"],
+ {area:"b", title:"Generativ AI som værktøj", vis:"bAI", focus:["lag2"],
   text:"Nyt i udkastet: programmering med generativ kunstig intelligens som værktøj er en del af kernestoffet. Eleverne undersøger også, hvilken indsigt i programmeringsvalg og design man får, når man programmerer på den måde. Tag det med til prøveworkshoppen, for de nuværende praktisk-musiske prøver forbyder chatbots."},
- {area:"b", title:"Lag 3: Modellering", hl:["lag3"],
+ {area:"b", title:"Lag 3: Modellering", vis:"bLag3", focus:["lag3"],
   text:"Øverst beskriver eleverne de forhold i verden, som programmet håndterer. Programmer bygger altid på modeller, og modeller er aldrig neutrale. Eleverne tegner diagrammer, arbejder med datagørelse, altså forsimplinger af verden, og sammenligner deres modeller med verden for at finde perspektiver og bias."},
- {area:"b", title:"Målene for området", hl:["stB"],
+ {area:"b", title:"Målene for området", vis:"bGoal",
   text:"Området har to mål. Eleverne bruger programmering som sprog og værktøj til at skabe digitale artefakter, og de bruger programmeringsbegreberne, når de afprøver løsninger og diskuterer fejl. Og eleverne undersøger modellers perspektiver og bias ved at tegne diagrammer og afprøve samspillet mellem egne modeller og verden."},
 
- {area:"c", title:"Undersøgelse og stillingtagen", hl:["phone"],
+ {area:"c", title:"Undersøgelse og stillingtagen", vis:"cIntro",
   text:"Her undersøger eleverne samspillet mellem mennesker og digitale teknologier i form af digitale fænomener. Udgangspunktet er primært elevernes eget hverdagsliv, også fænomener med kunstig intelligens. De møder også fænomener uden for deres egen erfaringshorisont."},
- {area:"c", title:"Brug og brugskontekst", hl:["people"],
+ {area:"c", title:"Brug og brugskontekst", vis:"cUse",
   text:"Først de menneskelige sider. Eleverne kortlægger digitale fænomener i deres hverdag. De laver brugsstudier af afstanden mellem den brug, udviklerne havde tænkt sig, og den brug, der faktisk sker. Og de eksperimenterer med alternative teknologier og med ikke at bruge teknologien."},
- {area:"c", title:"Teknologiens rolle og intention", hl:["mech"], reveal:true,
+ {area:"c", title:"Teknologiens rolle og intention", vis:"cRole",
   text:"Så åbner eleverne teknologien. Hvordan er den bygget, og hvordan spiller data, algoritmer og brug sammen? De afmaskerer algoritmer og undersøger, om de er deterministiske, adaptive eller generative. De undersøger også datagørelse, og om der laves digitale dobbeltgængere af brugerne."},
- {area:"c", title:"Stillingtagen", hl:["scale"], reveal:true,
+ {area:"c", title:"Stillingtagen", vis:"cStance",
   text:"Til sidst kobles de praktiske undersøgelser til principielle diskussioner: aktuelle samfundsdebatter, teknologiforestillinger og historiske eksempler samt etiske og filosofiske spørgsmål. Stillingtagen opbygges gradvist, og den skal føre til nye handlinger og eksperimenter."},
- {area:"c", title:"Målene for området", hl:["stC"], reveal:true,
+ {area:"c", title:"Målene for området", vis:"cGoal",
   text:"Området har to mål. Eleverne undersøger digitale fænomener i deres eget hverdagsliv. Og de tager gradvist stilling til fænomenernes betydning for mennesker og verden, på baggrund af egne praktiske undersøgelser og perspektiver, der ligger uden for deres egne erfaringer."},
 
- {area:"hub", title:"Sammenhængen", hl:["beams","orbits"], beams:true,
+ {area:"hub", title:"Sammenhængen", vis:"together", beams:true,
   text:"De tre områder ser på det samme samspil mellem digitale teknologier, mennesker og verden, men fra hver sin vinkel. De supplerer hinanden. Et forløb kan have særligt fokus på ét område, men trækker ofte på de andre. I alt har faget kun fem mål."},
- {area:"hub", title:"Det, der mangler endnu", hl:["coreSphere"],
+ {area:"hub", title:"Det, der mangler endnu", vis:"missing",
   text:"Afsnittet om undervisning og evaluering er stadig en pladsholder i udkastet. Det afprøves først i dansk, matematik og historie. Prøven, som efter planen holdes første gang i 2028/29, udvikles altså til en fagplan, hvor evalueringsafsnittet endnu ikke er skrevet. Rundvisningen slutter her."}
 ];
 
 /* ---------- Placering ---------- */
 const POS = { hub:{x:0,z:0}, a:{x:-9,z:-5}, b:{x:0,z:-11}, c:{x:9,z:-5} };
+const VIEW_DIST = {hub:4.0, a:4.0, b:4.6, c:4.0};   // afstand fra beskueren til midten af hver station
 const yawTo = (from,to)=> Math.atan2(from.x-to.x, from.z-to.z)*180/Math.PI;
 function viewpoint(area){
-  if(area==="hub") return {x:0,z:5.5,yaw:0};
-  const t=POS[area], d=Math.hypot(t.x,t.z), k=5.2/d;
+  if(area==="hub") return {x:0,z:VIEW_DIST.hub,yaw:0};
+  const t=POS[area], d=Math.hypot(t.x,t.z), k=VIEW_DIST[area]/d;
   const r={x:t.x - t.x*k, z:t.z - t.z*k};
   return {x:r.x, z:r.z, yaw:yawTo(r,t)};
 }
 
-/* ---------- Tekst på lærred (håndterer æ, ø og å) ---------- */
+/* ---------- Tekst og billeder på lærred (håndterer æ, ø og å) ---------- */
 function wrap(ctx,text,maxW){
   const words=text.split(/\s+/), lines=[]; let line="";
   for(const w of words){ const t=line?line+" "+w:w; if(ctx.measureText(t).width>maxW && line){lines.push(line);line=w;} else line=t; }
@@ -275,6 +277,35 @@ function panelTex(step,i){
     wrap(ctx,step.text,w-128).forEach((l,k)=>ctx.fillText(l,64,y+k*56));
   });
 }
+function glowTex(c){
+  return canvasTexture(256,256,(ctx,w,h)=>{
+    const g=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2);
+    g.addColorStop(0,c+"aa"); g.addColorStop(0.55,c+"33"); g.addColorStop(1,c+"00");
+    ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+  });
+}
+function appTex(){ // skærm med app-felter
+  return canvasTexture(400,800,(c,w,h)=>{
+    c.fillStyle="#1b2142";c.fillRect(0,0,w,h);
+    const cols=["#e8638c","#f2a541","#4fd1c5","#7aa2ff"];
+    for(let i=0;i<5;i++){c.fillStyle="#262e58";roundRect(c,24,40+i*150,w-48,130,18);c.fill();
+      c.fillStyle=cols[i%4];roundRect(c,40,56+i*150,90,98,12);c.fill();
+      c.fillStyle="#a9b0d6";c.fillRect(150,70+i*150,180,16);c.fillRect(150,104+i*150,130,12);}
+  });
+}
+function mapTex(){ // kort over et hverdagsområde
+  return canvasTexture(1024,640,(c,w,h)=>{
+    c.fillStyle="#1a2244";c.fillRect(0,0,w,h);
+    c.fillStyle="#24563a";roundRect(c,640,40,300,200,24);c.fill();
+    c.fillStyle="#2a3463";
+    for(let x=0;x<5;x++)for(let y=0;y<3;y++){roundRect(c,30+x*200,330+y*100,150,66,10);c.fill();}
+    c.fillStyle="#2a3463";roundRect(c,40,40,240,200,14);c.fill();roundRect(c,330,40,200,90,14);c.fill();
+    c.strokeStyle="#47518a";c.lineWidth=20;c.lineCap="round";c.beginPath();
+    c.moveTo(0,290);c.lineTo(w,290);c.moveTo(585,0);c.lineTo(585,h);c.moveTo(300,170);c.lineTo(585,170);c.stroke();
+    c.strokeStyle="#2f6fa8";c.lineWidth=26;c.beginPath();c.moveTo(0,610);c.bezierCurveTo(300,560,700,640,w,590);c.stroke();
+  });
+}
+let APP_TEX, MAP_TEX;
 
 /* ---------- Byggeklodser ---------- */
 const world=document.getElementById("world");
@@ -283,209 +314,620 @@ function el(tag,attrs={},parent=world){
   for(const[k,v] of Object.entries(attrs)) e.setAttribute(k,v);
   parent.appendChild(e); return e;
 }
-const mat=(c,extra="")=>`color: ${c}; roughness: 0.6; metalness: 0.1; ${extra}`;
-const glow=(c,i=0.6)=>`color: ${c}; emissive: ${c}; emissiveIntensity: ${i}; roughness: 0.4`;
-function label(parent,text,color,pos,w=2.4,opts={}){
-  const h=w*(opts.h||200)/(opts.w||1024);
-  const p=el("a-plane",{position:pos,width:w,height:h,material:"shader: flat; transparent: true; side: double"},parent);
-  applyTexture(p,labelTex(text,color,opts)); return p;
+const mat=(c,extra="")=>`color: ${c}; roughness: 0.65; metalness: 0.1; flatShading: true; ${extra}`;
+const glow=(c,i=0.6)=>`color: ${c}; emissive: ${c}; emissiveIntensity: ${i}; roughness: 0.4; flatShading: true`;
+const flat=(c,extra="")=>`shader: flat; color: ${c}; ${extra}`;
+const glass=(c="#bfe7ff",o=0.3)=>`color: ${c}; opacity: ${o}; transparent: true; roughness: 0.1; depthWrite: false`;
+const sc=s=>`${s} ${s} ${s}`;
+const grp=(p,pos="0 0 0",extra={})=>el("a-entity",{position:pos,...extra},p);
+const box=(p,pos,w,h,d,m,extra={})=>el("a-box",{position:pos,width:w,height:h,depth:d,material:m,...extra},p);
+const cyl=(p,pos,r,h,m,extra={})=>el("a-cylinder",{position:pos,radius:r,height:h,material:m,"segments-radial":12,...extra},p);
+const sph=(p,pos,r,m,extra={})=>el("a-sphere",{position:pos,radius:r,material:m,"segments-width":12,"segments-height":8,...extra},p);
+const cone=(p,pos,rb,rt,h,m,extra={})=>el("a-cone",{position:pos,"radius-bottom":rb,"radius-top":rt,height:h,material:m,"segments-radial":12,...extra},p);
+const spin=(dur,to="0 360 0")=>`property: rotation; to: ${to}; loop: true; dur: ${dur}; easing: linear`;
+function bobAnim(pos,amp=0.06,dur=2200){
+  const [x,y,z]=pos.split(" ").map(Number);
+  return `property: position; from: ${x} ${y} ${z}; to: ${x} ${y+amp} ${z}; dir: alternate; loop: true; dur: ${dur}; easing: easeInOutSine`;
 }
-function bar(parent,a,b,thick,color,z=0){ // linje i xy-planet
-  const dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy);
-  return el("a-box",{position:`${(a.x+b.x)/2} ${(a.y+b.y)/2} ${z}`,width:len,height:thick,depth:thick,
-    rotation:`0 0 ${Math.atan2(dy,dx)*180/Math.PI}`,material:mat(color)},parent);
+function moveAnim(from,to,dur,extra=""){ return `property: position; from: ${from}; to: ${to}; loop: true; dur: ${dur}; easing: linear; ${extra}`; }
+const pulse=(dur=600,delay=0,lo=0.6,hi=1.5)=>`property: scale; from: ${sc(lo)}; to: ${sc(hi)}; dir: alternate; loop: true; dur: ${dur}; delay: ${delay}; easing: easeInOutSine`;
+function link(p,a,b,r,m){ // tynd stang mellem to punkter
+  const A=new THREE.Vector3(...a), B=new THREE.Vector3(...b), d=B.clone().sub(A), len=d.length();
+  const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize());
+  const e=new THREE.Euler().setFromQuaternion(q,"YXZ"), R=180/Math.PI, m2=A.add(B).multiplyScalar(0.5);
+  return el("a-cylinder",{position:`${m2.x} ${m2.y} ${m2.z}`,radius:r,height:len,"segments-radial":6,"open-ended":true,
+    rotation:`${e.x*R} ${e.y*R} ${e.z*R}`,material:m},p);
+}
+function coneBetween(p,base,tip,rb,m){ // lyskegle fra base til spids
+  const A=new THREE.Vector3(...base), B=new THREE.Vector3(...tip), d=B.clone().sub(A), len=d.length();
+  const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize());
+  const e=new THREE.Euler().setFromQuaternion(q,"YXZ"), R=180/Math.PI, m2=A.add(B).multiplyScalar(0.5);
+  return el("a-cone",{position:`${m2.x} ${m2.y} ${m2.z}`,"radius-bottom":rb,"radius-top":0.01,height:len,"segments-radial":16,"open-ended":true,
+    rotation:`${e.x*R} ${e.y*R} ${e.z*R}`,material:m},p);
+}
+function dots(p,a,b,lift,n,c){ // prikket bue, der pulserer fra a mod b
+  for(let i=1;i<n;i++){
+    const t=i/n, x=a[0]+(b[0]-a[0])*t, y=a[1]+(b[1]-a[1])*t+Math.sin(t*Math.PI)*lift, z=a[2]+(b[2]-a[2])*t;
+    sph(p,`${x} ${y} ${z}`,0.03,flat(c),{"segments-width":6,"segments-height":4,animation:pulse(500,i*110,0.6,1.7)});
+  }
 }
 
-/* Gulv med gitter */
-const floor=el("a-plane",{rotation:"-90 0 0",width:60,height:60,material:"shader: flat; color: #ffffff; repeat: 30 30"});
-applyTexture(floor,(()=>{const t=canvasTexture(128,128,(c,w,h)=>{c.fillStyle="#0e1428";c.fillRect(0,0,w,h);c.strokeStyle="#1f2850";c.lineWidth=2;c.strokeRect(0,0,w,h);}); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(30,30); return t;})());
+/* ---------- 2D-former, der ekstruderes til 3D-ikoner ---------- */
+function poly(pts){const s=new THREE.Shape();pts.forEach(([x,y],i)=>i?s.lineTo(x,y):s.moveTo(x,y));s.closePath();return s;}
+const SHAPES={
+  heart(){const s=new THREE.Shape();s.moveTo(0,0.25);s.bezierCurveTo(0,0.4,-0.15,0.5,-0.3,0.5);s.bezierCurveTo(-0.5,0.5,-0.55,0.3,-0.55,0.2);
+    s.bezierCurveTo(-0.55,0,-0.35,-0.2,0,-0.45);s.bezierCurveTo(0.35,-0.2,0.55,0,0.55,0.2);s.bezierCurveTo(0.55,0.3,0.5,0.5,0.3,0.5);
+    s.bezierCurveTo(0.15,0.5,0,0.4,0,0.25);return s;},
+  star(){const pts=[];for(let i=0;i<10;i++){const a=Math.PI/2+i*Math.PI/5,r=i%2?0.21:0.5;pts.push([Math.cos(a)*r,Math.sin(a)*r]);}return poly(pts);},
+  check:()=>poly([[-0.5,0.02],[-0.32,0.2],[-0.12,0],[0.32,0.46],[0.5,0.28],[-0.12,-0.36]]),
+  arrow:()=>poly([[-0.5,-0.1],[0.08,-0.1],[0.08,-0.3],[0.5,0],[0.08,0.3],[0.08,0.1],[-0.5,0.1]]),
+  bolt:()=>poly([[0.12,0.5],[-0.3,-0.05],[-0.02,-0.05],[-0.14,-0.5],[0.3,0.08],[0.02,0.08]]),
+  chevL:()=>poly([[0.15,0.5],[-0.35,0],[0.15,-0.5],[0.33,-0.36],[-0.04,0],[0.33,0.36]]),
+  chevR:()=>poly([[-0.15,0.5],[0.35,0],[-0.15,-0.5],[-0.33,-0.36],[0.04,0],[-0.33,0.36]]),
+  slash:()=>poly([[0.1,0.5],[0.27,0.5],[-0.1,-0.5],[-0.27,-0.5]]),
+  bubble(){const s=new THREE.Shape(),r=0.12,x0=-0.5,x1=0.5,y0=-0.25,y1=0.35;
+    s.moveTo(x0+r,y0);s.lineTo(-0.25,y0);s.lineTo(-0.38,-0.45);s.lineTo(-0.05,y0);s.lineTo(x1-r,y0);s.quadraticCurveTo(x1,y0,x1,y0+r);
+    s.lineTo(x1,y1-r);s.quadraticCurveTo(x1,y1,x1-r,y1);s.lineTo(x0+r,y1);s.quadraticCurveTo(x0,y1,x0,y1-r);s.lineTo(x0,y0+r);s.quadraticCurveTo(x0,y0,x0+r,y0);return s;},
+  puzzle(){const s=new THREE.Shape();s.moveTo(-0.4,-0.4);s.lineTo(0.4,-0.4);s.lineTo(0.4,-0.12);s.bezierCurveTo(0.68,-0.28,0.68,0.28,0.4,0.12);
+    s.lineTo(0.4,0.4);s.lineTo(0.12,0.4);s.bezierCurveTo(0.28,0.68,-0.28,0.68,-0.12,0.4);s.lineTo(-0.4,0.4);s.closePath();return s;},
+  gear(){const s=new THREE.Shape(),n=10;for(let i=0;i<n*4;i++){const a=i/(n*4)*Math.PI*2,r=(i%4<2)?0.5:0.38,x=Math.cos(a)*r,y=Math.sin(a)*r;i?s.lineTo(x,y):s.moveTo(x,y);}
+    s.closePath();const h=new THREE.Path();h.absarc(0,0,0.13,0,Math.PI*2,true);s.holes.push(h);return s;}
+};
+AFRAME.registerComponent("shape2d",{
+  schema:{kind:{default:"star"},color:{type:"color",default:"#ffffff"},depth:{default:0.15},emissive:{default:0.25}},
+  init(){
+    const d=this.data, geo=new THREE.ExtrudeGeometry(SHAPES[d.kind](),{depth:d.depth,bevelEnabled:true,bevelThickness:0.03,bevelSize:0.025,bevelSegments:1,curveSegments:8});
+    geo.center();
+    const m=new THREE.MeshStandardMaterial({color:d.color,emissive:d.color,emissiveIntensity:d.emissive,roughness:0.5,metalness:0.05,flatShading:true});
+    this.el.setObject3D("mesh",new THREE.Mesh(geo,m));
+  },
+  remove(){ this.el.removeObject3D("mesh"); }
+});
+const shp=(p,kind,pos,s,c,a={},depth=0.15,em=0.25)=>el("a-entity",{position:pos,scale:sc(s),shape2d:`kind: ${kind}; color: ${c}; depth: ${depth}; emissive: ${em}`,...a},p);
 
-/* ---------- Kernen ---------- */
-function buildCore(){
-  const g=el("a-entity",{id:"core",position:"0 0 0"});
-  el("a-cylinder",{radius:1.4,height:0.3,position:"0 0.15 0",material:mat("#1b2240")},g);
-  el("a-ring",{"radius-inner":1.5,"radius-outer":1.58,rotation:"-90 0 0",position:"0 0.02 0",material:"shader: flat; color: #c9d1ff; opacity: 0.6; transparent: true"},g);
-  el("a-sphere",{id:"coreSphere",radius:0.45,position:"0 1.7 0",material:glow("#c9d1ff",0.9),
-    animation:"property: scale; from: 1 1 1; to: 1.12 1.12 1.12; dir: alternate; loop: true; dur: 1800; easing: easeInOutSine"},g);
-  const orb=el("a-entity",{id:"orbits",position:"0 1.7 0",animation:"property: rotation; to: 0 360 0; loop: true; dur: 22000; easing: linear"},g);
-  el("a-icosahedron",{radius:0.3,position:"1.5 0 0",material:glow("#f2a541",0.4)+"; flatShading: true",
-    animation:"property: rotation; to: 360 360 0; loop: true; dur: 9000; easing: linear"},orb);
-  el("a-octahedron",{radius:0.32,position:"-0.75 0.2 1.3",material:glow("#e8638c",0.4)+"; flatShading: true",
-    animation:"property: rotation; to: -360 0 360; loop: true; dur: 7000; easing: linear"},orb);
-  el("a-dodecahedron",{radius:0.32,position:"-0.75 -0.15 -1.3",material:"color: #4fd1c5; wireframe: true; emissive: #4fd1c5; emissiveIntensity: 0.8",
-    animation:"property: rotation; to: 0 -360 360; loop: true; dur: 11000; easing: linear"},orb);
-  label(g,"Teknologiforståelse",AREAS.hub.color,"0 3.1 0",2.6);
-  // Lysstråler til stationerne
-  const beams=el("a-entity",{id:"beams",visible:"false"});
-  ["a","b","c"].forEach(k=>{
-    const t=POS[k], len=Math.hypot(t.x,t.z)-2.4;
-    const yaw=Math.atan2(t.x,t.z)*180/Math.PI;
-    const holder=el("a-entity",{rotation:`0 ${yaw} 0`},beams);
-    el("a-box",{position:`0 0.06 ${1.5+len/2}`,width:0.12,height:0.04,depth:len,
-      material:`shader: flat; color: ${AREAS[k].color}; opacity: 0.85; transparent: true`,
-      animation:"property: material.opacity; from: 0.35; to: 0.95; dir: alternate; loop: true; dur: 1200"},holder);
+/* ---------- 3D-ikoner ---------- */
+const A_COL="#f2a541", B_COL="#4fd1c5", C_COL="#e8638c", CORE="#c9d1ff";
+const SKIN=["#e9c9a8","#c8a27c","#8f6a4f","#d4b593","#a3876f","#f0d5b8"];
+const ICON={
+  person(p,pos,c="#7aa2ff",s=1,skin=SKIN[0],a={}){const g=grp(p,pos,{scale:sc(s),...a});cone(g,"0 0.3 0",0.17,0.09,0.6,mat(c));sph(g,"0 0.74 0",0.13,mat(skin));return g;},
+  personWire(p,pos,c=B_COL,s=1,a={}){const g=grp(p,pos,{scale:sc(s),...a});const m=`color: ${c}; wireframe: true; emissive: ${c}; emissiveIntensity: 0.9`;
+    cone(g,"0 0.3 0",0.17,0.09,0.6,m,{"segments-radial":8});sph(g,"0 0.74 0",0.13,m,{"segments-width":8,"segments-height":6});return g;},
+  people(p,pos,s=1,a={}){const g=grp(p,pos,{scale:sc(s),...a});ICON.person(g,"-0.3 0 0.05",C_COL,0.85,SKIN[1]);ICON.person(g,"0.3 0 0.05",A_COL,0.85,SKIN[2]);ICON.person(g,"0 0 -0.12",B_COL,1,SKIN[0]);return g;},
+  heart:(p,pos,s=0.5,c=C_COL,a={})=>shp(p,"heart",pos,s,c,a,0.25,0.35),
+  star:(p,pos,s=0.4,c="#f7d154",a={})=>shp(p,"star",pos,s,c,a,0.15,0.5),
+  check:(p,pos,s=0.6,c=B_COL,a={})=>shp(p,"check",pos,s,c,a,0.18,0.45),
+  arrow:(p,pos,s=0.5,c=CORE,a={})=>shp(p,"arrow",pos,s,c,a,0.1,0.4),
+  gear:(p,pos,s=0.5,c=CORE,a={})=>shp(p,"gear",pos,s,c,a,0.15,0.2),
+  globe(p,pos,s=0.5,a={}){const g=grp(p,pos,{scale:sc(s),animation:spin(14000),...a});
+    sph(g,"0 0 0",0.5,mat("#3d7bd9"),{"segments-width":16,"segments-height":10});
+    [[0.3,0.25,0.3],[-0.35,-0.1,0.28],[0.05,-0.3,-0.4],[-0.2,0.3,-0.35],[0.42,-0.12,-0.15],[0.1,0.45,0.05]].forEach(([x,y,z])=>{
+      const v=new THREE.Vector3(x,y,z).normalize().multiplyScalar(0.46);
+      el("a-dodecahedron",{radius:0.17,position:`${v.x} ${v.y} ${v.z}`,material:mat("#5cc46a")},g);});
+    return g;},
+  house(p,pos,s=1,c="#dfe3fb",roof=C_COL){const g=grp(p,pos,{scale:sc(s)});box(g,"0 0.22 0",0.6,0.44,0.5,mat(c));
+    cone(g,"0 0.6 0",0.48,0.01,0.32,mat(roof),{"segments-radial":4,rotation:"0 45 0"});box(g,"0 0.13 0.252",0.14,0.26,0.01,mat("#3a2a4a"));return g;},
+  tree(p,pos,s=1){const g=grp(p,pos,{scale:sc(s)});cyl(g,"0 0.15 0",0.05,0.3,mat("#7a5236"),{"segments-radial":6});
+    cone(g,"0 0.55 0",0.26,0.01,0.55,mat("#4caf6a"),{"segments-radial":7});return g;},
+  hourglass(p,pos,s=1,a={}){const g=grp(p,pos,{scale:sc(s),...a});const metal=mat("#a9b0d6","metalness: 0.5");
+    cyl(g,"0 0.02 0",0.22,0.04,metal);cyl(g,"0 0.64 0",0.22,0.04,metal);
+    cone(g,"0 0.18 0",0.17,0.02,0.28,glass());cone(g,"0 0.47 0",0.02,0.17,0.28,glass());
+    cone(g,"0 0.1 0",0.14,0.03,0.12,glow(A_COL,0.4));cone(g,"0 0.42 0",0.02,0.09,0.1,glow(A_COL,0.4));
+    [0,120,240].forEach(d=>cyl(g,`${Math.cos(d*Math.PI/180)*0.19} 0.33 ${Math.sin(d*Math.PI/180)*0.19}`,0.012,0.6,metal,{"segments-radial":5}));return g;},
+  target(p,pos,s=1,a={}){const g=grp(p,pos,{scale:sc(s),...a});
+    [[0.5,C_COL],[0.37,"#eef1ff"],[0.24,C_COL],[0.11,A_COL]].forEach(([rr,c],i)=>cyl(g,`0 0 ${i*0.012}`,rr,0.04,mat(c),{rotation:"90 0 0","segments-radial":20}));
+    const ar=grp(g,"0 0 0.3");cyl(ar,"0 0 0",0.02,0.6,mat(CORE),{rotation:"90 0 0","segments-radial":5});
+    [0,120,240].forEach(d=>box(ar,"0 0 0.25",0.005,0.1,0.12,mat(B_COL),{rotation:`0 0 ${d}`}));return g;},
+  magnifier(p,pos,s=1,c=C_COL,a={}){const g=grp(p,pos,{scale:sc(s),...a});
+    el("a-torus",{radius:0.34,"radius-tubular":0.055,"segments-radial":8,"segments-tubular":28,material:glow(c,0.45)},g);
+    el("a-circle",{radius:0.32,segments:24,material:glass("#bfe7ff",0.22)+"; side: double"},g);
+    cyl(g,"0.44 -0.44 0",0.06,0.5,mat("#2a3358"),{rotation:"0 0 45","segments-radial":8});return g;},
+  pencil(p,pos,s=1,a={}){const g=grp(p,pos,{scale:sc(s),...a});cyl(g,"0 0 0",0.07,0.7,mat(A_COL),{"segments-radial":6});
+    cone(g,"0 0.43 0",0.07,0.005,0.16,mat("#f1d3a3"),{"segments-radial":6});cone(g,"0 0.495 0",0.022,0.003,0.04,mat("#2a2f45"),{"segments-radial":6});
+    cyl(g,"0 -0.39 0",0.072,0.08,mat(CORE,"metalness: 0.6"),{"segments-radial":6});cyl(g,"0 -0.47 0",0.068,0.09,mat(C_COL),{"segments-radial":6});return g;},
+  phone(p,pos,s=1,a={}){const g=grp(p,pos,{scale:sc(s),...a});box(g,"0 0 0",0.52,1,0.06,mat("#0d1020","metalness: 0.5"));
+    const scr=el("a-plane",{position:"0 0 0.031",width:0.46,height:0.92,material:"shader: flat; transparent: true"},g);applyTexture(scr,APP_TEX);return g;},
+  bubble(p,pos,s=0.6,c="#eef1ff",a={}){const g=grp(p,pos,{scale:sc(s),...a});shp(g,"bubble","0 0 0",1,c,{},0.12,0.15);
+    [-0.22,0,0.22].forEach((x,i)=>sph(g,`${x} 0.1 0.1`,0.06,mat("#1b2142"),{animation:`property: position; from: ${x} 0.1 0.1; to: ${x} 0.17 0.1; dir: alternate; loop: true; dur: 500; delay: ${i*160}; easing: easeInOutSine`}));return g;},
+  chip(p,pos,s=1,a={}){const g=grp(p,pos,{scale:sc(s),...a});box(g,"0 0 0",0.6,0.08,0.6,mat("#1d2233"));box(g,"0 0.05 0",0.3,0.03,0.3,mat("#a9b0d6","metalness: 0.7"));
+    for(let i=0;i<4;i++){const o=-0.21+i*0.14;[[o,0.34,0],[o,-0.34,0],[0.34,o,90],[-0.34,o,90]].forEach(([x,z,r])=>box(g,`${x} 0 ${z}`,0.05,0.03,0.12,mat(CORE,"metalness: 0.7"),{rotation:`0 ${r} 0`}));}return g;},
+  sun(p,pos,s=1,a={}){const g=grp(p,pos,{scale:sc(s),...a});sph(g,"0 0 0",0.24,glow("#ffd166",1.0));
+    const rays=grp(g,"0 0 0",{animation:spin(12000,"0 0 360")});
+    for(let i=0;i<8;i++){const an=i*45*Math.PI/180;cone(rays,`${Math.cos(an)*0.38} ${Math.sin(an)*0.38} 0`,0.05,0.005,0.14,glow("#ffd166",0.8),{rotation:`0 0 ${i*45-90}`,"segments-radial":4});}return g;},
+  bug(p,pos,s=1,a={}){const g=grp(p,pos,{scale:sc(s),...a});sph(g,"0 0.08 0",0.12,glow("#ff4d4d",0.3),{scale:"0.8 0.6 1.1"});sph(g,"0 0.08 0.14",0.06,mat("#1a1a24"));
+    box(g,"0 0.15 0",0.01,0.005,0.24,mat("#1a1a24"));
+    [-0.06,0,0.06].forEach(z=>[-1,1].forEach(sd=>cyl(g,`${sd*0.11} 0.04 ${z}`,0.008,0.14,mat("#1a1a24"),{rotation:`0 0 ${sd*60}`,"segments-radial":4})));
+    [-1,1].forEach(sd=>cyl(g,`${sd*0.03} 0.13 0.22`,0.005,0.1,mat("#1a1a24"),{rotation:`50 0 ${sd*-20}`,"segments-radial":4}));return g;},
+  robot(p,pos,v=4,s=1,a={}){const g=grp(p,pos,{scale:sc(s),...a});
+    if(v===1){el("a-dodecahedron",{radius:0.2,position:"0 0.2 0",material:mat("#6b7299")},g);return g;}
+    const body=v>=4?"#eef1ff":v===3?A_COL:"#8a90b5";
+    box(g,"0 0.16 0",0.36,0.3,0.28,mat(body));box(g,"0 0.45 0",0.26,0.24,0.24,mat(v>=4?A_COL:body),{rotation:v===2?"0 0 8":"0 0 0"});
+    if(v>=3) [-0.06,0.06].forEach(x=>sph(g,`${x} 0.47 0.122`,0.035,glow(B_COL,0.9)));
+    if(v>=4){cyl(g,"0 0.64 0",0.01,0.14,mat(CORE));sph(g,"0 0.72 0",0.035,glow("#ff4d4d",1),{animation:"property: material.emissiveIntensity; from: 0.3; to: 1.4; dir: alternate; loop: true; dur: 700"});
+      [-1,1].forEach(sd=>cyl(g,`${sd*0.22} 0.18 0.04`,0.03,0.22,mat(CORE),{rotation:`20 0 ${sd*-15}`,"segments-radial":6}));box(g,"0 0.18 0.142",0.16,0.08,0.01,glow(B_COL,0.5));}
+    return g;},
+  toolbox(p,pos,s=1){const g=grp(p,pos,{scale:sc(s)});box(g,"0 0.15 0",0.6,0.3,0.3,mat("#d9534f"));box(g,"0 0.31 0",0.62,0.03,0.32,mat("#b84440"));
+    el("a-torus",{position:"0 0.33 0",radius:0.12,"radius-tubular":0.02,arc:180,"segments-tubular":12,"segments-radial":6,material:mat("#2a3358")},g);
+    box(g,"0 0.17 0.152",0.1,0.06,0.01,mat(CORE,"metalness: 0.6"));return g;},
+  crystal(p,pos,s=1){const g=grp(p,pos,{scale:sc(s)});cyl(g,"0 0.08 0",0.2,0.16,mat("#3b2f4a"),{"segments-radial":8});
+    sph(g,"0 0.42 0",0.25,glass("#b9a2ff",0.35),{"segments-width":16,"segments-height":12});
+    el("a-octahedron",{position:"0 0.42 0",radius:0.1,material:glow("#e8b4ff",0.9),animation:spin(3000,"360 360 0")},g);return g;},
+  hurdle(p,pos,s=1){const g=grp(p,pos,{scale:sc(s)});[-0.45,0.45].forEach(x=>{cyl(g,`${x} 0.3 0`,0.03,0.6,mat("#a9b0d6"),{"segments-radial":6});box(g,`${x} 0.02 0`,0.06,0.04,0.3,mat("#a9b0d6"));});
+    for(let i=0;i<5;i++)box(g,`${-0.36+i*0.18} 0.5 0`,0.18,0.1,0.04,mat(i%2?"#eef1ff":A_COL));return g;},
+  book(p,pos,s=1,c=C_COL,a={}){const g=grp(p,pos,{scale:sc(s),...a});
+    box(g,"-0.17 0.02 0",0.34,0.03,0.46,mat(c),{rotation:"0 0 8"});box(g,"0.17 0.02 0",0.34,0.03,0.46,mat(c),{rotation:"0 0 -8"});
+    box(g,"-0.16 0.05 0",0.3,0.03,0.42,mat("#eef1ff"),{rotation:"0 0 8"});box(g,"0.16 0.05 0",0.3,0.03,0.42,mat("#eef1ff"),{rotation:"0 0 -8"});return g;},
+  ruler(p,pos,s=1,a={}){const g=grp(p,pos,{scale:sc(s),...a});box(g,"0 0 0",0.7,0.12,0.03,mat(A_COL));
+    for(let i=0;i<8;i++)box(g,`${-0.31+i*0.088} ${i%2?0.035:0.025} 0.017`,0.012,i%2?0.05:0.07,0.005,mat("#1b2142"));return g;},
+  doc(p,pos,s=1,lines=7,a={}){const g=grp(p,pos,{scale:sc(s),...a});box(g,"0 0 0",0.7,0.95,0.03,mat("#eef1ff"));
+    for(let i=0;i<lines;i++){const w=i===0?0.36:(i%3===2?0.38:0.56);box(g,`${-0.28+w/2} ${0.36-i*0.11} 0.017`,w,i===0?0.05:0.03,0.005,mat(i===0?"#2a3358":"#8a90b5"));}return g;},
+  clipboard(p,pos,s=1,a={}){const g=grp(p,pos,{scale:sc(s),...a});box(g,"0 0 0",0.5,0.7,0.03,mat("#8a5a3c"));box(g,"0 -0.03 0.018",0.42,0.58,0.005,mat("#eef1ff"));
+    box(g,"0 0.34 0.03",0.18,0.08,0.04,mat("#a9b0d6","metalness: 0.6"));
+    for(let i=0;i<3;i++){const y=0.14-i*0.15;box(g,`-0.13 ${y} 0.024`,0.07,0.07,0.006,mat("#2a3358"));box(g,`-0.13 ${y} 0.026`,0.05,0.05,0.006,mat("#eef1ff"));box(g,`0.06 ${y} 0.024`,0.22,0.025,0.005,mat("#8a90b5"));}return g;},
+  bulb(p,pos,s=1,c=B_COL,wire=true,a={}){const g=grp(p,pos,{scale:sc(s),...a});const m=wire?`color: ${c}; wireframe: true; emissive: ${c}; emissiveIntensity: 0.9`:glow(c,0.8);
+    el("a-icosahedron",{radius:0.25,detail:1,position:"0 0.08 0",material:m},g);cyl(g,"0 -0.22 0",0.1,0.16,wire?m:mat("#a9b0d6","metalness: 0.6"),{"segments-radial":8});
+    if(wire) cyl(g,"0 -0.06 0",0.012,0.18,m,{"segments-radial":4});return g;},
+  cloud(p,pos,s=1,c=CORE,a={}){const g=grp(p,pos,{scale:sc(s),...a});
+    [[-0.3,0,0.22],[0,0.1,0.3],[0.3,0,0.22],[0.12,-0.08,0.2],[-0.12,-0.08,0.2]].forEach(([x,y,r])=>sph(g,`${x} ${y} 0`,r,mat(c),{scale:"1 1 0.55"}));return g;},
+  loop(p,pos,s=0.5,c=B_COL,a={}){const g=grp(p,pos,{scale:sc(s),...a});
+    el("a-torus",{radius:0.4,"radius-tubular":0.06,arc:280,"segments-radial":6,"segments-tubular":20,material:glow(c,0.4)},g);
+    const an=280*Math.PI/180;cone(g,`${Math.cos(an)*0.4} ${Math.sin(an)*0.4} 0`,0.14,0.005,0.24,glow(c,0.4),{rotation:"0 0 280","segments-radial":6});return g;},
+  note(p,pos,s=0.4,c=A_COL,a={}){const g=grp(p,pos,{scale:sc(s),...a});sph(g,"-0.1 -0.3 0",0.16,glow(c,0.4),{scale:"1.2 0.85 0.6"});
+    box(g,"0.07 0.05 0",0.05,0.7,0.05,glow(c,0.4));box(g,"0.18 0.36 0",0.22,0.07,0.05,glow(c,0.4),{rotation:"0 0 -25"});return g;},
+  pedestal(p,pos,h=0.6,c="#1d2546",ring=null){const g=grp(p,pos);cyl(g,`0 ${h/2} 0`,0.3,h,mat(c),{"segments-radial":16});
+    if(ring) el("a-torus",{position:`0 ${h} 0`,rotation:"90 0 0",radius:0.3,"radius-tubular":0.015,"segments-radial":4,"segments-tubular":24,material:flat(ring)},g);return g;}
+};
+function buildScale(p,pos,s=1){ // vægt, der vejer for og imod
+  const g=grp(p,pos,{scale:sc(s)}), metal=mat("#a9b0d6","metalness: 0.6");
+  cyl(g,"0 0.03 0",0.35,0.06,mat("#2a3358"),{"segments-radial":16});cyl(g,"0 0.8 0",0.045,1.55,metal,{"segments-radial":8});sph(g,"0 1.6 0",0.07,glow(C_COL,0.5));
+  const beam=grp(g,"0 1.55 0",{animation:"property: rotation; from: 0 0 -9; to: 0 0 9; dir: alternate; loop: true; dur: 2800; easing: easeInOutSine"});
+  box(beam,"0 0 0",1.8,0.05,0.05,metal);
+  const pans=[-0.85,0.85].map(x=>{link(beam,[x,0,0],[x-0.24,-0.45,0],0.006,metal);link(beam,[x,0,0],[x+0.24,-0.45,0],0.006,metal);
+    cyl(beam,`${x} -0.47 0`,0.3,0.04,mat(C_COL),{"segments-radial":16});return grp(beam,`${x} -0.45 0`);});
+  return {g,left:pans[0],right:pans[1]};
+}
+
+/* ---------- Stationer: platform og et svævende ikon, man kan klikke på ---------- */
+const EMBLEM={
+  hub(p,pos){const g=grp(p,pos);sph(g,"0 0 0",0.3,glow(CORE,0.9),{animation:pulse(1800,0,1,1.12)});
+    const o=grp(g,"0 0 0",{animation:spin(9000)});[[A_COL,0],[C_COL,120],[B_COL,240]].forEach(([c,d])=>sph(o,`${Math.cos(d*Math.PI/180)*0.6} 0 ${Math.sin(d*Math.PI/180)*0.6}`,0.09,glow(c,0.6)));return g;},
+  a(p,pos,s=1){const g=grp(p,pos,{scale:sc(s),animation:spin(10000)});ICON.pencil(g,"0 0 0",0.9,{rotation:"0 0 -40"});ICON.star(g,"0.42 0.45 0",0.32);return g;},
+  b(p,pos,s=1){const g=grp(p,pos,{scale:sc(s),animation:spin(10000)});
+    shp(g,"chevL","-0.45 0 0",0.6,B_COL,{},0.15,0.45);shp(g,"slash","0 0 0",0.6,B_COL,{},0.15,0.45);shp(g,"chevR","0.45 0 0",0.6,B_COL,{},0.15,0.45);return g;},
+  c(p,pos,s=1){const g=grp(p,pos,{scale:sc(s),animation:spin(10000)});ICON.magnifier(g,"0 0 0",1);return g;}
+};
+const STATION={};
+function stationBase(id,area,beaconY=3.7){
+  const p=POS[area], c=AREAS[area].color;
+  const g=el("a-entity",{id,position:`${p.x} 0 ${p.z}`,rotation:`0 ${yawTo({x:0,z:0},p)} 0`});
+  cyl(g,"0 0.06 0",2.6,0.12,mat("#161c36"),{"segments-radial":40});
+  el("a-ring",{"radius-inner":2.62,"radius-outer":2.74,rotation:"-90 0 0",position:"0 0.02 0","segments-theta":48,material:flat(c,"opacity: 0.75; transparent: true")},g);
+  const gl=el("a-circle",{radius:2.5,rotation:"-90 0 0",position:"0 0.125 0",segments:40,material:"shader: flat; transparent: true; opacity: 0.45; depthWrite: false; blending: additive"},g);
+  applyTexture(gl,glowTex(c));
+  const em=EMBLEM[area](g,`0 ${beaconY} 0`,1.1);
+  em.setAttribute("animation__b",bobAnim(`0 ${beaconY} 0`,0.12,2600));
+  const hit=sph(g,`0 ${beaconY} 0`,0.8,"opacity: 0; transparent: true; depthWrite: false",{"data-goto":STEPS.findIndex(s=>s.area===area)});
+  STATION[area]={g,emblem:em,hit};
+  return g;
+}
+
+/* ---------- Scener: én pr. trin. Kun den aktuelle vises. ---------- */
+const VIS={};
+function vis(key,parent,build,y=0.12,s=1.2){ // s = endelig størrelse; tårnets scener (område b) skal passe til tårnet og har s=1
+  const r=grp(parent,`0 ${y} 0`,{visible:"false",scale:"0.001 0.001 0.001"}); r.dataset.key=key; r.dataset.s=s;
+  build(r); VIS[key]=r; return r;
+}
+
+/* Kernen */
+function buildHub(){
+  const hub=stationBase("core","hub",3.7);
+
+  vis("welcome",hub,r=>{ // skole + udkast til fagplan, der skrives på og justeres
+    const s=grp(r,"-0.8 0 -0.2");
+    box(s,"0 0.5 0",1.5,1.0,0.9,mat("#dfe3fb"));
+    cone(s,"0 1.24 0",1.15,0.01,0.48,mat(C_COL),{"segments-radial":4,rotation:"0 45 0",scale:"1 1 0.62"});
+    for(let row=0;row<2;row++) for(let col=0;col<3;col++){ if(row===0&&col===1) continue;
+      box(s,`${-0.45+col*0.45} ${0.32+row*0.38} 0.451`,0.24,0.22,0.02,glow(A_COL,0.8)); }
+    box(s,"0 0.21 0.452",0.26,0.42,0.02,mat("#3a2a4a"));
+    cyl(s,"0.62 1.5 0",0.02,1.0,mat("#a9b0d6"),{"segments-radial":5});
+    box(s,"0.8 1.86 0",0.34,0.22,0.01,glow(B_COL,0.5),{animation:"property: rotation; from: 0 -12 0; to: 0 12 0; dir: alternate; loop: true; dur: 900; easing: easeInOutSine"});
+    const d=grp(r,"0.95 1.45 0.25",{rotation:"0 -15 0",animation:bobAnim("0.95 1.45 0.25",0.08,2600)});
+    ICON.doc(d,"0 0 0",1.15);
+    const pen=grp(d,"0 -0.12 0.12",{animation:"property: position; from: -0.15 -0.12 0.12; to: 0.2 -0.12 0.12; dir: alternate; loop: true; dur: 900; easing: easeInOutSine"});
+    ICON.pencil(pen,"0.12 0.2 0",0.55,{rotation:"0 0 140"});
+    ICON.loop(d,"0 0 -0.12",1.15,B_COL,{animation:spin(9000,"0 0 360")});
+  });
+
+  vis("purpose",hub,r=>{ // en elev med praktiske værktøjer, der udtrykker sig og vælger
+    ICON.person(r,"0 0 0","#7aa2ff",1.7,SKIN[3]);
+    const t=grp(r,"0 1.0 0.36",{rotation:"-30 0 0"});
+    box(t,"0 0 0",0.5,0.34,0.03,mat("#1b2142"));box(t,"0 0 0.017",0.44,0.28,0.005,glow(B_COL,0.7));
+    [-1,1].forEach(sd=>link(r,[sd*0.14,0.98,0.05],[sd*0.2,0.98,0.33],0.04,mat("#7aa2ff")));
+    ICON.toolbox(r,"-1.3 0 0.3",1.3);
+    const ham=grp(r,"-1.3 1.05 0.3",{animation:bobAnim("-1.3 1.05 0.3",0.08,1800),rotation:"0 0 -25"});
+    cyl(ham,"0 0 0",0.03,0.5,mat("#7a5236"),{"segments-radial":6});box(ham,"0 0.27 0",0.26,0.1,0.1,mat("#a9b0d6","metalness: 0.6"));
+    ICON.bubble(r,"1.25 1.75 0.1",0.75,"#eef1ff",{animation:bobAnim("1.25 1.75 0.1",0.06,2400)});
+    ICON.heart(r,"1.25 1.82 0.2",0.18,C_COL);
+    [A_COL,B_COL,C_COL].forEach((c,i)=>{const x=-0.55+i*0.55;
+      box(r,`${x} 2.5 0`,0.4,0.52,0.03,glow(c,0.35),i===1?{animation:`property: position; from: ${x} 2.5 0; to: ${x} 2.72 0.2; dir: alternate; loop: true; dur: 1400; easing: easeInOutSine`}:{});
+      sph(r,`${x} 2.5 0.03`,0.07,flat("#0b0f1e"),i===1?{animation:`property: position; from: ${x} 2.5 0.03; to: ${x} 2.72 0.23; dir: alternate; loop: true; dur: 1400; easing: easeInOutSine`}:{});});
+  });
+
+  vis("premise",hub,r=>{ // telefonen formes af historie, kultur, intentioner og materialer, og former selv tanken
+    ICON.phone(r,"0 1.45 0",1.2,{animation:bobAnim("0 1.45 0",0.05,3000)});
+    const lk=flat(CORE,"opacity: 0.55; transparent: true");
+    ICON.hourglass(r,"-1.45 0.6 -0.3",1.1);                    link(r,[-1.45,1.0,-0.3],[-0.15,0.9,0],0.012,lk);
+    ICON.target(r,"1.45 1.25 -0.4",0.55,{rotation:"0 -25 0"}); link(r,[1.4,1.2,-0.35],[0.15,0.95,0],0.012,lk);
+    ICON.pedestal(r,"-1.05 0 0.75",0.6);ICON.chip(r,"-1.05 0.95 0.75",0.8,{rotation:"60 20 0"}); link(r,[-1.05,0.95,0.75],[-0.1,0.85,0.05],0.012,lk);
+    ICON.people(r,"1.1 0 0.7",0.85); link(r,[1.1,0.75,0.7],[0.1,0.85,0.05],0.012,lk);
+    const th=ICON.cloud(r,"1.25 1.65 0.75",0.55,"#eef1ff",{animation:bobAnim("1.25 1.65 0.75",0.06,2000)});
+    box(th,"0 0.02 0.18",0.16,0.26,0.03,mat("#0d1020"));
+    dots(r,[0.3,1.5,0.1],[1.0,1.7,0.7],0.15,6,CORE);
+    ICON.pedestal(r,"-1.45 0 -0.3",0.6);
+  });
+
+  vis("forms",hub,r=>{ // tre erkendeformer om samme kerne
+    sph(r,"0 1.5 0",0.34,glow(CORE,0.9),{animation:pulse(1800,0,1,1.1)});
+    el("a-torus",{position:"0 1.5 0",rotation:"114 0 0",radius:1.25,"radius-tubular":0.008,"segments-radial":4,"segments-tubular":64,material:flat(CORE,"opacity: 0.4; transparent: true")},r);
+    const orb=grp(grp(r,"0 1.5 0",{rotation:"24 0 0"}),"0 0 0",{animation:spin(22000)});
+    const a=grp(orb,"1.25 0 0",{animation:spin(9000,"0 -360 0")}); // skabe: blokke bygges op
+    box(a,"0 -0.15 0",0.32,0.2,0.32,glow(A_COL,0.35));box(a,"0.04 0.07 0.02",0.26,0.22,0.26,glow(A_COL,0.35),{rotation:"0 20 0"});
+    box(a,"-0.02 0.27 0",0.17,0.17,0.17,glow(A_COL,0.5),{rotation:"0 -15 0",animation:"property: position; from: -0.02 0.5 0; to: -0.02 0.27 0; dir: alternate; loop: true; dur: 1400; easing: easeOutQuad"});
+    const b=grp(orb,"-0.625 0 1.08",{animation:spin(9000,"0 -360 0")}); // omskabe: en form deles og vendes
+    box(b,"-0.1 0 0",0.18,0.36,0.36,glow(C_COL,0.35),{animation:"property: position; from: -0.1 0 0; to: -0.2 0.06 0; dir: alternate; loop: true; dur: 1300; easing: easeInOutSine"});
+    box(b,"0.1 0 0",0.18,0.36,0.36,glow(C_COL,0.35),{animation:"property: rotation; from: 0 0 0; to: 0 0 180; dir: alternate; loop: true; dur: 1300; easing: easeInOutSine"});
+    ICON.loop(b,"0 0 -0.05",0.6,C_COL,{animation:spin(5000,"0 0 360")});
+    const c=grp(orb,"-0.625 0 -1.08",{animation:spin(9000,"0 -360 0")}); // nytænke: pære i trådform
+    ICON.bulb(c,"0 0.05 0",1.2,B_COL,true);
+  });
+
+  vis("areas",hub,r=>{ // tre områder; det fjerde (digitale fænomener) glider ind under luppen
+    const P={a:[-1.3,-0.3],b:[0,-0.5],c:[1.3,-0.3]};
+    for(const k of ["a","b","c"]){const [x,z]=P[k];ICON.pedestal(r,`${x} 0 ${z}`,0.7,"#1d2546",AREAS[k].color);EMBLEM[k](r,`${x} 1.35 ${z}`,0.8);}
+    ICON.pedestal(r,"0 0 0.9",0.4,"#2a2f45","#6b7299");
+    const ph=grp(r,"0 0.8 0.9",{animation:"property: position; from: 0 0.8 0.9; to: 1.3 1.35 -0.3; dur: 3200; loop: true; easing: easeInOutCubic",
+      animation__s:"property: scale; from: 1 1 1; to: 0.35 0.35 0.35; dur: 3200; loop: true; easing: easeInCubic"});
+    ICON.phone(ph,"0 0 0",0.6);
+  });
+
+  vis("together",hub,r=>{ // samme samspil set fra tre vinkler + fem mål
+    const T=[0,1.95,0], L=[-1.0,0.6,0.2], Rr=[1.0,0.6,0.2], C=[0,1.05,0.13];
+    ICON.chip(r,"0 1.95 0",0.9,{rotation:"80 0 0"});
+    ICON.person(r,"-1.0 0.05 0.2","#7aa2ff",1.0,SKIN[3]);
+    ICON.globe(r,"1.0 0.6 0.2",0.45);
+    const lk=glow(CORE,0.6);
+    link(r,T,L,0.02,lk);link(r,L,Rr,0.02,lk);link(r,Rr,T,0.02,lk);
+    sph(r,C.join(" "),0.12,glow(CORE,0.9),{animation:pulse(900,0,0.8,1.3)});
+    [[A_COL,[-2.0,1.3,1.2]],[B_COL,[0,1.5,-1.9]],[C_COL,[2.0,1.3,1.2]]].forEach(([c,e])=>{
+      coneBetween(r,C,e,0.45,flat(c,"opacity: 0.16; transparent: true; side: double; depthWrite: false"));
+      sph(r,e.join(" "),0.11,glow(c,0.9));});
+    for(let i=0;i<5;i++) ICON.star(r,`${-1.0+i*0.5} ${2.8-Math.abs(i-2)*0.1} 0`,0.3,"#f7d154",{animation:spin(4000+i*300)});
+  });
+
+  vis("missing",hub,r=>{ // fagplan med tomt felt, fag der afprøver, og en prøve, der venter
+    const d=grp(r,"-0.35 1.5 0");
+    box(d,"0 0 0",1.3,1.7,0.04,mat("#eef1ff"));
+    for(let s=0;s<2;s++){box(d,`-0.25 ${0.7-s*0.5} 0.022`,0.6,0.06,0.005,mat("#2a3358"));
+      for(let i=0;i<3;i++) box(d,`${i===2?-0.15:0} ${0.58-s*0.5-i*0.09} 0.022`,i===2?0.8:1.1,0.035,0.005,mat("#8a90b5"));}
+    const ph=grp(d,"0 -0.5 0.03",{animation:"property: scale; from: 1 1 1; to: 1.04 1.06 1; dir: alternate; loop: true; dur: 800; easing: easeInOutSine"});
+    [[0,0.24,1.1,0.04],[0,-0.24,1.1,0.04],[-0.53,0,0.04,0.48],[0.53,0,0.04,0.48]].forEach(([x,y,w,h])=>box(ph,`${x} ${y} 0`,w,h,0.01,glow(A_COL,0.8)));
+    shp(r,"puzzle","0.55 1.0 0.35",0.35,A_COL,{animation:bobAnim("0.55 1.0 0.35",0.1,1600)},0.12,0.4);
+    ICON.pedestal(r,"1.1 0 0.1",0.5);ICON.book(r,"1.1 0.52 0.1",0.75,"#7aa2ff",{rotation:"25 0 0"});
+    ICON.pedestal(r,"1.65 0 0.1",0.5);ICON.ruler(r,"1.65 0.65 0.1",0.55,{rotation:"0 0 -20"});
+    ICON.pedestal(r,"2.15 0 0.1",0.5);ICON.hourglass(r,"2.15 0.5 0.1",0.55);
+    ICON.clipboard(r,"-1.75 1.1 0.4",1.0,{rotation:"0 30 0",animation:bobAnim("-1.75 1.1 0.4",0.05,2600)});
   });
 }
 
-/* ---------- Station A: Digital kreativitet og design ---------- */
-function stationBase(id,area){
-  const p=POS[area];
-  const g=el("a-entity",{id,position:`${p.x} 0 ${p.z}`,rotation:`0 ${yawTo({x:0,z:0},p)} 0`});
-  el("a-cylinder",{radius:2.6,height:0.12,position:"0 0.06 0",material:mat("#161c36")},g);
-  el("a-ring",{"radius-inner":2.65,"radius-outer":2.75,rotation:"-90 0 0",position:"0 0.02 0",
-    material:`shader: flat; color: ${AREAS[area].color}; opacity: 0.7; transparent: true`},g);
-  const sign=label(g,AREAS[area].name,AREAS[area].color,"0 4.1 0",3.2);
-  sign.classList.add("klik"); sign.dataset.goto=STEPS.findIndex(s=>s.area===area);
-  return g;
-}
-const stateCube={el:null,lbl:null,i:0,states:[
-  {name:"Rolig",color:"#4fd1c5",anim:"property: scale; to: 1 1 1; dur: 400"},
-  {name:"Aktiv",color:"#f2a541",anim:"property: scale; to: 1.25 1.25 1.25; dur: 400"},
-  {name:"Alarm",color:"#e8638c",anim:"property: scale; from: 0.8 0.8 0.8; to: 1.05 1.05 1.05; dir: alternate; loop: true; dur: 260"}
+/* Station A: Digital kreativitet og design */
+const stateCube={el:null,mouth:null,lamps:[],minis:[],i:0,states:[
+  {color:B_COL,anim:"property: scale; to: 1 1 1; dur: 400",mouth:"1 1 1"},
+  {color:A_COL,anim:"property: scale; to: 1.2 1.2 1.2; dur: 400",mouth:"1.6 2.4 1"},
+  {color:C_COL,anim:"property: scale; from: 0.85 0.85 0.85; to: 1.05 1.05 1.05; dir: alternate; loop: true; dur: 260",mouth:"0.6 4 1"}
 ]};
 function setCubeState(i){
   const s=stateCube.states[i]; stateCube.i=i;
   stateCube.el.setAttribute("material",glow(s.color,0.5));
   stateCube.el.removeAttribute("animation__st"); stateCube.el.setAttribute("animation__st",s.anim);
-  applyTexture(stateCube.lbl,labelTex("Tilstand: "+s.name,s.color,{size:80}));
+  stateCube.mouth.setAttribute("scale",s.mouth);
+  stateCube.lamps.forEach((l,k)=>l.setAttribute("material",k<=i?glow(s.color,1):mat("#2a3358")));
+  stateCube.minis.forEach((m,k)=>m.setAttribute("scale",k===i?"1.4 1.4 1.4":"1 1 1"));
 }
 function buildA(){
-  const g=stationBase("stA","a");
-  const sp=el("a-entity",{id:"spiral",position:"-0.4 0 0"},g);
-  const rot=el("a-entity",{animation:"property: rotation; to: 0 360 0; loop: true; dur: 30000; easing: linear"},sp);
-  el("a-cylinder",{radius:0.03,height:2.7,position:"0 1.45 0",material:mat("#3a4372")},rot);
-  const grey=new THREE.Color("#5b6488"), amb=new THREE.Color("#f2a541");
-  for(let i=0;i<6;i++){
-    const a=i*65*Math.PI/180, r=1.05, y=0.55+i*0.42;
-    const c=grey.clone().lerp(amb,i/5).getHexString();
-    el("a-sphere",{radius:0.17+i*0.025,"segments-width":3+i*3,"segments-height":2+i*2,
-      position:`${Math.cos(a)*r} ${y} ${Math.sin(a)*r}`,
-      material:`color: #${c}; flatShading: true; emissive: #${c}; emissiveIntensity: ${0.1+i*0.08}`},rot);
-    if(i<5){ const a2=(i+1)*65*Math.PI/180;
-      const m={x:(Math.cos(a)+Math.cos(a2))/2*r, z:(Math.sin(a)+Math.sin(a2))/2*r};
-      el("a-sphere",{radius:0.04,position:`${m.x} ${y+0.21} ${m.z}`,material:"shader: flat; color: #f2a541"},rot); }
-  }
-  label(g,"Afprøv → lær → justér",AREAS.a.color,"-0.4 3.35 0",1.9,{size:70});
-  stateCube.el=el("a-box",{id:"stateCube",class:"klik",width:0.55,height:0.55,depth:0.55,position:"1.7 1.15 0.6",material:glow("#4fd1c5",0.5)},g);
-  el("a-cylinder",{radius:0.3,height:0.8,position:"1.7 0.4 0.6",material:mat("#222a4d")},g);
-  stateCube.lbl=label(g,"Tilstand: Rolig","#4fd1c5","1.7 1.85 0.6",1.3,{size:80});
-  setCubeState(0);
-  stateCube.el.addEventListener("click",()=>setCubeState((stateCube.i+1)%3));
+  const st=stationBase("stA","a",3.7);
+
+  vis("aIntro",st,r=>{ // et artefakt på arbejdsbordet, der betyder noget for mig, for andre og for verden
+    box(r,"0 0.78 0",1.8,0.07,0.8,mat("#3b2f4a"));
+    [[-0.8,-0.33],[0.8,-0.33],[-0.8,0.33],[0.8,0.33]].forEach(([x,z])=>box(r,`${x} 0.39 ${z}`,0.06,0.78,0.06,mat("#2a2240")));
+    ICON.robot(r,"0 0.82 0",4,1.3);
+    ICON.pencil(r,"-0.55 0.86 0.15",0.5,{rotation:"0 30 90"});
+    ICON.gear(r,"0.6 0.84 0.12",0.28,CORE,{rotation:"-90 0 0"});
+    ICON.person(r,"-1.25 0 -0.5",A_COL,1.5,SKIN[1],{rotation:"0 35 0"});
+    ICON.heart(r,"-1.45 2.15 0.2",0.28,C_COL,{animation:pulse(800,0,0.95,1.08)});
+    ICON.people(r,"0 2.0 -0.2",0.6);cyl(r,"0 1.98 -0.2",0.35,0.03,mat("#2a3358"),{"segments-radial":16});
+    ICON.globe(r,"1.4 2.05 0.2",0.36);
+    [[-1.45,2.15,0.2],[0,2.25,-0.2],[1.4,2.05,0.2]].forEach(t=>dots(r,[0,1.45,0.05],t,0.25,7,A_COL));
+  });
+
+  vis("aProcess",st,r=>{ // fra problemløsning (puslespil) til åben, eksperimenterende tilgang (lyn og stjerner)
+    box(r,"0 1.3 0",2.9,0.05,0.05,glow(A_COL,0.3));
+    sph(r,"0 1.3 0.02",0.11,glow("#eef1ff",0.7),{animation:"property: position; from: -1.3 1.3 0.02; to: 1.3 1.3 0.02; dir: alternate; loop: true; dur: 3200; easing: easeInOutSine"});
+    const L=grp(r,"-1.55 1.3 0");
+    box(L,"0 0 0",0.8,0.8,0.06,mat("#2a3358"));
+    shp(L,"puzzle","0 0 0.03",0.55,"#11152a",{},0.01,0);
+    shp(L,"puzzle","0 0 0.08",0.55,A_COL,{animation:"property: position; from: -0.45 0.5 0.35; to: 0 0 0.08; dir: alternate; loop: true; dur: 1700; easing: easeInOutCubic"},0.1,0.35);
+    const Rg=grp(r,"1.55 1.3 0");
+    shp(Rg,"bolt","0 0 0",0.75,C_COL,{animation:"property: rotation; from: 0 0 -10; to: 0 0 10; dir: alternate; loop: true; dur: 300"},0.12,0.6);
+    const orb=grp(Rg,"0 0 0",{animation:spin(5000,"0 0 360")});
+    [[0.5,0.25],[-0.45,0.35],[0.1,-0.55],[-0.3,-0.4]].forEach(([x,y],i)=>ICON.star(orb,`${x} ${y} 0`,0.2+i*0.04,["#f7d154",B_COL,A_COL,"#b9a2ff"][i]));
+    ICON.bulb(r,"-0.55 0.55 0.6",0.8,"#f7d154",false);
+    ICON.pedestal(r,"-0.55 0 0.6",0.25);
+    ICON.chip(r,"0.55 0.45 0.6",0.6,{rotation:"0 20 0"});
+    ICON.pedestal(r,"0.55 0 0.6",0.4);
+  });
+
+  vis("aIter",st,r=>{ // spiral: prototypen bliver bedre, og målet skarpere
+    const rot=grp(r,"0 0 0",{animation:spin(36000)});
+    cyl(rot,"0 1.4 0",0.025,2.5,mat("#3a4372"),{"segments-radial":6});
+    const N=42;
+    for(let i=0;i<=N;i++){const a=i*0.165, y=0.3+i*0.054;
+      sph(rot,`${Math.cos(a)*1.0} ${y} ${Math.sin(a)*1.0}`,0.022+i*0.0006,flat(A_COL,`opacity: ${0.25+0.75*i/N}; transparent: true`),{"segments-width":6,"segments-height":4});}
+    [[2,1],[15,2],[28,3],[41,4]].forEach(([i,v])=>{const a=i*0.165, y=0.3+i*0.054;
+      ICON.robot(rot,`${Math.cos(a)*1.0} ${y-0.05} ${Math.sin(a)*1.0}`,v,0.8,{rotation:`0 ${-a*180/Math.PI+90} 0`});});
+    ICON.target(r,"0 3.0 0",0.42,{animation:"property: scale; from: 0.3 0.3 0.3; to: 0.48 0.48 0.48; dir: alternate; loop: true; dur: 1500; easing: easeInOutSine"});
+  });
+
+  vis("aMethods",st,r=>{ // processen indrammes: kontekst, intention, ressourcer, tilgang + spekulation og benspænd
+    const f=grp(r,"0 1.5 -0.15"), fm=glow(A_COL,0.3);
+    box(f,"0 0.92 0",2.7,0.09,0.09,fm);box(f,"0 -0.92 0",2.7,0.09,0.09,fm);box(f,"-1.35 0 0",0.09,1.93,0.09,fm);box(f,"1.35 0 0",0.09,1.93,0.09,fm);
+    box(f,"0 0 -0.06",2.6,1.75,0.02,flat("#141a30","opacity: 0.7; transparent: true"));
+    ICON.house(f,"-0.85 0.25 0.05",0.7);
+    ICON.target(f,"0.85 0.5 0.05",0.36);
+    ICON.toolbox(f,"-0.85 -0.82 0.1",0.8);
+    const fp=grp(f,"0.85 -0.45 0.06");
+    [[-0.2,-0.3],[0.0,-0.1],[0.15,0.1],[0.33,0.28]].forEach(([x,y],i)=>sph(fp,`${x+(i%2?0.06:-0.06)} ${y} 0`,0.07,glow(B_COL,0.5),{scale:"0.7 1.1 0.3",rotation:"0 0 -40",animation:pulse(700,i*180,0.8,1.15)}));
+    ICON.robot(f,"0 -0.75 0.1",2,1.2);
+    ICON.crystal(r,"-1.2 0 0.95",1.1);
+    ICON.hurdle(r,"1.2 0 0.95",1.0);
+  });
+
+  vis("aConstraint",st,r=>{ // terningen: input udefra skifter tilstand (klik på den)
+    const cg=grp(r,"1.1 0 0.3");
+    cyl(cg,"0 0.45 0",0.32,0.9,mat("#222a4d"),{"segments-radial":16});
+    stateCube.el=box(cg,"0 1.25 0",0.62,0.62,0.62,glow(B_COL,0.5),{class:"klik"});
+    [-0.13,0.13].forEach(x=>sph(stateCube.el,`${x} 0.08 0.315`,0.055,mat("#0b0f1e")));
+    stateCube.mouth=box(stateCube.el,"0 -0.12 0.315",0.2,0.035,0.01,mat("#0b0f1e"));
+    cone(stateCube.el,"0 0.42 0",0.12,0.02,0.2,mat("#a9b0d6","metalness: 0.6"),{rotation:"180 0 0"});
+    sph(stateCube.el,"0 0.5 0",0.05,glow("#ffffff",0.8));
+    stateCube.lamps=[-0.13,0,0.13].map(x=>sph(cg,`${x} 0.75 0.33`,0.045,mat("#2a3358")));
+    ICON.sun(r,"-1.55 1.55 0.3",0.65);
+    for(let i=0;i<3;i++) el("a-torus",{position:"-1.2 1.55 0.3",rotation:"0 90 0",radius:0.22,"radius-tubular":0.014,"segments-radial":4,"segments-tubular":24,
+      material:flat("#ffd166","opacity: 0.8; transparent: true"),animation:moveAnim("-1.2 1.55 0.3","0.8 1.42 0.3",2400,`delay: ${i*800}`)},r);
+    box(r,"-0.9 0.72 0.2",1.3,0.05,0.35,mat("#2a3358"));
+    box(r,"-0.9 0.36 0.2",0.08,0.72,0.08,mat("#2a3358"));
+    stateCube.minis=stateCube.states.map((s,k)=>box(r,`${-1.3+k*0.4} 0.86 0.2`,0.18,0.18,0.18,glow(s.color,0.5)));
+    [0,1].forEach(k=>ICON.arrow(r,`${-1.1+k*0.4} 0.86 0.2`,0.12,"#a9b0d6"));
+    setCubeState(0);
+    stateCube.el.addEventListener("click",()=>setCubeState((stateCube.i+1)%3));
+  });
+
+  vis("aGoal",st,r=>{ // det færdige artefakt: afprøvet, begrundet og godkendt
+    ICON.pedestal(r,"0 0 0",0.7,"#222a4d",A_COL);
+    ICON.robot(r,"0 0.7 0",4,1.5,{animation:spin(12000)});
+    ICON.check(r,"1.3 1.75 0",0.75,A_COL,{animation:bobAnim("1.3 1.75 0",0.08,1800)});
+    ICON.bubble(r,"-1.3 1.8 0",0.8,"#eef1ff",{animation:bobAnim("-1.3 1.8 0",0.06,2200)});
+    [1,2,3].forEach((v,k)=>ICON.robot(r,`${-0.7+k*0.7} 0 -1.1`,v,0.7));
+    dots(r,[-0.7,0.4,-1.1],[0.7,0.5,-1.1],0.2,8,A_COL);
+  });
 }
 
-/* ---------- Station B: Programmering og modellering ---------- */
+/* Station B: Programmering og modellering. Tårnet er fælles for alle trin i området. */
+function pips(p,n){ for(let i=0;i<n;i++) sph(p,`${-1.5+i*0.17} 0.1 0.62`,0.055,glow(B_COL,0.8)); }
 function buildB(){
-  const g=stationBase("stB","b");
-  // Lag 1
-  const l1=el("a-entity",{id:"lag1",position:"0 0.55 0"},g);
-  el("a-box",{width:2.4,height:0.08,depth:1.5,material:mat("#0f3b2e")},l1);
-  [[-0.6,0.2],[0.3,-0.3],[0.7,0.35]].forEach(([x,z])=>el("a-box",{width:0.35,height:0.08,depth:0.25,position:`${x} 0.08 ${z}`,material:mat("#111523")},l1));
-  [[-0.9,0.4,1.4,0],[0,0,1.2,90]].forEach(([x,z,w,r])=>el("a-box",{width:w,height:0.02,depth:0.03,position:`${x+0.5} 0.05 ${z}`,rotation:`0 ${r} 0`,material:mat("#c58b4a","metalness: 0.7")},l1));
-  el("a-sphere",{id:"led",radius:0.09,position:"-0.95 0.15 -0.4",material:glow("#ff4d4d",0.9),
-    animation:"property: material.emissiveIntensity; from: 0.1; to: 1.4; dir: alternate; loop: true; dur: 600"},l1);
-  el("a-cylinder",{radius:0.08,height:0.22,position:"0.95 0.16 -0.45",material:mat("#d9dcef")},l1);
-  label(l1,"Lag 1 · Materielt grundlag","#4fd1c5","-2.05 0.25 0",1.5,{size:66});
-  // Lag 2
-  const l2=el("a-entity",{id:"lag2",position:"0 1.75 0"},g);
-  el("a-box",{width:2.4,height:0.04,depth:1.5,material:"color: #4fd1c5; opacity: 0.15; transparent: true"},l2);
-  const blocks=[["gentag 10 gange","#4fd1c5",0.62],["hvis lys < 50","#7aa2ff",0.42],["sæt LED = tændt","#f2a541",0.22],["tæller = tæller + 1","#e8638c",0.02]];
-  blocks.forEach(([t,c,y],i)=>{
-    const x=-0.35+(i>0?0.15:0);
-    el("a-box",{width:1.3,height:0.18,depth:0.3,position:`${x} ${y+0.12} 0`,material:mat(c)},l2);
-    label(l2,t,"#0b0f1e",`${x} ${y+0.12} 0.155`,1.22,{bg:false,ink:"#0b0f1e",size:84,h:140});
+  const st=stationBase("stB","b",4.5);
+  const tower=grp(st,"0 0 0",{id:"tower",scale:sc(1.2)});
+  // Lag 1: elektronik
+  const l1=grp(tower,"0 0.55 0",{id:"lag1"});
+  box(l1,"0 0 0",2.4,0.08,1.5,mat("#0f3b2e"));
+  [[-0.6,-0.25],[0.3,-0.35],[0.65,0.05]].forEach(([x,z])=>box(l1,`${x} 0.08 ${z}`,0.35,0.08,0.25,mat("#111523")));
+  [[-0.4,0.1,1.4,0],[0.5,-0.1,0.9,90],[0.1,0.3,1.2,0]].forEach(([x,z,w,rr])=>box(l1,`${x} 0.05 ${z}`,w,0.02,0.03,mat("#c58b4a","metalness: 0.7"),{rotation:`0 ${rr} 0`}));
+  sph(l1,"-0.85 0.15 0.45",0.09,glow("#ff4d4d",0.9),{animation:"property: material.emissiveIntensity; from: 0.1; to: 1.4; dir: alternate; loop: true; dur: 600"});
+  cyl(l1,"0.85 0.08 0.45",0.1,0.08,mat("#3a3f5c"),{"segments-radial":10});
+  sph(l1,"0.85 0.13 0.45",0.08,glass("#ffe9a8",0.8),{"segments-width":10,"segments-height":6,"theta-length":90});
+  cyl(l1,"0 0.07 0.45",0.08,0.06,mat("#2a3358"),{"segments-radial":10});cyl(l1,"0 0.12 0.45",0.05,0.05,mat(C_COL),{"segments-radial":10});
+  for(let i=0;i<8;i++) box(l1,`${-0.7+i*0.2} 0.09 0.66`,0.12,0.06,0.08,glow(B_COL,0.1),
+    {animation:`property: material.emissiveIntensity; from: 0.05; to: 1.1; dir: alternate; loop: true; dur: ${450+(i*173)%500}; easing: linear`});
+  pips(l1,1);
+  // Lag 2: programmering (blokke med symboler for gentag, hvis, tænd og +1)
+  const l2=grp(tower,"0 1.75 0",{id:"lag2"});
+  box(l2,"0 0 0",2.4,0.04,1.5,flat(B_COL,"opacity: 0.15; transparent: true"));
+  [["loop",B_COL,0.62],["if","#7aa2ff",0.42],["led",A_COL,0.22],["plus",C_COL,0.02]].forEach(([k,c,y],i)=>{
+    const x=-0.35+(i>0?0.15:0), yy=y+0.12;
+    box(l2,`${x} ${yy} 0`,1.3,0.18,0.3,mat(c));
+    const gx=x-0.48, dark=mat("#0b0f1e");
+    if(k==="loop") ICON.loop(l2,`${gx} ${yy} 0.16`,0.17,"#0b0f1e");
+    if(k==="if") el("a-octahedron",{position:`${gx} ${yy} 0.16`,radius:0.08,scale:"1 1 0.4",material:dark},l2);
+    if(k==="led") sph(l2,`${gx} ${yy} 0.16`,0.06,glow("#fff3c4",1));
+    if(k==="plus"){box(l2,`${gx} ${yy} 0.16`,0.14,0.04,0.02,dark);box(l2,`${gx} ${yy} 0.16`,0.04,0.14,0.02,dark);}
+    box(l2,`${x+0.12} ${yy} 0.152`,0.7,0.035,0.005,flat("#0b0f1e","opacity: 0.5; transparent: true"));
   });
-  const ai=el("a-entity",{id:"aiSpark",position:"0.85 0.55 0.2",animation:"property: rotation; to: 0 360 0; loop: true; dur: 6000; easing: linear"},l2);
-  el("a-octahedron",{radius:0.16,material:glow("#ffffff",0.8)},ai);
-  [0,120,240].forEach(a=>el("a-tetrahedron",{radius:0.07,position:`${Math.cos(a*Math.PI/180)*0.3} 0.05 ${Math.sin(a*Math.PI/180)*0.3}`,material:glow("#c9d1ff",0.6)},ai));
-  label(l2,"generativ AI som værktøj","#ffffff","0.95 1.0 0.2",1.1,{size:62});
-  label(l2,"Lag 2 · Programmering","#4fd1c5","-2.05 0.3 0",1.5,{size:66});
-  // Lag 3
-  const l3=el("a-entity",{id:"lag3",position:"0 3.0 0"},g);
-  el("a-icosahedron",{radius:0.42,position:"-0.75 0.3 0",material:"color: #9fb0ff; wireframe: true"},l3);
-  label(l3,"verden","#9fb0ff","-0.75 -0.25 0",0.6,{size:80});
-  const nodes=[{x:0.2,y:0.55},{x:0.75,y:0.65},{x:0.45,y:0.1},{x:1.05,y:0.2}];
-  [[0,1],[0,2],[1,3],[2,3]].forEach(([a,b])=>bar(l3,nodes[a],nodes[b],0.025,"#4fd1c5"));
-  nodes.forEach(n=>el("a-sphere",{radius:0.08,position:`${n.x} ${n.y} 0`,material:glow("#4fd1c5",0.6)},l3));
-  bar(l3,{x:-0.25,y:0.35},{x:0.08,y:0.4},0.02,"#a9b0d6");
-  label(l3,"model = forsimpling","#4fd1c5","0.6 -0.2 0",1.0,{size:70});
-  label(l3,"Lag 3 · Modellering","#4fd1c5","-2.05 0.3 0",1.5,{size:66});
+  pips(l2,2);
+  // Lag 3: modellering (verden -> forenklet model)
+  const l3=grp(tower,"0 3.0 0",{id:"lag3"});
+  cyl(l3,"-0.8 0 0",0.48,0.04,mat("#2e4d3a"),{"segments-radial":16});
+  ICON.house(l3,"-0.98 0.02 -0.12",0.35);ICON.tree(l3,"-0.6 0.02 -0.18",0.45);
+  [["-1.08",C_COL,SKIN[2]],["-0.82",A_COL,SKIN[1]],["-0.56",B_COL,SKIN[0]]].forEach(([x,c,sk])=>ICON.person(l3,`${x} 0.02 0.25`,c,0.32,sk));
+  ICON.arrow(l3,"-0.12 0.32 0",0.32);
+  const nodes=[{x:0.3,y:0.55},{x:0.85,y:0.65},{x:0.55,y:0.12},{x:1.1,y:0.25}];
+  [[0,1],[0,2],[1,3],[2,3]].forEach(([a,b])=>link(l3,[nodes[a].x,nodes[a].y,0],[nodes[b].x,nodes[b].y,0],0.02,mat(B_COL)));
+  nodes.forEach(n=>sph(l3,`${n.x} ${n.y} 0`,0.08,glow(B_COL,0.6)));
+  pips(l3,3);
   // Datastrøm op gennem lagene
-  const df=el("a-entity",{id:"dataFlow",position:"1.35 0 0.55"},g);
-  el("a-cylinder",{radius:0.12,height:3.2,position:"0 2 0",material:"color: #4fd1c5; opacity: 0.12; transparent: true"},df);
-  for(let i=0;i<8;i++){
-    el("a-box",{width:0.08,height:0.08,depth:0.08,position:"0 0.5 0",material:"shader: flat; color: #4fd1c5",
-      animation:`property: position; from: 0 0.5 0; to: 0 3.6 0; loop: true; dur: 4000; delay: ${i*500}; easing: linear`},df);
-  }
+  const df=grp(tower,"1.55 0 0.6",{id:"dataFlow"});
+  cyl(df,"0 2 0",0.12,3.2,flat(B_COL,"opacity: 0.12; transparent: true"),{"open-ended":true});
+  for(let i=0;i<8;i++) box(df,"0 0.5 0",0.08,0.08,0.08,flat(B_COL),{animation:moveAnim("0 0.5 0","0 3.6 0",4000,`delay: ${i*500}`)});
+
+  vis("bIntro",st,r=>{ // pile, der viser data på vej op gennem lagene
+    for(let i=0;i<3;i++) ICON.arrow(r,"1.55 0.6 0.85",0.3,B_COL,{rotation:"0 0 90",animation:moveAnim("1.55 0.6 0.85","1.55 3.5 0.85",3000,`delay: ${i*1000}`)});
+  },0,1.2);
+  vis("bLag1",st,r=>{ // sensor tager lys ind, LED giver signal ud, data gemmes som bits
+    ICON.sun(r,"-2.05 1.6 0.6",0.7);
+    link(r,[-1.85,1.45,0.6],[0.85,0.7,0.45],0.05,flat("#ffd166","opacity: 0.35; transparent: true; depthWrite: false"));
+    sph(r,"-0.85 0.7 0.45",0.2,flat("#ff4d4d","opacity: 0.25; transparent: true; depthWrite: false"),{animation:pulse(600,0,0.6,1.4)});
+    ICON.arrow(r,"0.85 1.05 0.45",0.25,"#ffd166",{rotation:"0 0 -90"});
+    ICON.arrow(r,"-0.85 1.05 0.45",0.25,"#ff4d4d",{rotation:"0 0 90"});
+  },0,1.2);
+  vis("bLag2",st,r=>{ // en fejl kravler rundt i koden, og luppen finder den
+    const bw=grp(r,"-0.6 2.27 0.16",{rotation:"90 0 0",animation:"property: position; from: -0.6 2.27 0.16; to: 0.3 2.27 0.16; dir: alternate; loop: true; dur: 2600; easing: easeInOutSine"});
+    ICON.bug(bw,"0 0 0",2.0,{rotation:"0 90 0"});
+    ICON.magnifier(r,"-0.6 2.3 0.55",0.42,B_COL,{animation:"property: position; from: -0.6 2.3 0.55; to: 0.3 2.3 0.55; dir: alternate; loop: true; dur: 2600; delay: 200; easing: easeInOutSine"});
+  },0,1.2);
+  vis("bAI",st,r=>{ // AI-værktøjet foreslår en ny blok, der lander i programmet
+    const ai=grp(r,"1.2 2.65 0.35",{animation:bobAnim("1.2 2.65 0.35",0.06,1600)});
+    ICON.star(ai,"0 0 0",0.6,"#ffffff",{animation:spin(4000)});
+    const o=grp(ai,"0 0 0",{animation:spin(3000)});
+    [0,120,240].forEach(a=>el("a-tetrahedron",{radius:0.06,position:`${Math.cos(a*Math.PI/180)*0.32} 0.05 ${Math.sin(a*Math.PI/180)*0.32}`,material:glow(CORE,0.6)},o));
+    ICON.bubble(r,"1.6 3.15 0.3",0.45,"#eef1ff");
+    box(r,"1.2 2.65 0.35",0.6,0.14,0.22,glow("#eef1ff",0.4),{animation:"property: position; from: 1.2 2.65 0.35; to: -0.2 2.6 0.0; dur: 2200; loop: true; easing: easeInOutCubic",
+      animation__s:"property: scale; from: 0.2 0.2 0.2; to: 1 1 1; dur: 2200; loop: true; easing: easeOutCubic"});
+  },0,1.2);
+  vis("bLag3",st,r=>{ // verden filtreres til en model; kun én slags prik kommer igennem (bias)
+    cone(r,"-0.12 3.32 0.25",0.22,0.05,0.35,glass(CORE,0.35),{rotation:"0 0 -90","open-ended":true});
+    [C_COL,A_COL,B_COL].forEach((c,i)=>sph(r,"-0.8 3.4 0.25",0.05,glow(c,0.7),{animation:moveAnim("-0.8 3.4 0.25","-0.15 3.33 0.25",1500,`delay: ${i*500}`)}));
+    sph(r,"0.0 3.33 0.25",0.05,glow(B_COL,0.8),{animation:moveAnim("0.0 3.33 0.25","0.3 3.55 0.0",1500)});
+  },0,1.2);
+  vis("bGoal",st,r=>{ // to mål: programmering og modellering
+    ICON.check(r,"1.95 2.0 0.3",0.45,B_COL,{animation:bobAnim("1.95 2.0 0.3",0.06,1800)});
+    ICON.check(r,"1.95 3.3 0.3",0.45,B_COL,{animation:bobAnim("1.95 3.3 0.3",0.06,1800)});
+  },0,1.2);
 }
 
-/* ---------- Station C: Undersøgelse og stillingtagen ---------- */
-let mechEl, coverEl;
+/* Station C: Undersøgelse og stillingtagen */
 function buildC(){
-  const g=stationBase("stC","c");
-  const ph=el("a-entity",{id:"phone",position:"0 1.45 0"},g);
-  el("a-box",{width:0.85,height:1.65,depth:0.1,material:mat("#0d1020","metalness: 0.5")},ph);
-  coverEl=el("a-plane",{width:0.78,height:1.55,position:"0 0 0.055",material:"shader: flat; transparent: true"},ph);
-  applyTexture(coverEl,canvasTexture(400,800,(c,w,h)=>{
-    c.fillStyle="#1b2142";c.fillRect(0,0,w,h);
-    const cols=["#e8638c","#f2a541","#4fd1c5","#7aa2ff"];
-    for(let i=0;i<5;i++){c.fillStyle="#262e58";roundRect(c,24,40+i*150,w-48,130,18);c.fill();
-      c.fillStyle=cols[i%4];roundRect(c,40,56+i*150,90,98,12);c.fill();
-      c.fillStyle="#a9b0d6";c.fillRect(150,70+i*150,180,16);c.fillRect(150,104+i*150,130,12);}
-  }));
-  // Inde i maskinen: tre slags algoritmer
-  mechEl=el("a-entity",{id:"mech",position:"0 3.05 0",scale:"0.001 0.001 0.001"},g);
-  const det=el("a-entity",{position:"-1.25 0 0"},mechEl);
-  for(let i=0;i<3;i++) for(let j=0;j<3;j++) el("a-box",{width:0.14,height:0.14,depth:0.14,position:`${(i-1)*0.2} ${(j-1)*0.2} 0`,material:mat("#dde3ff")},det);
-  label(det,"deterministisk","#dde3ff","0 -0.55 0",1.0,{size:72});
-  const adp=el("a-entity",{position:"0 0 0"},mechEl);
-  el("a-sphere",{radius:0.25,material:glow("#f2a541",0.5),
-    animation:"property: scale; from: 0.75 0.75 0.75; to: 1.2 1.2 1.2; dir: alternate; loop: true; dur: 1300; easing: easeInOutSine",
-    animation__c:"property: material.color; from: #f2a541; to: #4fd1c5; dir: alternate; loop: true; dur: 2600"},adp);
-  label(adp,"adaptiv","#f2a541","0 -0.55 0",0.9,{size:72});
-  const gen=el("a-entity",{position:"1.25 0 0"},mechEl);
-  el("a-torus-knot",{radius:0.18,"radius-tubular":0.04,p:3,q:7,material:glow("#e8638c",0.5),
-    animation:"property: rotation; to: 360 360 0; loop: true; dur: 5000; easing: linear"},gen);
-  const orbit=el("a-entity",{animation:"property: rotation; to: 0 0 360; loop: true; dur: 2500; easing: linear"},gen);
-  [0,90,180,270].forEach(a=>el("a-sphere",{radius:0.04,position:`${Math.cos(a*Math.PI/180)*0.36} ${Math.sin(a*Math.PI/180)*0.36} 0`,material:"shader: flat; color: #e8638c"},orbit));
-  label(gen,"generativ","#e8638c","0 -0.55 0",0.9,{size:72});
-  // Mennesker omkring fænomenet
-  const pp=el("a-entity",{id:"people"},g);
-  const tones=["#8f7a6a","#c8a27c","#6b5747","#a3876f","#d4b593","#7d6b5d"];
-  [100,140,180,220,260,320].forEach((deg,i)=>{
-    const a=deg*Math.PI/180, r=1.75, f=el("a-entity",{position:`${Math.sin(a)*r} 0.12 ${Math.cos(a)*r}`,rotation:`0 ${deg+180} 0`,
-      animation:`property: position; to: ${Math.sin(a)*r} 0.2 ${Math.cos(a)*r}; dir: alternate; loop: true; dur: ${1400+i*230}; easing: easeInOutSine`},pp);
-    el("a-cylinder",{radius:0.15,height:0.8,position:"0 0.4 0",material:mat("#3d4677")},f);
-    el("a-sphere",{radius:0.14,position:"0 0.95 0",material:mat(tones[i])},f);
+  const st=stationBase("stC","c",3.7);
+
+  vis("cIntro",st,r=>{ // hverdagens digitale fænomener kredser om telefonen; noget ligger uden for horisonten
+    ICON.phone(r,"0 1.45 0",1.4,{animation:bobAnim("0 1.45 0",0.05,3000)});
+    const orb=grp(r,"0 1.45 0",{animation:spin(18000)}), back={animation:spin(18000,"0 -360 0")};
+    const icons=[(p,pos)=>ICON.bubble(p,pos,0.28,"#eef1ff",back),(p,pos)=>ICON.note(p,pos,0.35,A_COL,back),(p,pos)=>shp(p,"star",pos,0.3,"#ffffff",back,0.12,0.6),
+      (p,pos)=>ICON.heart(p,pos,0.28,C_COL,back),(p,pos)=>ICON.magnifier(p,pos,0.25,B_COL,back)];
+    icons.forEach((f,i)=>{const a=i/icons.length*Math.PI*2;f(orb,`${Math.cos(a)*1.05} ${Math.sin(i*1.7)*0.25} ${Math.sin(a)*1.05}`);});
+    [105,135,165,195,225,255].forEach((deg,i)=>{const a=deg*Math.PI/180, rr=1.8;
+      ICON.person(r,`${Math.sin(a)*rr} 0 ${Math.cos(a)*rr}`,["#3d4677","#5b4677","#3d6677"][i%3],1.1,SKIN[i],{rotation:`0 ${deg+180} 0`,
+        animation:bobAnim(`${Math.sin(a)*rr} 0 ${Math.cos(a)*rr}`,0.06,1400+i*230)});});
+    el("a-torus",{position:"0 0.03 0",rotation:"90 0 0",radius:2.25,"radius-tubular":0.015,"segments-radial":4,"segments-tubular":64,material:flat(C_COL,"opacity: 0.6; transparent: true")},r);
+    ICON.globe(r,"-2.45 1.1 -0.5",0.3);
   });
-  // Vægt: stillingtagen
-  const sc=el("a-entity",{id:"scale",position:"-1.85 0 1.0"},g);
-  el("a-cylinder",{radius:0.04,height:1.3,position:"0 0.65 0",material:mat("#a9b0d6","metalness: 0.6")},sc);
-  const beam=el("a-entity",{position:"0 1.3 0",animation:"property: rotation; from: 0 0 -12; to: 0 0 12; dir: alternate; loop: true; dur: 2400; easing: easeInOutSine"},sc);
-  el("a-box",{width:1.1,height:0.04,depth:0.04,material:mat("#a9b0d6","metalness: 0.6")},beam);
-  [-0.5,0.5].forEach(x=>{el("a-cylinder",{radius:0.006,height:0.3,position:`${x} -0.15 0`,material:mat("#a9b0d6")},beam);
-    el("a-cylinder",{radius:0.18,height:0.03,position:`${x} -0.3 0`,material:mat("#e8638c")},beam);});
-  label(sc,"stillingtagen","#e8638c","0 1.75 0",1.0,{size:72});
+
+  vis("cUse",st,r=>{ // kort over hverdagen: tænkt brug (lige) og faktisk brug (snoet); alternativ og fravalg
+    const m=grp(r,"0 0.95 0.1",{rotation:"-55 0 0"});
+    box(m,"0 0 -0.03",2.5,1.6,0.04,mat("#2a3358"));
+    applyTexture(el("a-plane",{width:2.4,height:1.5,material:"shader: flat"},m),MAP_TEX);
+    cyl(r,"0 0.45 -0.1",0.06,0.9,mat("#2a3358"),{"segments-radial":8});
+    const S=[-0.9,-0.45], E=[0.9,0.45];
+    [[S,B_COL],[E,C_COL],[[0.2,-0.5],A_COL],[[-0.6,0.45],A_COL]].forEach(([[x,y],c])=>{cone(m,`${x} ${y} 0.1`,0.04,0.004,0.2,mat("#c9d1ff"),{rotation:"-90 0 0","segments-radial":6});sph(m,`${x} ${y} 0.24`,0.07,glow(c,0.6));});
+    const ang=Math.atan2(E[1]-S[1],E[0]-S[0])*180/Math.PI;
+    for(let i=1;i<10;i++){const t=i/10;box(m,`${S[0]+(E[0]-S[0])*t} ${S[1]+(E[1]-S[1])*t} 0.015`,0.09,0.025,0.01,flat(B_COL),{rotation:`0 0 ${ang}`});}
+    for(let i=1;i<28;i++){const t=i/28, x=S[0]+(E[0]-S[0])*t, y=S[1]+(E[1]-S[1])*t+Math.sin(t*Math.PI*3)*0.3*Math.sin(t*Math.PI);
+      sph(m,`${x} ${y} 0.02`,0.024,flat(C_COL),{"segments-width":6,"segments-height":4,animation:pulse(400,i*70,0.7,1.8)});}
+    ICON.pedestal(r,"-1.75 0 0.6",0.7);ICON.book(r,"-1.75 0.72 0.6",0.75,A_COL,{rotation:"0 20 0"});ICON.pencil(r,"-1.6 0.8 0.75",0.35,{rotation:"0 30 80"});
+    ICON.pedestal(r,"1.75 0 0.6",0.7);
+    const no=grp(r,"1.75 1.25 0.6");
+    ICON.phone(no,"0 0 0",0.55);
+    el("a-torus",{position:"0 0 0.06",radius:0.4,"radius-tubular":0.045,"segments-radial":6,"segments-tubular":28,material:glow(C_COL,0.5)},no);
+    box(no,"0 0 0.06",0.78,0.07,0.05,glow(C_COL,0.5),{rotation:"0 0 45"});
+  });
+
+  vis("cRole",st,r=>{ // telefonen åbnes; tre slags algoritmer; en digital dobbeltgænger
+    const ph=grp(r,"0 1.15 0.2");
+    box(ph,"0 0 0",0.85,1.6,0.1,mat("#0d1020","metalness: 0.5"));
+    ICON.chip(ph,"0 0.25 0.06",0.6,{rotation:"90 0 0"});
+    ICON.gear(ph,"-0.18 -0.3 0.06",0.22,CORE,{animation:spin(4000,"0 0 360")});
+    ICON.gear(ph,"0.06 -0.42 0.06",0.16,A_COL,{animation:spin(2900,"0 0 -360")});
+    const cover=el("a-plane",{position:"0 0 0.056",width:0.78,height:1.52,material:"shader: flat; transparent: true","data-replay":"",
+      animation__rv:"property: position; from: 0 0 0.056; to: -0.95 0 0.056; dur: 1100; delay: 500; easing: easeInOutCubic; startEvents: vshow"},ph);
+    applyTexture(cover,APP_TEX);
+    const row=grp(r,"0 2.55 0");
+    ICON.gear(row,"-1.4 0 0",0.45,"#dde3ff",{animation:spin(4000,"0 0 360")});
+    ICON.gear(row,"-1.03 -0.22 0.02",0.32,"#dde3ff",{animation:spin(2850,"0 0 -360")});
+    el("a-torus",{position:"0 -0.1 0",radius:0.32,"radius-tubular":0.04,arc:180,"segments-radial":6,"segments-tubular":20,material:glow(A_COL,0.4)},row);
+    const nd=grp(row,"0 -0.1 0.04",{animation:"property: rotation; from: 0 0 -65; to: 0 0 65; dir: alternate; loop: true; dur: 1700; easing: easeInOutSine"});
+    box(nd,"0 0.14 0",0.03,0.28,0.02,mat("#eef1ff"));
+    [-0.15,0,0.15].forEach((x,i)=>box(row,`${x} -0.35 0`,0.09,0.2,0.09,glow(A_COL,0.3),{animation:`property: scale; from: 1 0.5 1; to: 1 1.6 1; dir: alternate; loop: true; dur: ${900+i*300}; easing: easeInOutSine`}));
+    box(row,"1.35 -0.25 0",0.4,0.26,0.3,mat(C_COL));
+    [["a-tetrahedron",0],["a-octahedron",1],["a-box",2],["a-dodecahedron",3]].forEach(([t,i])=>el(t,{...(t==="a-box"?{width:0.12,height:0.12,depth:0.12}:{radius:0.08}),position:"1.35 -0.1 0",
+      material:glow(["#f7d154",B_COL,A_COL,"#b9a2ff"][i],0.6),animation:moveAnim("1.35 -0.1 0",`${1.15+i*0.13} 0.45 0`,2000,`delay: ${i*500}`),
+      animation__s:`property: scale; from: 0.1 0.1 0.1; to: 1 1 1; dur: 2000; loop: true; delay: ${i*500}`},row));
+    ICON.person(r,"-1.85 0 0.7","#7aa2ff",1.1,SKIN[3]);
+    ICON.personWire(r,"-1.25 0 0.7",B_COL,1.1);
+    dots(r,[-1.75,0.9,0.7],[-1.3,0.9,0.7],0.15,5,B_COL);
+  });
+
+  vis("cStance",st,r=>{ // vægten: teknologi over for mennesker; debatter, historie og forestillinger; nye skridt
+    const s=buildScale(r,"0 0 0",1.1);
+    ICON.phone(s.left,"0 0.25 0",0.4);
+    ICON.heart(s.right,"0 0.22 0",0.35,C_COL);
+    ICON.bubble(r,"-1.25 2.35 0",0.55,"#eef1ff",{animation:bobAnim("-1.25 2.35 0",0.06,2000)});
+    ICON.bubble(r,"1.25 2.55 0",0.5,"#eef1ff",{scale:"-0.5 0.5 0.5",animation:bobAnim("1.25 2.55 0",0.06,2300)});
+    ICON.hourglass(r,"-1.65 0 0.5",1.1,{animation:"property: rotation; from: 0 0 0; to: 0 0 180; dur: 2500; loop: true; easing: easeInOutCubic"});
+    ICON.cloud(r,"1.65 1.35 0.4",0.55,CORE,{animation:bobAnim("1.65 1.35 0.4",0.05,2400)});
+    ICON.bulb(r,"1.65 1.42 0.6",0.45,"#f7d154",false);
+    for(let i=0;i<6;i++) sph(r,`${i%2?0.13:-0.13} 0.02 ${0.75+i*0.26}`,0.08,glow(C_COL,0.6),{scale:"0.7 0.2 1.1",animation:`property: material.emissiveIntensity; from: 0.1; to: 1.2; dir: alternate; loop: true; dur: 500; delay: ${i*180}`});
+  });
+
+  vis("cGoal",st,r=>{ // to mål: undersøge hverdagen og tage stilling
+    ICON.phone(r,"-0.95 1.15 0",0.85);
+    ICON.magnifier(r,"-0.95 1.3 0.35",0.55,C_COL,{animation:"property: position; from: -1.15 1.1 0.35; to: -0.75 1.45 0.35; dir: alternate; loop: true; dur: 2000; easing: easeInOutSine"});
+    buildScale(r,"0.95 0 0",0.7);
+    ICON.check(r,"-0.95 2.3 0",0.5,C_COL,{animation:bobAnim("-0.95 2.3 0",0.06,1800)});
+    ICON.check(r,"0.95 2.3 0",0.5,C_COL,{animation:bobAnim("0.95 2.3 0",0.06,1800)});
+  });
 }
 
-/* ---------- Fremhævning ---------- */
-const HL_IDS=["core","coreSphere","orbits","beams","stA","spiral","stateCube","stB","lag1","lag2","lag3","aiSpark","dataFlow","stC","phone","people","mech","scale"];
-let ring;
-function highlight(ids){
-  if(!ring){ ring=el("a-ring",{"radius-inner":0.55,"radius-outer":0.62,rotation:"-90 0 0",material:"shader: flat; color: #ffffff; opacity: 0.9; transparent: true; side: double",
-    animation:"property: scale; from: 0.9 0.9 0.9; to: 1.15 1.15 1.15; dir: alternate; loop: true; dur: 700"}); }
-  HL_IDS.forEach(id=>{const e=document.getElementById(id); if(e) e.removeAttribute("animation__hl");});
-  const big=["core","stA","stB","stC","beams","people"];
-  ids.forEach(id=>{
-    const e=document.getElementById(id); if(!e || big.includes(id) || id==="mech" || id==="stateCube" || id==="coreSphere") return;
-    const s=e.getAttribute("scale")||{x:1,y:1,z:1};
-    e.setAttribute("animation__hl",`property: scale; from: ${s.x} ${s.y} ${s.z}; to: ${s.x*1.08} ${s.y*1.08} ${s.z*1.08}; dir: alternate; loop: true; dur: 650; easing: easeInOutSine`);
+/* Lysstråler fra kernen til stationerne */
+function buildBeams(){
+  const beams=el("a-entity",{id:"beams",visible:"false"});
+  ["a","b","c"].forEach(k=>{
+    const t=POS[k], len=Math.hypot(t.x,t.z)-5.6, yaw=Math.atan2(t.x,t.z)*180/Math.PI;
+    const holder=el("a-entity",{rotation:`0 ${yaw} 0`},beams);
+    el("a-box",{position:`0 0.06 ${2.8+len/2}`,width:0.12,height:0.04,depth:len,
+      material:flat(AREAS[k].color,"opacity: 0.85; transparent: true"),
+      animation:"property: material.opacity; from: 0.35; to: 0.95; dir: alternate; loop: true; dur: 1200"},holder);
   });
-  // ring under første synlige mål
-  const first=document.getElementById(ids[0]);
-  if(first && first.object3D){
-    const v=new THREE.Vector3(); first.object3D.getWorldPosition(v);
-    ring.setAttribute("position",`${v.x} 0.14 ${v.z}`); ring.setAttribute("visible", !big.includes(ids[0]));
+}
+function buildStars(){ // stjernehimmel (én tegning, påvirkes ikke af tågen)
+  const n=700, pts=new Float32Array(n*3);
+  for(let i=0;i<n;i++){const u=Math.random()*Math.PI*2, v=0.05+Math.random()*1.3, R=40;
+    pts[i*3]=Math.cos(u)*Math.cos(v)*R; pts[i*3+1]=Math.sin(v)*R; pts[i*3+2]=Math.sin(u)*Math.cos(v)*R;}
+  const g=new THREE.BufferGeometry(); g.setAttribute("position",new THREE.BufferAttribute(pts,3));
+  $("scene").object3D.add(new THREE.Points(g,new THREE.PointsMaterial({color:0xc9d1ff,size:0.16,fog:false,transparent:true,opacity:0.75})));
+}
+
+/* ---------- Visning: kun scenen for det aktuelle trin ---------- */
+let shown=null;
+function showVis(key){
+  if(shown===key) return;
+  const old=VIS[shown], nu=VIS[key]; shown=key;
+  if(old){
+    old.setAttribute("animation__vis","property: scale; to: 0.001 0.001 0.001; dur: 300; easing: easeInCubic");
+    clearTimeout(old._t); old._t=setTimeout(()=>{ if(shown!==old.dataset.key){ old.setAttribute("visible",false); old.pause(); } },340);
   }
+  if(nu){
+    clearTimeout(nu._t); nu.play(); nu.setAttribute("visible",true);
+    nu.setAttribute("animation__vis",`property: scale; from: 0.001 0.001 0.001; to: ${sc(nu.dataset.s)}; dur: 750; delay: 200; easing: easeOutBack`);
+    nu.querySelectorAll("[data-replay]").forEach(e=>e.emit("vshow",null,false));
+  }
+}
+function setDim(e,dim){ // tone et lag i tårnet ned
+  e.object3D.traverse(o=>{ const m=o.material; if(!m) return;
+    if(m.userData.op===undefined){ m.userData.op=m.opacity; m.userData.tr=m.transparent; }
+    m.transparent=dim?true:m.userData.tr; m.opacity=dim?m.userData.op*0.18:m.userData.op; m.needsUpdate=true; });
+}
+function showStations(s){ // kun den aktuelle station; på oversigtstrinnene alle
+  for(const k in STATION){ const on=s.beams || k===s.area;
+    const em=!!s.beams && k!=="hub";
+    STATION[k].g.setAttribute("visible",on); STATION[k].emblem.setAttribute("visible",em);
+    STATION[k].hit.classList.toggle("klik",em); }
+  $("tower").setAttribute("visible",s.area==="b");
 }
 
 /* ---------- Tilstand og navigation ---------- */
@@ -499,7 +941,7 @@ function pickVoice(){
 }
 if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
 /* Færdige lydfiler (fx ElevenLabs) pr. trin: AUDIO[trinnummer] = "url". Findes en fil, bruges den i stedet for browserstemmen. */
-const AUDIO = {0:"audio/01.mp3", 1:"audio/02.mp3", 2:"audio/03.mp3", 3:"audio/04.mp3", 4:"audio/05.mp3", 5:"audio/06.mp3", 6:"audio/07.mp3", 7:"audio/08.mp3", 8:"audio/09.mp3", 9:"audio/10.mp3", 10:"audio/11.mp3", 11:"audio/12.mp3", 12:"audio/13.mp3", 13:"audio/14.mp3", 14:"audio/15.mp3", 15:"audio/16.mp3", 16:"audio/17.mp3", 17:"audio/18.mp3", 18:"audio/19.mp3", 19:"audio/20.mp3", 20:"audio/21.mp3", 21:"audio/22.mp3", 22:"audio/23.mp3", 23:"audio/24.mp3"};
+const AUDIO = Object.fromEntries(STEPS.map((_,i)=>[i,`audio/${String(i+1).padStart(2,"0")}.mp3`]));
 let player=null;
 function speak(t){
   if(player){ player.pause(); player=null; }
@@ -533,10 +975,9 @@ function go(i){
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.area===s.area));
   if(s.area!==prevArea || (s.area==="hub" && (i===0||i===22))) moveRig(s.area);
   $("beams").setAttribute("visible",!!s.beams);
-  const reveal=!!s.reveal;
-  mechEl.setAttribute("animation__rv",`property: scale; to: ${reveal?"1 1 1":"0.001 0.001 0.001"}; dur: 900; easing: easeOutBack`);
-  coverEl.setAttribute("animation__rv",`property: position; to: ${reveal?"-0.95 0 0.055":"0 0 0.055"}; dur: 900; easing: easeInOutCubic`);
-  setTimeout(()=>highlight(s.hl),reveal?950:50);
+  showStations(s);
+  showVis(s.vis);
+  ["lag1","lag2","lag3","dataFlow"].forEach(id=>setDim($(id), !!s.focus && !s.focus.includes(id)));
   applyTexture($("vrPanel"),panelTex(s,i));
   speak(s.title+". "+s.text);
 }
@@ -552,11 +993,15 @@ document.addEventListener("keydown",e=>{ if($("start").hidden){ if(e.key==="Arro
 function begin(withSound){ $("start").hidden=true; setTts(withSound); go(0); }
 const scene=$("scene");
 function init(){
-  buildCore(); buildA(); buildB(); buildC(); vrButtons();
+  APP_TEX=appTex(); MAP_TEX=mapTex();
+  const floor=el("a-plane",{rotation:"-90 0 0",width:80,height:80,material:"shader: flat; color: #ffffff"});
+  applyTexture(floor,(()=>{const t=canvasTexture(128,128,(c,w,h)=>{c.fillStyle="#0e1428";c.fillRect(0,0,w,h);c.strokeStyle="#1f2850";c.lineWidth=2;c.strokeRect(0,0,w,h);}); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(40,40); return t;})());
+  buildHub(); buildA(); buildB(); buildC(); buildBeams(); buildStars(); vrButtons();
+  for(const v of Object.values(VIS)){ const stop=()=>{ if(shown!==v.dataset.key) v.pause(); }; v.hasLoaded ? stop() : v.addEventListener("loaded",stop,{once:true}); }
   document.querySelectorAll(".vrbtn").forEach(b=>b.addEventListener("click",()=>{
     const a=b.dataset.action; if(a==="prev") go(cur-1); else if(a==="next") go(cur===STEPS.length-1?0:cur+1); else setTts(!ttsOn);
   }));
-  scene.addEventListener("click",e=>{ const t=e.target; if(t && t.dataset && t.dataset.goto!==undefined && !t.closest("#nav")) go(+t.dataset.goto); });
+  scene.addEventListener("click",e=>{ const t=e.target && e.target.closest && e.target.closest("[data-goto]"); if(t && !t.closest("#nav")) go(+t.dataset.goto); });
   scene.addEventListener("enter-vr",()=>{ $("vrPanelWrap").setAttribute("visible",true); $("card").hidden=true; });
   scene.addEventListener("exit-vr",()=>{ $("vrPanelWrap").setAttribute("visible",false); $("card").hidden=false; });
   $("go").onclick=()=>begin(true); $("goSilent").onclick=()=>begin(false);
