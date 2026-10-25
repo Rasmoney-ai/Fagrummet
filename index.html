@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fagrummet: teknologiforståelse</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe-v1.6.0.min.js"></script>
+<style>
+/* Layout: fuldskærms 3D-rum, tekstkort nederst til venstre, startskærm ovenpå. Én bevidst mørk "værksted om natten"-look. */
+:root{
+  color-scheme: dark;
+  --night:#0b0f1e;      /* rummets baggrund */
+  --panel:#141a30;      /* kort */
+  --line:#2a3358;       /* kanter */
+  --ink:#eef1ff;        /* tekst */
+  --muted:#a9b0d6;      /* sekundær tekst */
+  --amber:#f2a541;      /* Digital kreativitet og design */
+  --teal:#4fd1c5;       /* Programmering og modellering */
+  --rose:#e8638c;       /* Undersøgelse og stillingtagen */
+  --core:#c9d1ff;       /* kernen */
+  --display:"Familjen Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "Consolas", monospace;
+}
+html,body{height:100%}
+body{background:var(--night);color:var(--ink);font-family:var(--body);overflow:hidden}
+.stage{position:fixed;inset:0}
+.stage a-scene{width:100%;height:100%}
+
+.card{
+  position:fixed;
+  left:max(16px, env(safe-area-inset-left,0px));
+  bottom:calc(16px + env(safe-area-inset-bottom,0px));
+  width:min(460px, calc(100% - 32px));
+  max-height:min(62vh, 560px);
+  display:flex;flex-direction:column;gap:12px;
+  background:color-mix(in srgb, var(--panel) 92%, transparent);
+  border:1px solid var(--line);border-radius:14px;
+  padding:16px 18px;
+  backdrop-filter:blur(8px);
+  z-index:5;
+}
+.meta{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.chip{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 8px;border-radius:999px;border:1px solid currentColor;color:var(--core)}
+.count{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.card h1{font-family:var(--display);font-weight:700;font-size:24px;line-height:1.15;margin:0;text-wrap:balance}
+.body{font-size:16px;line-height:1.5;color:var(--ink);overflow-y:auto;min-height:0;max-width:62ch}
+.body p{margin:0}
+.controls{display:flex;flex-wrap:wrap;gap:8px}
+button{font:600 14px var(--body);color:var(--ink);background:#1d2546;border:1px solid var(--line);
+  border-radius:9px;padding:8px 12px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+button.primary{background:var(--ink);color:var(--night);border-color:var(--ink)}
+button[aria-pressed="true"]{border-color:var(--teal);color:var(--teal)}
+.nav{display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid var(--line);padding-top:10px}
+.nav button{font-size:13px;padding:6px 10px;background:transparent}
+.nav button[data-area="hub"]{color:var(--core)}
+.nav button[data-area="a"]{color:var(--amber)}
+.nav button[data-area="b"]{color:var(--teal)}
+.nav button[data-area="c"]{color:var(--rose)}
+.nav button.on{background:#232c52}
+.note{font-size:12.5px;color:var(--muted);margin:0}
+
+.hint{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:max(16px, env(safe-area-inset-right,0px));
+  font-family:var(--mono);font-size:11px;color:var(--muted);background:color-mix(in srgb,var(--panel) 85%,transparent);
+  border:1px solid var(--line);border-radius:8px;padding:6px 10px;z-index:5;max-width:60vw}
+
+.start{position:fixed;inset:0;z-index:10;display:grid;place-items:center;
+  background:radial-gradient(ellipse at 50% 40%, #18204a 0%, var(--night) 70%);
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px))}
+.start-inner{max-width:560px;display:flex;flex-direction:column;gap:18px}
+.start .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.start h2{font-family:var(--display);font-size:clamp(34px,7vw,56px);line-height:1.02;margin:0;font-weight:700;text-wrap:balance}
+.start h2 span{display:block}
+.start h2 .a{color:var(--amber)} .start h2 .b{color:var(--teal)} .start h2 .c{color:var(--rose)}
+.start p{font-size:17px;line-height:1.5;color:var(--muted);margin:0;max-width:56ch}
+.start .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.start button.primary{font-size:16px;padding:12px 18px}
+
+@media (max-width:560px){
+  .card{max-height:48vh;padding:14px}
+  .card h1{font-size:20px}
+  .body{font-size:15px}
+  .hint{display:none}
+}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto} }
+</style>
+</head>
+<body>
+
+<div class="stage">
+<a-scene id="scene" embedded
+  renderer="antialias: true; colorManagement: true"
+  background="color: #0b0f1e"
+  fog="type: exponential; color: #0b0f1e; density: 0.035"
+  loading-screen="dotsColor: #f2a541; backgroundColor: #0b0f1e"
+  cursor="rayOrigin: mouse"
+  raycaster="objects: .klik"
+  xr-mode-ui="enabled: true"
+  vr-mode-ui="enabled: true">
+
+  <a-entity light="type: ambient; color: #8a93c9; intensity: 0.7"></a-entity>
+  <a-entity light="type: directional; color: #ffffff; intensity: 0.9" position="3 8 4"></a-entity>
+  <a-entity light="type: point; color: #c9d1ff; intensity: 1.2; distance: 9" position="0 2.4 0"></a-entity>
+
+  <a-entity id="world"></a-entity>
+
+  <a-entity id="rig" position="0 0 5.5">
+    <a-entity id="cam" camera position="0 1.6 0" look-controls="pointerLockEnabled: false; reverseMouseDrag: false"></a-entity>
+    <a-entity laser-controls="hand: right; model: false" raycaster="objects: .klik; lineColor: #f2a541; lineOpacity: 0.8"></a-entity>
+    <a-entity laser-controls="hand: left; model: false" raycaster="objects: .klik; lineColor: #4fd1c5; lineOpacity: 0.8"></a-entity>
+    <!-- Tekstpanel i VR (skjult på skærm, hvor HTML-kortet bruges) -->
+    <a-entity id="vrPanelWrap" position="1.25 1.45 -2.1" rotation="0 -22 0" visible="false">
+      <a-plane id="vrPanel" width="1.8" height="1.2" material="shader: flat; transparent: true; side: double"></a-plane>
+      <a-plane class="klik vrbtn" data-action="prev" position="-0.6 -0.78 0" width="0.52" height="0.2" material="shader: flat; transparent: true"></a-plane>
+      <a-plane class="klik vrbtn" data-action="tts" position="0 -0.78 0" width="0.52" height="0.2" material="shader: flat; transparent: true"></a-plane>
+      <a-plane class="klik vrbtn" data-action="next" position="0.6 -0.78 0" width="0.52" height="0.2" material="shader: flat; transparent: true"></a-plane>
+    </a-entity>
+  </a-entity>
+</a-scene>
+</div>
+
+<div class="hint" id="hint">Træk for at se dig om · Klik på modeller og skilte · ← → skifter trin</div>
+
+<section class="card" id="card" aria-live="polite">
+  <div class="meta"><span class="chip" id="chip">Kernen</span><span class="count" id="count">1 / 24</span></div>
+  <h1 id="title">Velkommen</h1>
+  <div class="body" id="bodyText"><p></p></div>
+  <div class="controls">
+    <button id="prev" type="button">Forrige</button>
+    <button id="next" type="button" class="primary">Næste</button>
+    <button id="tts" type="button" aria-pressed="true">Oplæsning til</button>
+    <button id="replay" type="button">Læs igen</button>
+  </div>
+  <div class="nav" id="nav">
+    <button type="button" data-area="hub" data-goto="0">Kernen</button>
+    <button type="button" data-area="a" data-goto="5">Kreativitet og design</button>
+    <button type="button" data-area="b" data-goto="11">Programmering og modellering</button>
+    <button type="button" data-area="c" data-goto="17">Undersøgelse og stillingtagen</button>
+  </div>
+  <p class="note" id="voiceNote"></p>
+</section>
+
+<div class="start" id="start">
+  <div class="start-inner">
+    <div class="eyebrow">Valgfag · andet udkast til fagplan · juni 2026</div>
+    <h2><span>Teknologiforståelse</span><span class="a">skabe</span><span class="b">programmere</span><span class="c">tage stilling</span></h2>
+    <p>Gå rundt i fagets tre indholdsområder. Hvert område har sin egen station med modeller, og en dansk stemme fortæller undervejs. Brug mus eller touch på skærmen, eller tryk "VR" nederst til højre med et headset.</p>
+    <div class="row">
+      <button class="primary" id="go" type="button">Start rundvisningen</button>
+      <button id="goSilent" type="button">Start uden lyd</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- Indhold: andet udkast til fagplan for teknologiforståelse (valgfag), juni 2026 ---------- */
+const AREAS = {
+  hub:{name:"Kernen", color:"#c9d1ff"},
+  a:{name:"Digital kreativitet og design", color:"#f2a541"},
+  b:{name:"Programmering og modellering", color:"#4fd1c5"},
+  c:{name:"Undersøgelse og stillingtagen", color:"#e8638c"}
+};
+const STEPS = [
+ {area:"hub", title:"Velkommen", hl:["core"],
+  text:"Teknologiforståelse bliver et nyt toårigt praktisk/musisk valgfag fra skoleåret 2027/28, i 7.-8. eller 8.-9. klasse. Det, du ser her, bygger på andet udkast til fagplanen fra juni 2026. Skolerne i udviklingsprogrammet afprøver udkastet i efteråret, og derefter justerer fagudvalget det."},
+ {area:"hub", title:"Fagets formål", hl:["coreSphere"],
+  text:"Faget skal give eleverne praktiske kundskaber og gøre dem i stand til at handle myndigt og engageret over for de digitale teknologier, de møder. Eleverne arbejder praktisk og kreativt med at udtrykke sig både med og om digitale teknologier, og de inddrages i valg af indhold, så undervisningen tager afsæt i deres egne erfaringer."},
+ {area:"hub", title:"Grundantagelsen", hl:["coreSphere"],
+  text:"Digitale teknologier er ikke neutrale. De åbner nye måder at handle og udtrykke sig på, men de former også, hvordan mennesker tænker og handler. Hver teknologi er præget af en kultur og en historie, af bestemte intentioner og af et materielt grundlag."},
+ {area:"hub", title:"Tre erkendeformer", hl:["orbits"],
+  text:"Fagets karakter samles i tre måder at forstå på. Man forstår ved selv at skabe digitale teknologier: den ravgule form. Man forstår ved at omskabe eller modvirke det, andre har skabt: den rosa form. Og man forstår ved at nytænke og forestille sig alternativer: den turkise trådform. De kredser alle om den samme kerne."},
+ {area:"hub", title:"Tre indholdsområder", hl:["beams"], beams:true,
+  text:"Andet udkast har tre indholdsområder: Digital kreativitet og design, Programmering og modellering samt Undersøgelse og stillingtagen. Råudkastet fra september 2025 havde fire. Digitale fænomener er ikke længere et område for sig. Nu er de det, eleverne undersøger i det tredje område. Lysstrålerne viser vej til de tre stationer."},
+
+ {area:"a", title:"Digital kreativitet og design", hl:["stA"],
+  text:"Her skaber eleverne digitale artefakter, produkter og kreative udtryk, der betyder noget for dem selv, for andre eller for verden. Teknologi ses her som noget, mennesker skaber ud fra egne intentioner."},
+ {area:"a", title:"Kreative processer", hl:["spiral"],
+  text:"Processerne spænder fra design, hvor man løser et problem eller udfylder et behov, til mere åbne tilgange, hvor man udforsker, eksperimenterer eller provokerer. Undervisningen omfatter designprocesser, innovation og entreprenørskab, undersøgelse af teknologiens materielle betingelser og æstetiske produkter, der siger noget om teknologiens rolle."},
+ {area:"a", title:"Iteration", hl:["spiral"],
+  text:"Spiralen viser iteration. Hver afprøvning giver erfaringer, der former næste version. Prototypen bliver ikke kun mere færdig. Intentionen bliver også skarpere undervejs, fordi eleverne tilpasser den ud fra det, de opdager."},
+ {area:"a", title:"Kreative metoder", hl:["spiral","stateCube"],
+  text:"Eleverne indrammer processen: hvilken kontekst artefaktet skal virke i, hvilke intentioner de arbejder ud fra, hvilke ressourcer der er, og hvordan de griber det an. De bruger kreativitetsmetoder som spekulation og benspænd, og de begrunder deres valg ud fra egne afprøvninger."},
+ {area:"a", title:"Et digitalt benspænd", hl:["stateCube"],
+  text:"Ét benspænd hører særligt til det digitale materiale. Artefaktet skal kunne skifte mellem forskellige tilstande ud fra det input, det får fra omgivelserne. Prøv det selv: klik på terningen til højre, og se den skifte tilstand."},
+ {area:"a", title:"Målet for området", hl:["stA"],
+  text:"Eleverne arbejder iterativt med at skabe digitale artefakter og andre kreative produkter. I arbejdet indgår afprøvninger, udvikling og tilpasning af intentioner, brug af kreative metoder og argumentation for egne valg."},
+
+ {area:"b", title:"Programmering og modellering", hl:["dataFlow"],
+  text:"Her opøver eleverne håndværket i selv at skabe digitale teknologier og får indsigt i teknologiens materielle grundlag. Området er bygget af tre konstruktive lag, der bygger videre på hinanden. Data og algoritmer går igen på alle tre lag. Se strømmen af data op gennem tårnet."},
+ {area:"b", title:"Lag 1: Materielt grundlag", hl:["lag1"],
+  text:"Nederst ligger elektronikken. Eleverne afprøver programmerbar elektronik og bruger sensorer, der tager input fra brugere eller verden og giver output tilbage som signaler og symboler. De får praktiske erfaringer med, hvordan digitale data ser ud, hvordan de laves, og hvordan de gemmes."},
+ {area:"b", title:"Lag 2: Programmering og computerforståelse", hl:["lag2"],
+  text:"I midten arbejder eleverne med logikken bag teknologien: algoritmer, variable, kontrolstrukturer og simple datatyper som tal, tekst og sand eller falsk. De programmerer både analogt og i et udvalgt sprog. De øver fejlfinding af både logiske fejl og syntaksfejl, og fejl ses som naturlige og uundgåelige."},
+ {area:"b", title:"Generativ AI som værktøj", hl:["aiSpark","lag2"],
+  text:"Nyt i udkastet: programmering med generativ kunstig intelligens som værktøj er en del af kernestoffet. Eleverne undersøger også, hvilken indsigt i programmeringsvalg og design man får, når man programmerer på den måde. Tag det med til prøveworkshoppen, for de nuværende praktisk-musiske prøver forbyder chatbots."},
+ {area:"b", title:"Lag 3: Modellering", hl:["lag3"],
+  text:"Øverst beskriver eleverne de forhold i verden, som programmet håndterer. Programmer bygger altid på modeller, og modeller er aldrig neutrale. Eleverne tegner diagrammer, arbejder med datagørelse, altså forsimplinger af verden, og sammenligner deres modeller med verden for at finde perspektiver og bias."},
+ {area:"b", title:"Målene for området", hl:["stB"],
+  text:"Området har to mål. Eleverne bruger programmering som sprog og værktøj til at skabe digitale artefakter, og de bruger programmeringsbegreberne, når de afprøver løsninger og diskuterer fejl. Og eleverne undersøger modellers perspektiver og bias ved at tegne diagrammer og afprøve samspillet mellem egne modeller og verden."},
+
+ {area:"c", title:"Undersøgelse og stillingtagen", hl:["phone"],
+  text:"Her undersøger eleverne samspillet mellem mennesker og digitale teknologier i form af digitale fænomener. Udgangspunktet er primært elevernes eget hverdagsliv, også fænomener med kunstig intelligens. De møder også fænomener uden for deres egen erfaringshorisont."},
+ {area:"c", title:"Brug og brugskontekst", hl:["people"],
+  text:"Først de menneskelige sider. Eleverne kortlægger digitale fænomener i deres hverdag. De laver brugsstudier af afstanden mellem den brug, udviklerne havde tænkt sig, og den brug, der faktisk sker. Og de eksperimenterer med alternative teknologier og med ikke at bruge teknologien."},
+ {area:"c", title:"Teknologiens rolle og intention", hl:["mech"], reveal:true,
+  text:"Så åbner eleverne teknologien. Hvordan er den bygget, og hvordan spiller data, algoritmer og brug sammen? De afmaskerer algoritmer og undersøger, om de er deterministiske, adaptive eller generative. De undersøger også datagørelse, og om der laves digitale dobbeltgængere af brugerne."},
+ {area:"c", title:"Stillingtagen", hl:["scale"], reveal:true,
+  text:"Til sidst kobles de praktiske undersøgelser til principielle diskussioner: aktuelle samfundsdebatter, teknologiforestillinger og historiske eksempler samt etiske og filosofiske spørgsmål. Stillingtagen opbygges gradvist, og den skal føre til nye handlinger og eksperimenter."},
+ {area:"c", title:"Målene for området", hl:["stC"], reveal:true,
+  text:"Området har to mål. Eleverne undersøger digitale fænomener i deres eget hverdagsliv. Og de tager gradvist stilling til fænomenernes betydning for mennesker og verden, på baggrund af egne praktiske undersøgelser og perspektiver, der ligger uden for deres egne erfaringer."},
+
+ {area:"hub", title:"Sammenhængen", hl:["beams","orbits"], beams:true,
+  text:"De tre områder ser på det samme samspil mellem digitale teknologier, mennesker og verden, men fra hver sin vinkel. De supplerer hinanden. Et forløb kan have særligt fokus på ét område, men trækker ofte på de andre. I alt har faget kun fem mål."},
+ {area:"hub", title:"Det, der mangler endnu", hl:["coreSphere"],
+  text:"Afsnittet om undervisning og evaluering er stadig en pladsholder i udkastet. Det afprøves først i dansk, matematik og historie. Prøven, som efter planen holdes første gang i 2028/29, udvikles altså til en fagplan, hvor evalueringsafsnittet endnu ikke er skrevet. Rundvisningen slutter her."}
+];
+
+/* ---------- Placering ---------- */
+const POS = { hub:{x:0,z:0}, a:{x:-9,z:-5}, b:{x:0,z:-11}, c:{x:9,z:-5} };
+const yawTo = (from,to)=> Math.atan2(from.x-to.x, from.z-to.z)*180/Math.PI;
+function viewpoint(area){
+  if(area==="hub") return {x:0,z:5.5,yaw:0};
+  const t=POS[area], d=Math.hypot(t.x,t.z), k=5.2/d;
+  const r={x:t.x - t.x*k, z:t.z - t.z*k};
+  return {x:r.x, z:r.z, yaw:yawTo(r,t)};
+}
+
+/* ---------- Tekst på lærred (håndterer æ, ø og å) ---------- */
+function wrap(ctx,text,maxW){
+  const words=text.split(/\s+/), lines=[]; let line="";
+  for(const w of words){ const t=line?line+" "+w:w; if(ctx.measureText(t).width>maxW && line){lines.push(line);line=w;} else line=t; }
+  if(line) lines.push(line); return lines;
+}
+function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function canvasTexture(w,h,draw){
+  const c=document.createElement("canvas"); c.width=w; c.height=h; const ctx=c.getContext("2d"); draw(ctx,w,h);
+  const tex=new THREE.CanvasTexture(c); tex.colorSpace=THREE.SRGBColorSpace; tex.anisotropy=4; return tex;
+}
+function applyTexture(el,tex){
+  const set=()=>{const m=el.getObject3D("mesh"); if(!m) return false; m.material.map=tex; m.material.transparent=true; m.material.needsUpdate=true; return true;};
+  if(!set()) el.addEventListener("object3dset",()=>set(),{once:true});
+}
+function labelTex(text,color,opts={}){
+  const w=opts.w||1024,h=opts.h||200,size=opts.size||74;
+  return canvasTexture(w,h,(ctx)=>{
+    ctx.clearRect(0,0,w,h);
+    if(opts.bg!==false){ ctx.fillStyle="rgba(11,15,30,0.82)"; roundRect(ctx,6,6,w-12,h-12,28); ctx.fill(); ctx.strokeStyle=color; ctx.lineWidth=5; ctx.stroke(); }
+    ctx.fillStyle=opts.ink||color; ctx.font=`700 ${size}px "Familjen Grotesk", sans-serif`; ctx.textAlign="center"; ctx.textBaseline="middle";
+    const lines=wrap(ctx,text,w-60), lh=size*1.1, y0=h/2-(lines.length-1)*lh/2;
+    lines.forEach((l,i)=>ctx.fillText(l,w/2,y0+i*lh));
+  });
+}
+function panelTex(step,i){
+  const a=AREAS[step.area];
+  return canvasTexture(1500,1000,(ctx,w,h)=>{
+    ctx.fillStyle="rgba(20,26,48,0.95)"; roundRect(ctx,8,8,w-16,h-16,40); ctx.fill();
+    ctx.strokeStyle="#2a3358"; ctx.lineWidth=6; ctx.stroke();
+    ctx.font='500 34px "JetBrains Mono", monospace'; ctx.fillStyle=a.color; ctx.textBaseline="top";
+    ctx.fillText(a.name.toUpperCase(),64,56);
+    ctx.fillStyle="#a9b0d6"; ctx.textAlign="right"; ctx.fillText(`${i+1} / ${STEPS.length}`,w-64,56); ctx.textAlign="left";
+    ctx.fillStyle="#eef1ff"; ctx.font='700 72px "Familjen Grotesk", sans-serif';
+    const tl=wrap(ctx,step.title,w-128); tl.forEach((l,k)=>ctx.fillText(l,64,118+k*80));
+    let y=118+tl.length*80+30;
+    ctx.font='400 42px "Source Sans 3", sans-serif'; ctx.fillStyle="#dfe3fb";
+    wrap(ctx,step.text,w-128).forEach((l,k)=>ctx.fillText(l,64,y+k*56));
+  });
+}
+
+/* ---------- Byggeklodser ---------- */
+const world=document.getElementById("world");
+function el(tag,attrs={},parent=world){
+  const e=document.createElement(tag);
+  for(const[k,v] of Object.entries(attrs)) e.setAttribute(k,v);
+  parent.appendChild(e); return e;
+}
+const mat=(c,extra="")=>`color: ${c}; roughness: 0.6; metalness: 0.1; ${extra}`;
+const glow=(c,i=0.6)=>`color: ${c}; emissive: ${c}; emissiveIntensity: ${i}; roughness: 0.4`;
+function label(parent,text,color,pos,w=2.4,opts={}){
+  const h=w*(opts.h||200)/(opts.w||1024);
+  const p=el("a-plane",{position:pos,width:w,height:h,material:"shader: flat; transparent: true; side: double"},parent);
+  applyTexture(p,labelTex(text,color,opts)); return p;
+}
+function bar(parent,a,b,thick,color,z=0){ // linje i xy-planet
+  const dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy);
+  return el("a-box",{position:`${(a.x+b.x)/2} ${(a.y+b.y)/2} ${z}`,width:len,height:thick,depth:thick,
+    rotation:`0 0 ${Math.atan2(dy,dx)*180/Math.PI}`,material:mat(color)},parent);
+}
+
+/* Gulv med gitter */
+const floor=el("a-plane",{rotation:"-90 0 0",width:60,height:60,material:"shader: flat; color: #ffffff; repeat: 30 30"});
+applyTexture(floor,(()=>{const t=canvasTexture(128,128,(c,w,h)=>{c.fillStyle="#0e1428";c.fillRect(0,0,w,h);c.strokeStyle="#1f2850";c.lineWidth=2;c.strokeRect(0,0,w,h);}); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(30,30); return t;})());
+
+/* ---------- Kernen ---------- */
+function buildCore(){
+  const g=el("a-entity",{id:"core",position:"0 0 0"});
+  el("a-cylinder",{radius:1.4,height:0.3,position:"0 0.15 0",material:mat("#1b2240")},g);
+  el("a-ring",{"radius-inner":1.5,"radius-outer":1.58,rotation:"-90 0 0",position:"0 0.02 0",material:"shader: flat; color: #c9d1ff; opacity: 0.6; transparent: true"},g);
+  el("a-sphere",{id:"coreSphere",radius:0.45,position:"0 1.7 0",material:glow("#c9d1ff",0.9),
+    animation:"property: scale; from: 1 1 1; to: 1.12 1.12 1.12; dir: alternate; loop: true; dur: 1800; easing: easeInOutSine"},g);
+  const orb=el("a-entity",{id:"orbits",position:"0 1.7 0",animation:"property: rotation; to: 0 360 0; loop: true; dur: 22000; easing: linear"},g);
+  el("a-icosahedron",{radius:0.3,position:"1.5 0 0",material:glow("#f2a541",0.4)+"; flatShading: true",
+    animation:"property: rotation; to: 360 360 0; loop: true; dur: 9000; easing: linear"},orb);
+  el("a-octahedron",{radius:0.32,position:"-0.75 0.2 1.3",material:glow("#e8638c",0.4)+"; flatShading: true",
+    animation:"property: rotation; to: -360 0 360; loop: true; dur: 7000; easing: linear"},orb);
+  el("a-dodecahedron",{radius:0.32,position:"-0.75 -0.15 -1.3",material:"color: #4fd1c5; wireframe: true; emissive: #4fd1c5; emissiveIntensity: 0.8",
+    animation:"property: rotation; to: 0 -360 360; loop: true; dur: 11000; easing: linear"},orb);
+  label(g,"Teknologiforståelse",AREAS.hub.color,"0 3.1 0",2.6);
+  // Lysstråler til stationerne
+  const beams=el("a-entity",{id:"beams",visible:"false"});
+  ["a","b","c"].forEach(k=>{
+    const t=POS[k], len=Math.hypot(t.x,t.z)-2.4;
+    const yaw=Math.atan2(t.x,t.z)*180/Math.PI;
+    const holder=el("a-entity",{rotation:`0 ${yaw} 0`},beams);
+    el("a-box",{position:`0 0.06 ${1.5+len/2}`,width:0.12,height:0.04,depth:len,
+      material:`shader: flat; color: ${AREAS[k].color}; opacity: 0.85; transparent: true`,
+      animation:"property: material.opacity; from: 0.35; to: 0.95; dir: alternate; loop: true; dur: 1200"},holder);
+  });
+}
+
+/* ---------- Station A: Digital kreativitet og design ---------- */
+function stationBase(id,area){
+  const p=POS[area];
+  const g=el("a-entity",{id,position:`${p.x} 0 ${p.z}`,rotation:`0 ${yawTo({x:0,z:0},p)+180} 0`});
+  el("a-cylinder",{radius:2.6,height:0.12,position:"0 0.06 0",material:mat("#161c36")},g);
+  el("a-ring",{"radius-inner":2.65,"radius-outer":2.75,rotation:"-90 0 0",position:"0 0.02 0",
+    material:`shader: flat; color: ${AREAS[area].color}; opacity: 0.7; transparent: true`},g);
+  const sign=label(g,AREAS[area].name,AREAS[area].color,"0 4.1 0",3.2);
+  sign.classList.add("klik"); sign.dataset.goto=STEPS.findIndex(s=>s.area===area);
+  return g;
+}
+const stateCube={el:null,lbl:null,i:0,states:[
+  {name:"Rolig",color:"#4fd1c5",anim:"property: scale; to: 1 1 1; dur: 400"},
+  {name:"Aktiv",color:"#f2a541",anim:"property: scale; to: 1.25 1.25 1.25; dur: 400"},
+  {name:"Alarm",color:"#e8638c",anim:"property: scale; from: 0.8 0.8 0.8; to: 1.05 1.05 1.05; dir: alternate; loop: true; dur: 260"}
+]};
+function setCubeState(i){
+  const s=stateCube.states[i]; stateCube.i=i;
+  stateCube.el.setAttribute("material",glow(s.color,0.5));
+  stateCube.el.removeAttribute("animation__st"); stateCube.el.setAttribute("animation__st",s.anim);
+  applyTexture(stateCube.lbl,labelTex("Tilstand: "+s.name,s.color,{size:80}));
+}
+function buildA(){
+  const g=stationBase("stA","a");
+  const sp=el("a-entity",{id:"spiral",position:"-0.4 0 0"},g);
+  const rot=el("a-entity",{animation:"property: rotation; to: 0 360 0; loop: true; dur: 30000; easing: linear"},sp);
+  el("a-cylinder",{radius:0.03,height:2.7,position:"0 1.45 0",material:mat("#3a4372")},rot);
+  const grey=new THREE.Color("#5b6488"), amb=new THREE.Color("#f2a541");
+  for(let i=0;i<6;i++){
+    const a=i*65*Math.PI/180, r=1.05, y=0.55+i*0.42;
+    const c=grey.clone().lerp(amb,i/5).getHexString();
+    el("a-sphere",{radius:0.17+i*0.025,"segments-width":3+i*3,"segments-height":2+i*2,
+      position:`${Math.cos(a)*r} ${y} ${Math.sin(a)*r}`,
+      material:`color: #${c}; flatShading: true; emissive: #${c}; emissiveIntensity: ${0.1+i*0.08}`},rot);
+    if(i<5){ const a2=(i+1)*65*Math.PI/180;
+      const m={x:(Math.cos(a)+Math.cos(a2))/2*r, z:(Math.sin(a)+Math.sin(a2))/2*r};
+      el("a-sphere",{radius:0.04,position:`${m.x} ${y+0.21} ${m.z}`,material:"shader: flat; color: #f2a541"},rot); }
+  }
+  label(g,"Afprøv → lær → justér",AREAS.a.color,"-0.4 3.35 0",1.9,{size:70});
+  stateCube.el=el("a-box",{id:"stateCube",class:"klik",width:0.55,height:0.55,depth:0.55,position:"1.7 1.15 0.6",material:glow("#4fd1c5",0.5)},g);
+  el("a-cylinder",{radius:0.3,height:0.8,position:"1.7 0.4 0.6",material:mat("#222a4d")},g);
+  stateCube.lbl=label(g,"Tilstand: Rolig","#4fd1c5","1.7 1.85 0.6",1.3,{size:80});
+  setCubeState(0);
+  stateCube.el.addEventListener("click",()=>setCubeState((stateCube.i+1)%3));
+}
+
+/* ---------- Station B: Programmering og modellering ---------- */
+function buildB(){
+  const g=stationBase("stB","b");
+  // Lag 1
+  const l1=el("a-entity",{id:"lag1",position:"0 0.55 0"},g);
+  el("a-box",{width:2.4,height:0.08,depth:1.5,material:mat("#0f3b2e")},l1);
+  [[-0.6,0.2],[0.3,-0.3],[0.7,0.35]].forEach(([x,z])=>el("a-box",{width:0.35,height:0.08,depth:0.25,position:`${x} 0.08 ${z}`,material:mat("#111523")},l1));
+  [[-0.9,0.4,1.4,0],[0,0,1.2,90]].forEach(([x,z,w,r])=>el("a-box",{width:w,height:0.02,depth:0.03,position:`${x+0.5} 0.05 ${z}`,rotation:`0 ${r} 0`,material:mat("#c58b4a","metalness: 0.7")},l1));
+  el("a-sphere",{id:"led",radius:0.09,position:"-0.95 0.15 -0.4",material:glow("#ff4d4d",0.9),
+    animation:"property: material.emissiveIntensity; from: 0.1; to: 1.4; dir: alternate; loop: true; dur: 600"},l1);
+  el("a-cylinder",{radius:0.08,height:0.22,position:"0.95 0.16 -0.45",material:mat("#d9dcef")},l1);
+  label(l1,"Lag 1 · Materielt grundlag","#4fd1c5","-2.05 0.25 0",1.5,{size:66});
+  // Lag 2
+  const l2=el("a-entity",{id:"lag2",position:"0 1.75 0"},g);
+  el("a-box",{width:2.4,height:0.04,depth:1.5,material:"color: #4fd1c5; opacity: 0.15; transparent: true"},l2);
+  const blocks=[["gentag 10 gange","#4fd1c5",0.62],["hvis lys < 50","#7aa2ff",0.42],["sæt LED = tændt","#f2a541",0.22],["tæller = tæller + 1","#e8638c",0.02]];
+  blocks.forEach(([t,c,y],i)=>{
+    const x=-0.35+(i>0?0.15:0);
+    el("a-box",{width:1.3,height:0.18,depth:0.3,position:`${x} ${y+0.12} 0`,material:mat(c)},l2);
+    label(l2,t,"#0b0f1e",`${x} ${y+0.12} 0.155`,1.22,{bg:false,ink:"#0b0f1e",size:84,h:140});
+  });
+  const ai=el("a-entity",{id:"aiSpark",position:"0.85 0.55 0.2",animation:"property: rotation; to: 0 360 0; loop: true; dur: 6000; easing: linear"},l2);
+  el("a-octahedron",{radius:0.16,material:glow("#ffffff",0.8)},ai);
+  [0,120,240].forEach(a=>el("a-tetrahedron",{radius:0.07,position:`${Math.cos(a*Math.PI/180)*0.3} 0.05 ${Math.sin(a*Math.PI/180)*0.3}`,material:glow("#c9d1ff",0.6)},ai));
+  label(l2,"generativ AI som værktøj","#ffffff","0.95 1.0 0.2",1.1,{size:62});
+  label(l2,"Lag 2 · Programmering","#4fd1c5","-2.05 0.3 0",1.5,{size:66});
+  // Lag 3
+  const l3=el("a-entity",{id:"lag3",position:"0 3.0 0"},g);
+  el("a-icosahedron",{radius:0.42,position:"-0.75 0.3 0",material:"color: #9fb0ff; wireframe: true"},l3);
+  label(l3,"verden","#9fb0ff","-0.75 -0.25 0",0.6,{size:80});
+  const nodes=[{x:0.2,y:0.55},{x:0.75,y:0.65},{x:0.45,y:0.1},{x:1.05,y:0.2}];
+  [[0,1],[0,2],[1,3],[2,3]].forEach(([a,b])=>bar(l3,nodes[a],nodes[b],0.025,"#4fd1c5"));
+  nodes.forEach(n=>el("a-sphere",{radius:0.08,position:`${n.x} ${n.y} 0`,material:glow("#4fd1c5",0.6)},l3));
+  bar(l3,{x:-0.25,y:0.35},{x:0.08,y:0.4},0.02,"#a9b0d6");
+  label(l3,"model = forsimpling","#4fd1c5","0.6 -0.2 0",1.0,{size:70});
+  label(l3,"Lag 3 · Modellering","#4fd1c5","-2.05 0.3 0",1.5,{size:66});
+  // Datastrøm op gennem lagene
+  const df=el("a-entity",{id:"dataFlow",position:"1.35 0 0.55"},g);
+  el("a-cylinder",{radius:0.12,height:3.2,position:"0 2 0",material:"color: #4fd1c5; opacity: 0.12; transparent: true"},df);
+  for(let i=0;i<8;i++){
+    el("a-box",{width:0.08,height:0.08,depth:0.08,position:"0 0.5 0",material:"shader: flat; color: #4fd1c5",
+      animation:`property: position; from: 0 0.5 0; to: 0 3.6 0; loop: true; dur: 4000; delay: ${i*500}; easing: linear`},df);
+  }
+}
+
+/* ---------- Station C: Undersøgelse og stillingtagen ---------- */
+let mechEl, coverEl;
+function buildC(){
+  const g=stationBase("stC","c");
+  const ph=el("a-entity",{id:"phone",position:"0 1.45 0"},g);
+  el("a-box",{width:0.85,height:1.65,depth:0.1,material:mat("#0d1020","metalness: 0.5")},ph);
+  coverEl=el("a-plane",{width:0.78,height:1.55,position:"0 0 0.055",material:"shader: flat; transparent: true"},ph);
+  applyTexture(coverEl,canvasTexture(400,800,(c,w,h)=>{
+    c.fillStyle="#1b2142";c.fillRect(0,0,w,h);
+    const cols=["#e8638c","#f2a541","#4fd1c5","#7aa2ff"];
+    for(let i=0;i<5;i++){c.fillStyle="#262e58";roundRect(c,24,40+i*150,w-48,130,18);c.fill();
+      c.fillStyle=cols[i%4];roundRect(c,40,56+i*150,90,98,12);c.fill();
+      c.fillStyle="#a9b0d6";c.fillRect(150,70+i*150,180,16);c.fillRect(150,104+i*150,130,12);}
+  }));
+  // Inde i maskinen: tre slags algoritmer
+  mechEl=el("a-entity",{id:"mech",position:"0 3.05 0",scale:"0.001 0.001 0.001"},g);
+  const det=el("a-entity",{position:"-1.25 0 0"},mechEl);
+  for(let i=0;i<3;i++) for(let j=0;j<3;j++) el("a-box",{width:0.14,height:0.14,depth:0.14,position:`${(i-1)*0.2} ${(j-1)*0.2} 0`,material:mat("#dde3ff")},det);
+  label(det,"deterministisk","#dde3ff","0 -0.55 0",1.0,{size:72});
+  const adp=el("a-entity",{position:"0 0 0"},mechEl);
+  el("a-sphere",{radius:0.25,material:glow("#f2a541",0.5),
+    animation:"property: scale; from: 0.75 0.75 0.75; to: 1.2 1.2 1.2; dir: alternate; loop: true; dur: 1300; easing: easeInOutSine",
+    animation__c:"property: material.color; from: #f2a541; to: #4fd1c5; dir: alternate; loop: true; dur: 2600"},adp);
+  label(adp,"adaptiv","#f2a541","0 -0.55 0",0.9,{size:72});
+  const gen=el("a-entity",{position:"1.25 0 0"},mechEl);
+  el("a-torus-knot",{radius:0.18,"radius-tubular":0.04,p:3,q:7,material:glow("#e8638c",0.5),
+    animation:"property: rotation; to: 360 360 0; loop: true; dur: 5000; easing: linear"},gen);
+  const orbit=el("a-entity",{animation:"property: rotation; to: 0 0 360; loop: true; dur: 2500; easing: linear"},gen);
+  [0,90,180,270].forEach(a=>el("a-sphere",{radius:0.04,position:`${Math.cos(a*Math.PI/180)*0.36} ${Math.sin(a*Math.PI/180)*0.36} 0`,material:"shader: flat; color: #e8638c"},orbit));
+  label(gen,"generativ","#e8638c","0 -0.55 0",0.9,{size:72});
+  // Mennesker omkring fænomenet
+  const pp=el("a-entity",{id:"people"},g);
+  const tones=["#8f7a6a","#c8a27c","#6b5747","#a3876f","#d4b593","#7d6b5d"];
+  [100,140,180,220,260,320].forEach((deg,i)=>{
+    const a=deg*Math.PI/180, r=1.75, f=el("a-entity",{position:`${Math.sin(a)*r} 0.12 ${Math.cos(a)*r}`,rotation:`0 ${deg+180} 0`,
+      animation:`property: position; to: ${Math.sin(a)*r} 0.2 ${Math.cos(a)*r}; dir: alternate; loop: true; dur: ${1400+i*230}; easing: easeInOutSine`},pp);
+    el("a-cylinder",{radius:0.15,height:0.8,position:"0 0.4 0",material:mat("#3d4677")},f);
+    el("a-sphere",{radius:0.14,position:"0 0.95 0",material:mat(tones[i])},f);
+  });
+  // Vægt: stillingtagen
+  const sc=el("a-entity",{id:"scale",position:"-1.85 0 1.0"},g);
+  el("a-cylinder",{radius:0.04,height:1.3,position:"0 0.65 0",material:mat("#a9b0d6","metalness: 0.6")},sc);
+  const beam=el("a-entity",{position:"0 1.3 0",animation:"property: rotation; from: 0 0 -12; to: 0 0 12; dir: alternate; loop: true; dur: 2400; easing: easeInOutSine"},sc);
+  el("a-box",{width:1.1,height:0.04,depth:0.04,material:mat("#a9b0d6","metalness: 0.6")},beam);
+  [-0.5,0.5].forEach(x=>{el("a-cylinder",{radius:0.006,height:0.3,position:`${x} -0.15 0`,material:mat("#a9b0d6")},beam);
+    el("a-cylinder",{radius:0.18,height:0.03,position:`${x} -0.3 0`,material:mat("#e8638c")},beam);});
+  label(sc,"stillingtagen","#e8638c","0 1.75 0",1.0,{size:72});
+}
+
+/* ---------- Fremhævning ---------- */
+const HL_IDS=["core","coreSphere","orbits","beams","stA","spiral","stateCube","stB","lag1","lag2","lag3","aiSpark","dataFlow","stC","phone","people","mech","scale"];
+let ring;
+function highlight(ids){
+  if(!ring){ ring=el("a-ring",{"radius-inner":0.55,"radius-outer":0.62,rotation:"-90 0 0",material:"shader: flat; color: #ffffff; opacity: 0.9; transparent: true; side: double",
+    animation:"property: scale; from: 0.9 0.9 0.9; to: 1.15 1.15 1.15; dir: alternate; loop: true; dur: 700"}); }
+  HL_IDS.forEach(id=>{const e=document.getElementById(id); if(e) e.removeAttribute("animation__hl");});
+  const big=["core","stA","stB","stC","beams","people"];
+  ids.forEach(id=>{
+    const e=document.getElementById(id); if(!e || big.includes(id) || id==="mech" || id==="stateCube" || id==="coreSphere") return;
+    const s=e.getAttribute("scale")||{x:1,y:1,z:1};
+    e.setAttribute("animation__hl",`property: scale; from: ${s.x} ${s.y} ${s.z}; to: ${s.x*1.08} ${s.y*1.08} ${s.z*1.08}; dir: alternate; loop: true; dur: 650; easing: easeInOutSine`);
+  });
+  // ring under første synlige mål
+  const first=document.getElementById(ids[0]);
+  if(first && first.object3D){
+    const v=new THREE.Vector3(); first.object3D.getWorldPosition(v);
+    ring.setAttribute("position",`${v.x} 0.14 ${v.z}`); ring.setAttribute("visible", !big.includes(ids[0]));
+  }
+}
+
+/* ---------- Tilstand og navigation ---------- */
+let cur=-1, ttsOn=true, daVoice=null;
+const $=id=>document.getElementById(id);
+function pickVoice(){
+  const vs=speechSynthesis.getVoices(); const da=vs.filter(v=>/^da/i.test(v.lang));
+  daVoice=da.find(v=>/natural|online|neural/i.test(v.name))||da[0]||null;
+  $("voiceNote").textContent = !("speechSynthesis" in window) ? "Din browser kan ikke læse op. Teksten vises stadig."
+    : daVoice ? `Stemme: ${daVoice.name}` : vs.length ? "Ingen dansk stemme fundet i browseren. Edge har naturlige danske stemmer." : "";
+}
+if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
+/* Færdige lydfiler (fx ElevenLabs) pr. trin: AUDIO[trinnummer] = "url". Findes en fil, bruges den i stedet for browserstemmen. */
+const AUDIO = {};
+let player=null;
+function speak(t){
+  if(player){ player.pause(); player=null; }
+  if(!ttsOn) return;
+  if(AUDIO[cur]){ if("speechSynthesis" in window) speechSynthesis.cancel(); player=new Audio(AUDIO[cur]); player.play().catch(()=>{}); return; }
+  if(!("speechSynthesis" in window)) return;
+  speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang="da-DK"; if(daVoice) u.voice=daVoice; u.rate=1.0;
+  speechSynthesis.speak(u);
+}
+function moveRig(area){
+  const vp=viewpoint(area), rig=$("rig");
+  rig.setAttribute("animation__p",`property: position; to: ${vp.x} 0 ${vp.z}; dur: 1600; easing: easeInOutCubic`);
+  const r=rig.getAttribute("rotation"); let to=vp.yaw; while(to-r.y>180) to-=360; while(to-r.y<-180) to+=360;
+  rig.setAttribute("animation__r",`property: rotation; to: 0 ${to} 0; dur: 1600; easing: easeInOutCubic`);
+  // nulstil hovedets drej på skærm, så modellen er i synsfeltet
+  const cam=$("cam"); const lc=cam.components["look-controls"];
+  if(lc && !$("scene").is("vr-mode")){ lc.pitchObject.rotation.x=0; lc.yawObject.rotation.y=0; }
+}
+function vrButtons(){
+  const labels={prev:"Forrige",next:"Næste",tts: ttsOn?"Lyd: til":"Lyd: fra"};
+  document.querySelectorAll(".vrbtn").forEach(b=>applyTexture(b,labelTex(labels[b.dataset.action],"#eef1ff",{w:520,h:200,size:72})));
+}
+function go(i){
+  i=Math.max(0,Math.min(STEPS.length-1,i)); const s=STEPS[i], prevArea=cur>=0?STEPS[cur].area:null; cur=i;
+  const a=AREAS[s.area];
+  $("chip").textContent=a.name; $("chip").style.color=a.color;
+  $("count").textContent=`${i+1} / ${STEPS.length}`;
+  $("title").textContent=s.title;
+  $("bodyText").innerHTML=""; const p=document.createElement("p"); p.textContent=s.text; $("bodyText").appendChild(p);
+  $("prev").disabled=i===0; $("next").textContent= i===STEPS.length-1 ? "Forfra" : "Næste";
+  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.area===s.area));
+  if(s.area!==prevArea || (s.area==="hub" && (i===0||i===22))) moveRig(s.area);
+  $("beams").setAttribute("visible",!!s.beams);
+  const reveal=!!s.reveal;
+  mechEl.setAttribute("animation__rv",`property: scale; to: ${reveal?"1 1 1":"0.001 0.001 0.001"}; dur: 900; easing: easeOutBack`);
+  coverEl.setAttribute("animation__rv",`property: position; to: ${reveal?"-0.95 0 0.055":"0 0 0.055"}; dur: 900; easing: easeInOutCubic`);
+  setTimeout(()=>highlight(s.hl),reveal?950:50);
+  applyTexture($("vrPanel"),panelTex(s,i));
+  speak(s.title+". "+s.text);
+}
+$("prev").onclick=()=>go(cur-1);
+$("next").onclick=()=>go(cur===STEPS.length-1?0:cur+1);
+$("replay").onclick=()=>{const s=STEPS[cur]; const was=ttsOn; ttsOn=true; speak(s.title+". "+s.text); ttsOn=was;};
+function setTts(on){ ttsOn=on; $("tts").setAttribute("aria-pressed",on); $("tts").textContent=on?"Oplæsning til":"Oplæsning fra"; if(!on){ if("speechSynthesis" in window) speechSynthesis.cancel(); if(player){player.pause();player=null;} } vrButtons(); }
+$("tts").onclick=()=>setTts(!ttsOn);
+document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>go(+b.dataset.goto));
+document.addEventListener("keydown",e=>{ if($("start").hidden){ if(e.key==="ArrowRight") go(cur+1); if(e.key==="ArrowLeft") go(cur-1);} });
+
+/* ---------- Start ---------- */
+function begin(withSound){ $("start").hidden=true; setTts(withSound); go(0); }
+const scene=$("scene");
+function init(){
+  buildCore(); buildA(); buildB(); buildC(); vrButtons();
+  document.querySelectorAll(".vrbtn").forEach(b=>b.addEventListener("click",()=>{
+    const a=b.dataset.action; if(a==="prev") go(cur-1); else if(a==="next") go(cur===STEPS.length-1?0:cur+1); else setTts(!ttsOn);
+  }));
+  scene.addEventListener("click",e=>{ const t=e.target; if(t && t.dataset && t.dataset.goto!==undefined && !t.closest("#nav")) go(+t.dataset.goto); });
+  scene.addEventListener("enter-vr",()=>{ $("vrPanelWrap").setAttribute("visible",true); $("card").hidden=true; });
+  scene.addEventListener("exit-vr",()=>{ $("vrPanelWrap").setAttribute("visible",false); $("card").hidden=false; });
+  $("go").onclick=()=>begin(true); $("goSilent").onclick=()=>begin(false);
+}
+const ready=()=> (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(init);
+if(scene.hasLoaded) ready(); else scene.addEventListener("loaded",ready);
+</script>
+</body>
+</html>

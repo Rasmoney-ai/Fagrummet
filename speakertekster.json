@@ -1,0 +1,122 @@
+[
+  {
+    "nr": 1,
+    "fil": "audio/01.mp3",
+    "tekst": "Velkommen. Teknologiforståelse bliver et nyt toårigt praktisk/musisk valgfag fra skoleåret 2027/28, i 7.-8. eller 8.-9. klasse. Det, du ser her, bygger på andet udkast til fagplanen fra juni 2026. Skolerne i udviklingsprogrammet afprøver udkastet i efteråret, og derefter justerer fagudvalget det."
+  },
+  {
+    "nr": 2,
+    "fil": "audio/02.mp3",
+    "tekst": "Fagets formål. Faget skal give eleverne praktiske kundskaber og gøre dem i stand til at handle myndigt og engageret over for de digitale teknologier, de møder. Eleverne arbejder praktisk og kreativt med at udtrykke sig både med og om digitale teknologier, og de inddrages i valg af indhold, så undervisningen tager afsæt i deres egne erfaringer."
+  },
+  {
+    "nr": 3,
+    "fil": "audio/03.mp3",
+    "tekst": "Grundantagelsen. Digitale teknologier er ikke neutrale. De åbner nye måder at handle og udtrykke sig på, men de former også, hvordan mennesker tænker og handler. Hver teknologi er præget af en kultur og en historie, af bestemte intentioner og af et materielt grundlag."
+  },
+  {
+    "nr": 4,
+    "fil": "audio/04.mp3",
+    "tekst": "Tre erkendeformer. Fagets karakter samles i tre måder at forstå på. Man forstår ved selv at skabe digitale teknologier: den ravgule form. Man forstår ved at omskabe eller modvirke det, andre har skabt: den rosa form. Og man forstår ved at nytænke og forestille sig alternativer: den turkise trådform. De kredser alle om den samme kerne."
+  },
+  {
+    "nr": 5,
+    "fil": "audio/05.mp3",
+    "tekst": "Tre indholdsområder. Andet udkast har tre indholdsområder: Digital kreativitet og design, Programmering og modellering samt Undersøgelse og stillingtagen. Råudkastet fra september 2025 havde fire. Digitale fænomener er ikke længere et område for sig. Nu er de det, eleverne undersøger i det tredje område. Lysstrålerne viser vej til de tre stationer."
+  },
+  {
+    "nr": 6,
+    "fil": "audio/06.mp3",
+    "tekst": "Digital kreativitet og design. Her skaber eleverne digitale artefakter, produkter og kreative udtryk, der betyder noget for dem selv, for andre eller for verden. Teknologi ses her som noget, mennesker skaber ud fra egne intentioner."
+  },
+  {
+    "nr": 7,
+    "fil": "audio/07.mp3",
+    "tekst": "Kreative processer. Processerne spænder fra design, hvor man løser et problem eller udfylder et behov, til mere åbne tilgange, hvor man udforsker, eksperimenterer eller provokerer. Undervisningen omfatter designprocesser, innovation og entreprenørskab, undersøgelse af teknologiens materielle betingelser og æstetiske produkter, der siger noget om teknologiens rolle."
+  },
+  {
+    "nr": 8,
+    "fil": "audio/08.mp3",
+    "tekst": "Iteration. Spiralen viser iteration. Hver afprøvning giver erfaringer, der former næste version. Prototypen bliver ikke kun mere færdig. Intentionen bliver også skarpere undervejs, fordi eleverne tilpasser den ud fra det, de opdager."
+  },
+  {
+    "nr": 9,
+    "fil": "audio/09.mp3",
+    "tekst": "Kreative metoder. Eleverne indrammer processen: hvilken kontekst artefaktet skal virke i, hvilke intentioner de arbejder ud fra, hvilke ressourcer der er, og hvordan de griber det an. De bruger kreativitetsmetoder som spekulation og benspænd, og de begrunder deres valg ud fra egne afprøvninger."
+  },
+  {
+    "nr": 10,
+    "fil": "audio/10.mp3",
+    "tekst": "Et digitalt benspænd. Ét benspænd hører særligt til det digitale materiale. Artefaktet skal kunne skifte mellem forskellige tilstande ud fra det input, det får fra omgivelserne. Prøv det selv: klik på terningen til højre, og se den skifte tilstand."
+  },
+  {
+    "nr": 11,
+    "fil": "audio/11.mp3",
+    "tekst": "Målet for området. Eleverne arbejder iterativt med at skabe digitale artefakter og andre kreative produkter. I arbejdet indgår afprøvninger, udvikling og tilpasning af intentioner, brug af kreative metoder og argumentation for egne valg."
+  },
+  {
+    "nr": 12,
+    "fil": "audio/12.mp3",
+    "tekst": "Programmering og modellering. Her opøver eleverne håndværket i selv at skabe digitale teknologier og får indsigt i teknologiens materielle grundlag. Området er bygget af tre konstruktive lag, der bygger videre på hinanden. Data og algoritmer går igen på alle tre lag. Se strømmen af data op gennem tårnet."
+  },
+  {
+    "nr": 13,
+    "fil": "audio/13.mp3",
+    "tekst": "Lag 1: Materielt grundlag. Nederst ligger elektronikken. Eleverne afprøver programmerbar elektronik og bruger sensorer, der tager input fra brugere eller verden og giver output tilbage som signaler og symboler. De får praktiske erfaringer med, hvordan digitale data ser ud, hvordan de laves, og hvordan de gemmes."
+  },
+  {
+    "nr": 14,
+    "fil": "audio/14.mp3",
+    "tekst": "Lag 2: Programmering og computerforståelse. I midten arbejder eleverne med logikken bag teknologien: algoritmer, variable, kontrolstrukturer og simple datatyper som tal, tekst og sand eller falsk. De programmerer både analogt og i et udvalgt sprog. De øver fejlfinding af både logiske fejl og syntaksfejl, og fejl ses som naturlige og uundgåelige."
+  },
+  {
+    "nr": 15,
+    "fil": "audio/15.mp3",
+    "tekst": "Generativ AI som værktøj. Nyt i udkastet: programmering med generativ kunstig intelligens som værktøj er en del af kernestoffet. Eleverne undersøger også, hvilken indsigt i programmeringsvalg og design man får, når man programmerer på den måde. Tag det med til prøveworkshoppen, for de nuværende praktisk-musiske prøver forbyder chatbots."
+  },
+  {
+    "nr": 16,
+    "fil": "audio/16.mp3",
+    "tekst": "Lag 3: Modellering. Øverst beskriver eleverne de forhold i verden, som programmet håndterer. Programmer bygger altid på modeller, og modeller er aldrig neutrale. Eleverne tegner diagrammer, arbejder med datagørelse, altså forsimplinger af verden, og sammenligner deres modeller med verden for at finde perspektiver og bias."
+  },
+  {
+    "nr": 17,
+    "fil": "audio/17.mp3",
+    "tekst": "Målene for området. Området har to mål. Eleverne bruger programmering som sprog og værktøj til at skabe digitale artefakter, og de bruger programmeringsbegreberne, når de afprøver løsninger og diskuterer fejl. Og eleverne undersøger modellers perspektiver og bias ved at tegne diagrammer og afprøve samspillet mellem egne modeller og verden."
+  },
+  {
+    "nr": 18,
+    "fil": "audio/18.mp3",
+    "tekst": "Undersøgelse og stillingtagen. Her undersøger eleverne samspillet mellem mennesker og digitale teknologier i form af digitale fænomener. Udgangspunktet er primært elevernes eget hverdagsliv, også fænomener med kunstig intelligens. De møder også fænomener uden for deres egen erfaringshorisont."
+  },
+  {
+    "nr": 19,
+    "fil": "audio/19.mp3",
+    "tekst": "Brug og brugskontekst. Først de menneskelige sider. Eleverne kortlægger digitale fænomener i deres hverdag. De laver brugsstudier af afstanden mellem den brug, udviklerne havde tænkt sig, og den brug, der faktisk sker. Og de eksperimenterer med alternative teknologier og med ikke at bruge teknologien."
+  },
+  {
+    "nr": 20,
+    "fil": "audio/20.mp3",
+    "tekst": "Teknologiens rolle og intention. Så åbner eleverne teknologien. Hvordan er den bygget, og hvordan spiller data, algoritmer og brug sammen? De afmaskerer algoritmer og undersøger, om de er deterministiske, adaptive eller generative. De undersøger også datagørelse, og om der laves digitale dobbeltgængere af brugerne."
+  },
+  {
+    "nr": 21,
+    "fil": "audio/21.mp3",
+    "tekst": "Stillingtagen. Til sidst kobles de praktiske undersøgelser til principielle diskussioner: aktuelle samfundsdebatter, teknologiforestillinger og historiske eksempler samt etiske og filosofiske spørgsmål. Stillingtagen opbygges gradvist, og den skal føre til nye handlinger og eksperimenter."
+  },
+  {
+    "nr": 22,
+    "fil": "audio/22.mp3",
+    "tekst": "Målene for området. Området har to mål. Eleverne undersøger digitale fænomener i deres eget hverdagsliv. Og de tager gradvist stilling til fænomenernes betydning for mennesker og verden, på baggrund af egne praktiske undersøgelser og perspektiver, der ligger uden for deres egne erfaringer."
+  },
+  {
+    "nr": 23,
+    "fil": "audio/23.mp3",
+    "tekst": "Sammenhængen. De tre områder ser på det samme samspil mellem digitale teknologier, mennesker og verden, men fra hver sin vinkel. De supplerer hinanden. Et forløb kan have særligt fokus på ét område, men trækker ofte på de andre. I alt har faget kun fem mål."
+  },
+  {
+    "nr": 24,
+    "fil": "audio/24.mp3",
+    "tekst": "Det, der mangler endnu. Afsnittet om undervisning og evaluering er stadig en pladsholder i udkastet. Det afprøves først i dansk, matematik og historie. Prøven, som efter planen holdes første gang i 2028/29, udvikles altså til en fagplan, hvor evalueringsafsnittet endnu ikke er skrevet. Rundvisningen slutter her."
+  }
+]
