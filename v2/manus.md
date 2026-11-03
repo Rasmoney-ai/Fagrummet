@@ -190,7 +190,7 @@ Området har to mål. Det første er, at eleverne bruger programmering som sprog
 
 *Scene:* Målpladen deler sig i to. Hver halvdel lyser op ved de etager, den hører til.
 
-### Delrum B1 · Kælderen (Materielt grundlag)
+### Delrum B1 · Kabelrummet (Materielt grundlag)
 
 *Scenografi:* Et elektronikværksted med synlige kabler i loftet. Der er en stor gennemskåret mikrocontroller at gå rundt om og en væg med sensorer. Et vindue viser kabler, der fører ud af bygningen.
 
@@ -252,7 +252,7 @@ Fjerde punkt er fejlfinding. Fagplanen skelner mellem logiske fejl og syntaksfej
 
 *Scene:* To programmer kører. Det ene stopper med en rød markering, og det andet kører, men figuren går den forkerte vej.
 
-**B2.5 · Generativ AI som programmeringsværktøj**
+**B2.5 · Generativ kunstig intelligens som værktøj**
 
 Femte punkt er programmering med generativ kunstig intelligens som værktøj. Fagplanen tilføjer, at eleverne skal undersøge, hvilken indsigt i programmeringsvalg og design man kan få gennem den måde at programmere på. Det handler ikke kun om at få koden skrevet. Et eksempel kunne være, at eleverne beder en chatbot om et program, gennemgår det linje for linje og sammenligner det med deres egen løsning. Hvilke valg traf modellen for dem?
 

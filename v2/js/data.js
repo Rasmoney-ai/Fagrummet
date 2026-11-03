@@ -15,7 +15,7 @@ export const ROOMS = {
   "a1":     { name: "Værkstedet", sub: "Kreative processer", area: "a", parent: "hal-a", children: [], spawn: [0, 5, 0] },
   "a2":     { name: "Metodelaboratoriet", sub: "Kreative metoder", area: "a", parent: "hal-a", children: [], spawn: [0, 5, 0] },
   "hal-b":  { name: "Tårnets fod", sub: "Programmering og modellering", area: "b", parent: "forhal", children: ["b1", "b2", "b3"], spawn: [0, 5, 0] },
-  "b1":     { name: "Kælderen", sub: "Materielt grundlag", area: "b", parent: "hal-b", children: [], spawn: [0, 5, 0] },
+  "b1":     { name: "Kabelrummet", sub: "Materielt grundlag", area: "b", parent: "hal-b", children: [], spawn: [0, 5, 0] },
   "b2":     { name: "Maskinrummet", sub: "Programmering og computerforståelse", area: "b", parent: "hal-b", children: [], spawn: [0, 5, 0] },
   "b3":     { name: "Tegnestuen", sub: "Modellering", area: "b", parent: "hal-b", children: [], spawn: [0, 5, 0] },
   "hal-c":  { name: "Gaden", sub: "Undersøgelse og stillingtagen", area: "c", parent: "forhal", children: ["c1", "c2", "c3"], spawn: [0, 5, 0] },

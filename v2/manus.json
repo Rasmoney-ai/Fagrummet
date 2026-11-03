@@ -5,7 +5,7 @@
   "room": "forhal",
   "title": "Velkommen",
   "exit": false,
-  "text": "Velkommen til Fagrummet. Teknologiforståelse bliver et toårigt praktisk-musisk valgfag i 7.-8. eller 8.-9. klasse fra skoleåret 2027/28. Det, du hører, bygger på andet udkast til fagplanen fra juni 2026. Skoler i udviklingsprogrammet afprøver udkastet i efteråret 2026, og derefter justerer fagudvalget det. Fagplanen kan altså stadig ændre sig. Du kan bevæge dig frit mellem rummene, og du kan altid vende tilbage hertil.",
+  "text": "Velkommen til Fagrummet. Teknologiforståelse bliver et nyt praktisk-musisk valgfag, der løber over to år, i syvende og ottende eller i ottende og niende klasse. Fagplanen træder i kraft i skoleåret, der begynder i sommeren 2027. Det, du hører, bygger på andet udkast til fagplanen fra juni 2026. Skoler i udviklingsprogrammet afprøver udkastet i efteråret 2026, og derefter justerer fagudvalget det. Fagplanen kan altså stadig ændre sig. Du kan bevæge dig frit mellem rummene, og du kan altid vende tilbage hertil.",
   "scene": "Kernen lyser op, og portene står i halvmørke."
  },
  {
@@ -14,7 +14,7 @@
   "room": "forhal",
   "title": "Fagets formål",
   "exit": false,
-  "text": "Fagplanen siger, at faget skal fremme elevernes praktiske kundskaber og give dem forudsætninger for at agere myndigt og engageret over for de digitale teknologier, de møder i verden. Genstandsfeltet er digitale teknologier i elevernes liv og i verden omkring dem. Eleverne arbejder praktisk og kreativt med at udtrykke sig både med og om teknologierne, og de inddrages i valget af indhold, så det tager afsæt i deres egne erfaringer. Målet er deltagelse i og medansvar for et frit og demokratisk samfund med digitale teknologier.",
+  "text": "Fagplanen siger, at faget skal fremme elevernes praktiske kundskaber. Det skal give dem forudsætninger for at agere myndigt og engageret over for de digitale teknologier, de møder i verden. Genstandsfeltet er digitale teknologier i elevernes liv og i verden omkring dem. Eleverne arbejder praktisk og kreativt med at udtrykke sig både med og om teknologierne, og de inddrages i valget af indhold, så det tager afsæt i deres egne erfaringer. Faget forbereder dermed eleverne til deltagelse i og medansvar for et frit og demokratisk samfund med digitale teknologier.",
   "scene": "Ordene \"med\" og \"om\" står på hver sin side af kernen."
  },
  {
@@ -23,7 +23,7 @@
   "room": "forhal",
   "title": "Et praktisk fag med mange rødder",
   "exit": false,
-  "text": "Teknologiforståelse er et praktisk fag om samspillet mellem mennesker og digitale teknologier, og om hvordan de påvirker hinanden. Fagplanen siger, at faget samler kernestof fra natur-, samfunds- og humanvidenskaberne og fra tekniske og æstetiske håndværksfag. I undervisningen bliver det til én sammenhængende faglighed. Det betyder, at en elev kan lodde en sensor, diskutere privatliv og skitsere et design i samme forløb, uden at det er tre forskellige fag.",
+  "text": "Teknologiforståelse er et praktisk fag om samspillet mellem mennesker og digitale teknologier, og om hvordan de påvirker hinanden. Fagplanen siger, at faget samler kernestof fra naturvidenskab, samfundsvidenskab og humanvidenskab og fra tekniske og æstetiske håndværksfag. I undervisningen bliver det til én sammenhængende faglighed. Et eksempel kunne være, at en elev lodder en sensor, diskuterer privatliv og skitserer et design i samme forløb, uden at det er tre forskellige fag.",
   "scene": "Fem tynde rødder vokser op ad kernen og fletter sig sammen."
  },
  {
@@ -32,7 +32,7 @@
   "room": "forhal",
   "title": "Grundantagelsen",
   "exit": false,
-  "text": "Fagets grundantagelse er, at digitale teknologier ikke er neutrale. De giver nye muligheder for at handle og udtrykke sig, og de muligheder kan bruges kreativt. Men teknologierne former også, hvordan vi tænker og handler, og derfor kræver de kritisk omtanke. Fagplanen nævner fire ting, der præger enhver teknologi: en bestemt kultur, en historie, nogle intentioner og et materielt grundlag. Det er de fire facetter, du ser åbne sig i kernen.",
+  "text": "Fagets grundantagelse er, at digitale teknologier ikke er neutrale. De giver nye muligheder for at handle og udtrykke sig, og de muligheder kan bruges kreativt og konstruktivt. Men teknologierne former også, hvordan vi tænker og handler, og derfor kræver de kritisk omtanke. Fagplanen nævner fire ting, der præger enhver teknologi: en bestemt kultur, en historie, nogle intentioner og et materielt grundlag. Det er de fire facetter, du ser åbne sig i kernen, og tilsammen skaber de både muligheder og udfordringer.",
   "scene": "Kernen åbner fire facetter med teksterne kultur, historie, intentioner og materielt grundlag."
  },
  {
@@ -50,7 +50,7 @@
   "room": "forhal",
   "title": "Tre porte",
   "exit": false,
-  "text": "Fagets indhold er delt i tre indholdsområder. Digital kreativitet og design ser teknologi som noget, mennesker skaber ud fra egne intentioner. Programmering og modellering ser teknologi som et materielt grundlag, der indlejrer og forstærker menneskelige perspektiver. Undersøgelse og stillingtagen ser teknologi som fænomener, hvor mennesker og teknik spiller sammen. De tre områder supplerer hinanden. Et forløb kan have fokus på ét af dem, men trækker ofte på de andre. Vælg en port.",
+  "text": "Fagets indhold er delt i tre indholdsområder. Digital kreativitet og design ser teknologi som noget, mennesker skaber ud fra egne intentioner. Programmering og modellering ser teknologi som et materielt grundlag, der former, indlejrer og forstærker menneskelige perspektiver. Undersøgelse og stillingtagen ser teknologi som fænomener, hvor mennesker og teknik spiller sammen. De tre områder supplerer hinanden. Et forløb kan have fokus på ét af dem, men trækker ofte på de andre. Vælg en port.",
   "scene": "Portene åbner sig én ad gangen og får lys i deres farve, når de bliver nævnt."
  },
  {
@@ -59,7 +59,7 @@
   "room": "hal-a",
   "title": "Ind i området",
   "exit": false,
-  "text": "Fagplanen siger, at eleverne her arbejder kreativt med at skabe digitale artefakter. Det kan være produkter og kreative udtryk, der har betydning for dem selv, for andre mennesker eller for verden. Teknologi ses som noget, mennesker skaber ud fra egne intentioner. Mikkel Hjorth fra fagudvalget peger på en vigtig konsekvens for læreren: man skal kunne afgive kontrol over, hvad eleverne ender med at lave. Området har to dele. Til venstre ligger processerne, og til højre ligger metoderne.",
+  "text": "Fagplanen siger, at eleverne her arbejder kreativt med at skabe digitale artefakter. Det kan være produkter og kreative udtryk, der har betydning for dem selv, for andre mennesker eller for verden. Teknologi ses som noget, mennesker skaber ud fra egne intentioner. Mikkel Hjorth, der sidder i fagudvalget, peger på, at læreren derfor må kunne give slip på kontrollen med, hvad eleverne ender med at lave. Området har to dele med hver sin dør: Værkstedet for processerne og Metodelaboratoriet for metoderne.",
   "scene": "Prototyperne på bordene lyser kort op én efter én."
  },
  {
@@ -68,7 +68,7 @@
   "room": "hal-a",
   "title": "Målet for området",
   "exit": true,
-  "text": "Området har ét mål. Fagplanen siger, at eleverne arbejder iterativt med at skabe digitale artefakter og andre kreative produkter. I arbejdet indgår afprøvninger, udvikling og tilpasning af intentioner, brug af kreative metoder og argumentation for egne valg. Læg mærke til, at målet ikke handler om et færdigt produkt. Det handler om arbejdet frem mod produktet, og om at eleven kan begrunde sine valg.",
+  "text": "Området har ét mål. Fagplanen siger, at eleverne arbejder iterativt med at skabe digitale artefakter og andre kreative produkter. I arbejdet indgår afprøvninger, udvikling og tilpasning af intentioner, brug af kreative metoder og argumentation for egne valg. Læg mærke til, at målet lægger vægt på arbejdet frem mod produktet, og på at eleven kan begrunde sine valg.",
   "scene": "Målpladen lyser op. Fire nøgleord fremhæves: iterativt, intentioner, metoder, argumentation."
  },
  {
@@ -77,7 +77,7 @@
   "room": "a1",
   "title": "Kreative processer",
   "exit": false,
-  "text": "Fagplanen beskriver et spænd. I den ene ende står design, hvor eleverne skaber noget for at udfylde et behov eller løse et problem. I den anden ende står mere åbne tilgange, hvor de udforsker, eksperimenterer eller provokerer. Begge ender giver to ting: eleverne lærer selv at skabe artefakter eller påvirke fænomener, og de får øje for de designvalg, andre har truffet i de teknologier, de bruger hver dag.",
+  "text": "Fagplanen nævner to slags processer. Den ene er design, hvor eleverne skaber noget for at udfylde et behov eller løse et problem. Den anden er mere åbne tilgange, hvor de udforsker, eksperimenterer eller provokerer. Begge giver to ting. Eleverne lærer selv at skabe artefakter eller påvirke fænomener. Og de får øje for de designvalg, andre har truffet i eksisterende teknologier.",
   "scene": "En lang skala på gulvet går fra \"løse et problem\" til \"provokere\". De fire stationer står på hver deres sted langs skalaen."
  },
  {
@@ -86,7 +86,7 @@
   "room": "a1",
   "title": "Designprocesser",
   "exit": false,
-  "text": "Første punkt er designprocesser, hvor eleverne skaber digitale artefakter, der kan udfylde et behov eller løse et problem for mennesker eller verden. Det centrale er, at nogen andre end eleven selv har brug for løsningen. Et eksempel kunne være en lille enhed, der viser de yngste elever, om der er plads i makerspacet. Eleverne interviewer brugerne, bygger en prototype og prøver den af hos dem.",
+  "text": "Første punkt er designprocesser, hvor eleverne skaber digitale artefakter, der kan udfylde et behov eller løse et problem for mennesker eller verden. Det centrale er, at artefaktet skal udfylde et virkeligt behov, og at eleverne tager udgangspunkt i dem, der skal bruge det. Et eksempel kunne være en lille enhed, der viser de yngste elever, om der er plads i skolens værksted. Eleverne interviewer brugerne, bygger en prototype og prøver den af hos dem.",
   "scene": "Et brugerkort, en skitse og en prototype står i rækkefølge på bordet."
  },
  {
@@ -95,7 +95,7 @@
   "room": "a1",
   "title": "Innovation og entreprenørskab",
   "exit": false,
-  "text": "Andet punkt er innovation og entreprenørskab i relation til samfundsproblemer eller erhvervslivet. Her rækker processen ud af skolen. Eleverne spørger, hvem idéen skaber værdi for, og hvordan den kunne blive til noget i virkeligheden. Et eksempel kunne være, at en klasse udvikler en prototype til en lokal forening og præsenterer den for foreningen. Bagefter skal eleverne vurdere, hvilke behov idéen dækker, og hvilke den overser.",
+  "text": "Andet punkt er innovation og entreprenørskab i relation til samfundsproblemer eller erhvervslivet. Her rækker processen ud af skolen. Eleverne spørger, hvem idéen skaber værdi for, og hvordan den kunne blive til noget i virkeligheden. Et eksempel kunne være, at en klasse udvikler en prototype til en lokal forening eller virksomhed og præsenterer den for dem. Bagefter skal eleverne vurdere, hvilke behov idéen dækker, og hvilke den overser.",
   "scene": "En dør på stationen åbner sig ud mod en lille bymodel med en forening, en butik og en institution."
  },
  {
@@ -104,7 +104,7 @@
   "room": "a1",
   "title": "Teknologiens materielle betingelser",
   "exit": false,
-  "text": "Tredje punkt er at undersøge teknologiens materielle betingelser og udtryksmuligheder gennem kreative processer og eksperimenter. Hjorth kalder det tinkering: man finder ud af, hvad materialet kan, ved at lege med det. Hvad sker der, når ledende tråd bliver syet ind i stof? Hvor langt kan en sensor mærke? Her er der ingen kunde. Spørgsmålet er, hvad materialet kan bruges til, og hvad det ikke kan.",
+  "text": "Tredje punkt er at undersøge teknologiens materielle betingelser og udtryksmuligheder gennem kreative processer og eksperimenter. Man finder ud af, hvad materialet kan, ved at lege og eksperimentere med det. Et eksempel kunne være at undersøge, hvad der sker, når ledende tråd bliver syet ind i stof, eller hvor langt en sensor kan mærke. Her er der ingen kunde. Spørgsmålet er, hvad materialet kan bruges til, og hvad det ikke kan.",
   "scene": "En kasse med komponenter. Når man klikker på en komponent, viser en lille animation, hvad den kan gøre."
  },
  {
@@ -113,7 +113,7 @@
   "room": "a1",
   "title": "Æstetiske produkter med noget på hjerte",
   "exit": false,
-  "text": "Fjerde punkt er kreative eller æstetiske digitale produkter, der viser noget om teknologiens muligheder, rolle eller betydning. Det er den åbne ende af spændet, hvor digital kunst og kritisk eller spekulativt design hører hjemme. Produktet skal ikke løse et problem. Det skal få beskueren til at tænke. Et eksempel kunne være en lampe, der bliver svagere, jo mere skærmtid der registreres i rummet.",
+  "text": "Fjerde punkt er kreative eller æstetiske digitale produkter, der viser noget om teknologiens muligheder, rolle eller betydning. Det ligger tæt på de mere åbne tilgange, hvor for eksempel digital kunst og kritisk eller spekulativt design hører hjemme. Produktet behøver ikke løse et problem, men det skal vise noget om teknologien og få beskueren til at tænke. Et eksempel kunne være en lampe, der bliver svagere, jo mere skærmtid der registreres i rummet.",
   "scene": "En lampe på stationen dæmpes langsomt, mens en telefon ved siden af lyser stærkere."
  },
  {
@@ -122,7 +122,7 @@
   "room": "a2",
   "title": "Kreative metoder",
   "exit": false,
-  "text": "Fagplanen siger, at eleverne bruger én eller flere kreative metoder i deres arbejde. De taler sammen om deres proces og om, hvad metoderne betyder for den. De begrunder deres valg, løsninger og intentioner ud fra egne undersøgelser eller afprøvninger. Metoderne er altså ikke bare et redskab. De skal kunne forklares. Rummet har fire stationer: indramning, afprøvning, kreativitetsmetoder og digitale benspænd.",
+  "text": "Fagplanen siger, at eleverne bruger én eller flere kreative metoder i deres arbejde. De taler sammen om deres proces og om, hvad metoderne betyder for den. De begrunder deres valg, løsninger og intentioner ud fra egne undersøgelser eller afprøvninger. Metoderne er altså ikke bare et redskab. De skal kunne forklares. Rummet har fire stationer: indramning, afprøvninger, metoder til kreativitet og digitale benspænd.",
   "scene": "De fire stationer lyser op hver for sig."
  },
  {
@@ -131,7 +131,7 @@
   "room": "a2",
   "title": "Indramning af processen",
   "exit": false,
-  "text": "Første punkt er at indramme processen. Eleverne afklarer, hvilken kontekst artefaktet skal virke i, hvilke intentioner og grundantagelser de arbejder ud fra, hvilke ressourcer de har, og hvordan de vil gribe processen an. Indramningen gør det muligt at vurdere arbejdet bagefter: virkede artefaktet i den kontekst, det var tænkt til? Et eksempel kunne være et indramningsark med fire felter, som eleverne udfylder ved start og vender tilbage til undervejs.",
+  "text": "Første punkt er at indramme processen. Eleverne afklarer, hvilken kontekst artefaktet skal virke i, og hvilke intentioner og grundantagelser de arbejder ud fra. De afklarer også, hvilke ressourcer de har, og hvordan de vil gribe processen an. Indramningen gør det muligt at vurdere arbejdet bagefter: virkede artefaktet i den kontekst, det var tænkt til? Et eksempel kunne være et indramningsark med fire felter, som eleverne udfylder ved start og vender tilbage til undervejs.",
   "scene": "Et ark på et skråbord med fire felter: kontekst, intention, ressourcer og tilgang."
  },
  {
@@ -140,7 +140,7 @@
   "room": "a2",
   "title": "Afprøvninger",
   "exit": false,
-  "text": "Andet punkt er afprøvninger, hvor erfaringer fra den forrige iteration bestemmer næste skridt. Spiralen viser det. Hvert omløb er en version, der bliver prøvet af, og det, man opdager, ændrer den næste version. Det er ikke kun prototypen, der bliver bedre. Intentionen kan også ændre sig. En gruppe kan fx opdage, at brugerne ville noget helt andet end det, gruppen troede.",
+  "text": "Andet punkt er afprøvninger, hvor erfaringer fra den forrige iteration informerer næste skridt og kan føre til justeringer. Spiralen viser det. Hvert omløb er en version, der bliver prøvet af, og det, man opdager, ændrer den næste version. Det er ikke kun prototypen, der bliver bedre. Intentionen kan også ændre sig. Et eksempel kunne være, at en gruppe opdager, at brugerne ville noget helt andet end det, gruppen troede.",
   "scene": "En kugle triller op ad spiraltrappen. Ved hvert omløb ændrer prototypen form, og et lille intentionskort bliver skrevet om."
  },
  {
@@ -149,7 +149,7 @@
   "room": "a2",
   "title": "Metoder til kreativitet",
   "exit": false,
-  "text": "Tredje punkt er metoder til kreativitet, fx spekulation og kreative benspænd, der åbner for nye løsninger og udtryk. Spekulation er at spørge \"hvad nu hvis?\" og forestille sig en anden fremtid. Et benspænd er en begrænsning, som tvinger én væk fra den første og mest oplagte idé. Hjorth bruger Amabiles definition af kreativitet: noget, der både er nyt og passer til et mål. Benspændet hjælper med det nye. Målet sørger for, at det stadig giver mening.",
+  "text": "Tredje punkt er metoder til kreativitet, for eksempel spekulation og kreative benspænd, der åbner for nye og alternative løsninger og udtryk. Spekulation er at spørge: hvad nu hvis, og så forestille sig en anden fremtid. Et benspænd er en begrænsning, som tvinger én væk fra den første og mest oplagte idé. Mikkel Hjorth bruger forskeren Teresa Amabiles definition af kreativitet: noget, der både er nyt og passer til et mål. Benspændet hjælper med det nye. Målet sørger for, at det stadig giver mening.",
   "scene": "Man trækker et kort fra benspændsvæggen, fx \"uden skærm\" eller \"til en bedstemor\", og en prototype ændrer sig efter kortet."
  },
  {
@@ -158,7 +158,7 @@
   "room": "a2",
   "title": "Digitale benspænd",
   "exit": false,
-  "text": "Fjerde punkt er benspænd, der er knyttet til det digitale materiale. Fagplanen nævner især, at artefaktet skal kunne skifte mellem forskellige tilstande ud fra input fra omgivelserne. Det er det, der adskiller et digitalt artefakt fra en papfigur: det reagerer. Et eksempel kunne være en urtepotte, der viser tre tilstande, nemlig tørstig, tilfreds og druknet, ud fra en fugtsensor. Klik på terningen og se den skifte tilstand.",
+  "text": "Fjerde punkt er benspænd, der er knyttet til det digitale materiale. Fagplanen nævner blandt andet, at artefaktet skal kunne skifte mellem forskellige tilstande ud fra input fra omgivelserne. Det er det, der adskiller et digitalt artefakt fra en papfigur: det reagerer. Et eksempel kunne være en urtepotte, der viser tre tilstande, nemlig tørstig, tilfreds og druknet, ud fra en fugtsensor. Peg på terningen, og se den skifte tilstand.",
   "scene": "Terningen skifter farve og udtryk ved hvert klik. En lille potte ved siden af viser de tre tilstande."
  },
  {
@@ -167,7 +167,7 @@
   "room": "hal-b",
   "title": "Ind i området",
   "exit": false,
-  "text": "Fagplanen siger, at eleverne her opøver håndværksmæssige kundskaber i selv at skabe digitale teknologier. Gennem det får de indsigt i teknologiens materielle grundlag og betingelser. Eleverne arbejder med tre konstruktive lag: materielt grundlag, programmering og computerforståelse samt modellering. Lagene bygger videre på hinanden, men de skal ikke læres i en bestemt rækkefølge. De spiller sammen i det praktiske arbejde. Hjorth minder om, at det tager tid for både lærere og elever at blive trygge ved programmerbar elektronik.",
+  "text": "Fagplanen siger, at eleverne her opøver håndværksmæssige kundskaber i selv at skabe digitale teknologier. Gennem det får de indsigt i teknologiens materielle grundlag og betingelser. Eleverne arbejder med tre konstruktive lag: materielt grundlag, programmering og computerforståelse samt modellering. Fagplanen siger, at lagene bygger videre på hinanden og fungerer i samspil i det praktiske arbejde. Mikkel Hjorth peger på, at det tager tid at blive fortrolig med programmerbar elektronik.",
   "scene": "Etagerne lyser op én efter én, nedefra og op."
  },
  {
@@ -176,7 +176,7 @@
   "room": "hal-b",
   "title": "Data og algoritmer på alle lag",
   "exit": false,
-  "text": "To begreber går igen på alle tre lag: data og algoritmer. Fagplanen kalder dem centrale komponenter i digitale teknologier. I kælderen bliver data målt og gemt. I maskinrummet bliver data behandlet af algoritmer. I tegnestuen bliver det besluttet, hvad der overhovedet skal være data. Hold øje med lyspakkerne i søjlen. De er de samme data, set fra tre forskellige højder.",
+  "text": "To begreber går igen på alle tre lag: data og algoritmer. Fagplanen kalder dem centrale komponenter i digitale teknologier. På det nederste lag bliver data målt og gemt. I midten bliver de behandlet af algoritmer. Øverst bliver det besluttet, hvad der overhovedet skal være data. Hold øje med lyspakkerne i søjlen. De er de samme data, set fra tre forskellige højder.",
   "scene": "Én lyspakke bliver fremhævet og følges hele vejen op gennem tårnet."
  },
  {
@@ -185,7 +185,7 @@
   "room": "hal-b",
   "title": "Målene for området",
   "exit": true,
-  "text": "Området har to mål. Det første er, at eleverne bruger programmering som sprog og værktøj til at skabe digitale artefakter, og at de bruger programmeringsbegreber, når de afprøver løsninger og diskuterer fejl og tilpasninger. Det andet er, at eleverne undersøger modellers perspektiver og bias ved at tegne diagrammer og afprøve, hvordan deres egne modeller og verden hænger sammen. Det første mål hører til de to nederste lag. Det andet hører til det øverste.",
+  "text": "Området har to mål. Det første er, at eleverne bruger programmering som sprog og værktøj til at skabe digitale artefakter. De bruger programmeringsbegreber, når de afprøver løsninger og diskuterer fejl og tilpasninger. Det andet er, at eleverne undersøger modellers perspektiver og bias ved at tegne diagrammer og afprøve, hvordan deres egne modeller og verden hænger sammen. Det første mål ligger tættest på programmeringen, og det andet ligger tættest på modelleringen.",
   "scene": "Målpladen deler sig i to. Hver halvdel lyser op ved de etager, den hører til."
  },
  {
@@ -194,7 +194,7 @@
   "room": "b1",
   "title": "Materielt grundlag",
   "exit": false,
-  "text": "Det første lag handler om teknologiens materielle grundlag og dens systemiske samspil med andre teknologier og med verden. Fagplanen siger, at eleverne især arbejder med den elektronik, der ligger bag digitale teknologier, og at de selv prøver at indsamle, opbevare og behandle data om verden. \"Systemisk\" betyder, at en enhed aldrig står alene. Den hænger sammen med net, servere, strøm og råstoffer.",
+  "text": "Det første lag handler om teknologiens materielle grundlag og dens systemiske samspil med andre teknologier og med verden. Fagplanen siger, at eleverne især arbejder med den elektronik, der ligger bag digitale teknologier. De prøver også selv at indsamle, opbevare og behandle data om verden. Systemisk betyder, at en enhed aldrig står alene. Den hænger sammen med net, servere, strøm og råstoffer.",
   "scene": "Kablerne i loftet lyser op og fører ud gennem vinduet til en lille model af et datacenter."
  },
  {
@@ -203,7 +203,7 @@
   "room": "b1",
   "title": "Programmerbar elektronik",
   "exit": false,
-  "text": "Første punkt er at afprøve og udforske programmerbar elektronik. Det kan være en lille mikrocontroller som en micro:bit eller en ESP32, som eleverne programmerer og ser reagere. Pointen er at opdage, at en computer ikke kun er en skærm og et tastatur. Den kan være en chip på størrelse med et frimærke, der styrer en motor, en lampe eller en lyd. Udforskningen kommer før opskriften.",
+  "text": "Første punkt er at afprøve og udforske programmerbar elektronik. Et eksempel kunne være en lille mikrocontroller, som eleverne programmerer og ser reagere. Pointen er at opdage, at en computer ikke kun er en skærm og et tastatur. Den kan være en chip på størrelse med et frimærke, der styrer en motor, en lampe eller en lyd. Fagplanen lægger vægt på at afprøve og udforske.",
   "scene": "Den gennemskårne mikrocontroller åbner sig og viser processor, hukommelse og ben, der forbinder den til omverdenen."
  },
  {
@@ -212,7 +212,7 @@
   "room": "b1",
   "title": "Sensorer, input og output",
   "exit": false,
-  "text": "Andet punkt er sensorer og andre teknologier, der tager input fra brugere eller verden og giver output tilbage som signaler og symboler. En sensor oversætter noget fysisk, fx lys, varme eller bevægelse, til et tal. Programmet oversætter tallet tilbage til noget, vi kan opfatte: en lyd, en farve eller et ikon. Et eksempel kunne være en temperatursensor, der får en lampe til at skifte fra blå til rød.",
+  "text": "Andet punkt er sensorer og andre teknologier, der tager input fra brugere eller verden og giver output tilbage som signaler og symboler. En sensor oversætter noget fysisk, for eksempel lys, varme eller bevægelse, til et tal. Programmet oversætter tallet tilbage til noget, vi kan opfatte: en lyd, en farve eller et ikon. Et eksempel kunne være en temperatursensor, der får en lampe til at skifte fra blå til rød.",
   "scene": "Man vifter med hånden foran sensorvæggen, og tal ruller forbi og bliver til lys og lyd."
  },
  {
@@ -221,7 +221,7 @@
   "room": "b1",
   "title": "Hvordan data ser ud og gemmes",
   "exit": false,
-  "text": "Tredje punkt er praktiske erfaringer med, hvordan digitale data ser ud, hvordan de bliver lavet, og hvordan de bliver gemt. Eleverne skal se, at en måling bliver til en række tal, og tallene til bits. Data ligger et fysisk sted, på et kort i enheden eller på en server langt væk. Et eksempel kunne være at logge temperaturen i klassen et døgn og bagefter åbne filen og se, hvad der faktisk blev gemt.",
+  "text": "Tredje punkt er praktiske erfaringer med, hvordan digitale data ser ud, hvordan de bliver lavet, og hvordan de bliver gemt. Eleverne skal se, at en måling bliver til en række tal, og tallene til bits. Data ligger et fysisk sted, på et hukommelseskort i enheden eller på en server langt væk. Et eksempel kunne være at logge temperaturen i klassen et døgn og bagefter åbne filen og se, hvad der faktisk blev gemt.",
   "scene": "En måling bliver til tal og derefter til en strimmel af nuller og ettaller, som glider ind i en lagerenhed."
  },
  {
@@ -230,7 +230,7 @@
   "room": "b2",
   "title": "Programmering og computerforståelse",
   "exit": false,
-  "text": "I det andet lag arbejder eleverne med forskellige måder at kommunikere og interagere med den logik, der ligger bag digitale teknologier. Fagplanen siger, at det er den logik, der bestemmer, hvordan teknologien virker, og hvad man kan gøre med den. Samtidig opbygger eleverne et håndværk i programmering som sprog og fagligt værktøj. Laget har fem punkter, og de har lige stor vægt.",
+  "text": "I det andet lag arbejder eleverne med forskellige måder at kommunikere og interagere med den logik, der ligger bag digitale teknologier. Fagplanen siger, at det er den logik, der betinger, hvordan teknologien virker, og hvad man kan gøre med den. Samtidig opbygger eleverne et håndværk i programmering som sprog og fagligt værktøj. Laget har fem punkter.",
   "scene": "Flowdiagrammet i loftet begynder at køre, og fem stationer lyser op."
  },
  {
@@ -239,7 +239,7 @@
   "room": "b2",
   "title": "Programmeringsbegreber",
   "exit": false,
-  "text": "Første punkt er begreberne: algoritmer, variable og kontrolstrukturer samt simple datatyper som tal, tekst og sand eller falsk. En algoritme er en præcis opskrift. En variabel er en navngiven kasse, der kan ændre indhold. Kontrolstrukturer er gentagelser og valg, altså \"gør det her ti gange\" og \"hvis det regner, så …\". Begreberne skal eleverne kunne bruge, når de taler om deres egen kode.",
+  "text": "Første punkt er begreberne: algoritmer, variable og kontrolstrukturer samt simple datatyper som tal, tekst og sand eller falsk. En algoritme er en præcis opskrift. En variabel er en navngiven kasse, der kan ændre indhold. Kontrolstrukturer er gentagelser og valg, altså at gøre noget ti gange, eller at gøre noget, hvis det regner. Begreberne skal eleverne kunne bruge, når de taler om deres egen kode.",
   "scene": "Tre kasser med navne, en løkke og en forgrening samles til et lille program."
  },
  {
@@ -248,7 +248,7 @@
   "room": "b2",
   "title": "Praktiske og analoge tilgange",
   "exit": false,
-  "text": "Andet punkt er praktiske og analoge programmeringstilgange. Man kan programmere uden computer: en elev skriver en præcis instruks, og en anden udfører den ord for ord. Når instruksen fejler, bliver det tydeligt, hvor bogstaveligt en maskine læser. Det gør begreberne fysiske og giver et fælles sprog, inden der kommer kode på en skærm.",
+  "text": "Andet punkt er praktiske og analoge programmeringstilgange. Man kan programmere uden computer. Et eksempel kunne være, at en elev skriver en præcis instruks, og en anden udfører den ord for ord. Når instruksen fejler, bliver det tydeligt, hvor bogstaveligt en maskine læser. Det gør begreberne fysiske og giver et fælles sprog, inden der kommer kode på en skærm.",
   "scene": "I det skærmløse hjørne går en figur rundt efter instrukser på kort, der ligger på gulvet, og går forkert ved en uklar instruks."
  },
  {
@@ -257,7 +257,7 @@
   "room": "b2",
   "title": "Et udvalgt programmeringssprog",
   "exit": false,
-  "text": "Tredje punkt er at programmere i et udvalgt sprog og undersøge, hvad det sprog kan, og hvad det ikke kan. Fagplanen vælger ikke sproget. Det gør læreren. Det kan være blokke eller tekst. Det vigtige er, at eleverne lærer at se sproget som et valg med konsekvenser. Blokke beskytter mod stavefejl, men kan gøre store programmer uoverskuelige. Tekst er mere fleksibel, men mindre tilgivende.",
+  "text": "Tredje punkt er at programmere i et udvalgt sprog og undersøge, hvad det sprog kan, og hvad det ikke kan. Fagplanen siger ikke, hvilket sprog det skal være. Det kan være blokke eller tekst. Det vigtige er, at eleverne lærer at se sproget som et valg med konsekvenser. Blokke beskytter mod stavefejl, men kan gøre store programmer uoverskuelige. Tekst er mere fleksibel, men mindre tilgivende.",
   "scene": "Det samme lille program vises side om side som blokke og som tekst."
  },
  {
@@ -266,16 +266,16 @@
   "room": "b2",
   "title": "Fejlfinding",
   "exit": false,
-  "text": "Fjerde punkt er fejlfinding. Fagplanen skelner mellem logiske fejl og syntaksfejl. En syntaksfejl er en forkert stavet kommando, som maskinen nægter at køre. En logisk fejl er et program, der kører fint, men gør noget andet, end man ville. Fagplanen siger også, at fejl skal omfavnes som naturlige og uundgåelige. Fejl er en del af arbejdet og ikke et tegn på, at man ikke kan.",
+  "text": "Fjerde punkt er fejlfinding. Fagplanen skelner mellem logiske fejl og syntaksfejl. En syntaksfejl er en fejl i den måde, koden er skrevet på, for eksempel en forkert stavet kommando, så maskinen ikke kan køre den. En logisk fejl er et program, der kører fint, men gør noget andet, end man ville. Fagplanen siger også, at fejl skal omfavnes som naturlige og uundgåelige. Fejl er en del af arbejdet og ikke et tegn på, at man ikke kan.",
   "scene": "To programmer kører. Det ene stopper med en rød markering, og det andet kører, men figuren går den forkerte vej."
  },
  {
   "id": "b2-5",
   "ref": "B2.5",
   "room": "b2",
-  "title": "Generativ AI som programmeringsværktøj",
+  "title": "Generativ kunstig intelligens som værktøj",
   "exit": false,
-  "text": "Femte punkt er programmering med generativ kunstig intelligens som værktøj. Fagplanen tilføjer, at eleverne skal undersøge, hvilken indsigt i programmeringsvalg og design man kan få gennem den måde at programmere på. Det handler ikke kun om at få koden skrevet. Et eksempel kunne være, at eleverne beder en chatbot om et program, gennemgår det linje for linje og sammenligner det med deres egen løsning. Hvilke valg traf modellen for dem?",
+  "text": "Femte punkt er programmering med generativ kunstig intelligens som værktøj. Fagplanen tilføjer, at eleverne skal undersøge, hvilken indsigt i programmeringsvalg og design man kan få gennem den måde at programmere på. Det handler ikke kun om at få koden skrevet. Et eksempel kunne være, at eleverne beder en chatbot, som skolen har godkendt, om et program, gennemgår det linje for linje og sammenligner det med deres egen løsning. Hvilke valg traf modellen for dem?",
   "scene": "En talebobbel bliver til kode. Hver linje kan klikkes på og viser et lille spørgsmålstegn: hvorfor sådan?"
  },
  {
@@ -284,7 +284,7 @@
   "room": "b3",
   "title": "Modellering",
   "exit": false,
-  "text": "I det tredje lag bruger eleverne modellering til at beskrive de forhold i verden, som programmet skal håndtere, og til at forstå hvad det betyder. Fagplanen siger, at eleverne skal blive bevidste om, at programmer altid bygger på modeller og modelleringsvalg. De er aldrig neutrale, men bygger på bestemte perspektiver og antagelser, der kan være forkerte eller indeholde bias. Sammenlign køen udenfor med modellen på bordet. Hvad er der ikke taget med?",
+  "text": "I det tredje lag bruger eleverne modellering til at beskrive de forhold i verden, som programmet skal håndtere, og til at forstå hvad det betyder. Fagplanen siger, at eleverne skal blive bevidste om, at programmer altid bygger på modeller og modelleringsvalg. De er aldrig neutrale, men bygger på bestemte perspektiver og antagelser, der kan være forkerte eller indeholde bias. Sammenlign køen under vinduet med modellen på bordet. Hvad er der ikke taget med?",
   "scene": "Køen og bordmodellen bliver vist side om side. Det, modellen ikke har med, fx en elev der springer over, lyser op i køen."
  },
  {
@@ -293,7 +293,7 @@
   "room": "b3",
   "title": "Modelleringsværktøjer og diagrammer",
   "exit": false,
-  "text": "Første punkt er modelleringsværktøjer og -tilgange, herunder grafiske diagrammer. Et rutediagram viser, hvordan et program skal forløbe. Et tilstandsdiagram viser, hvilke tilstande en ting kan være i, og hvad der får den til at skifte. Diagrammet gør det muligt at tale om en model, før den bliver til kode. Det er også her, man opdager, at noget mangler.",
+  "text": "Første punkt er modelleringsværktøjer og modelleringstilgange, herunder grafiske diagrammer. Et rutediagram viser, hvordan et program skal forløbe. Et tilstandsdiagram viser, hvilke tilstande en ting kan være i, og hvad der får den til at skifte. Diagrammet gør det muligt at tale om en model, før den bliver til kode. Det er også her, man opdager, at noget mangler.",
   "scene": "På væggen bliver et rutediagram og et tilstandsdiagram tegnet trin for trin."
  },
  {
@@ -302,7 +302,7 @@
   "room": "b3",
   "title": "Datagørelse og datamodellering",
   "exit": false,
-  "text": "Andet punkt er datagørelse og datamodellering, altså forenklinger og abstraktioner af verden, så den kan repræsenteres som data i et program. Et eksempel kunne være venskab på et socialt medie. Et venskab i virkeligheden har mange nuancer. I programmet er det ofte en sand eller falsk-værdi: ven eller ikke ven. Eleverne prøver selv at datagøre noget fra hverdagen og ser, hvad der går tabt.",
+  "text": "Andet punkt er datagørelse og datamodellering, altså forenklinger og abstraktioner af verden, så den kan repræsenteres som data i et program. Et eksempel kunne være venskab på et socialt medie. Et venskab i virkeligheden har mange nuancer. I programmet er det ofte bare ja eller nej: ven eller ikke ven. Eleverne prøver selv at datagøre noget fra hverdagen og ser, hvad der går tabt.",
   "scene": "Et nuanceret billede af to venner bliver forenklet trin for trin, indtil kun et flueben er tilbage."
  },
  {
@@ -311,7 +311,7 @@
   "room": "b3",
   "title": "Modeller mod verden",
   "exit": false,
-  "text": "Tredje punkt er at sammenligne modeller med hinanden og med verden og at afprøve og undersøge egne modelleringsvalg og bias. Et eksempel kunne være, at to grupper hver modellerer \"en god makker til gruppearbejde\" til en app. Den ene vægter fagligt niveau, den anden venskaber. Når modellerne bliver prøvet af på klassens egne erfaringer, bliver det tydeligt, at valgene afspejler bestemte perspektiver.",
+  "text": "Tredje punkt er at sammenligne modeller med hinanden og med verden og at afprøve og undersøge egne modelleringsvalg og bias. Et eksempel kunne være, at to grupper hver laver en model af en god makker til gruppearbejde i en app. Den ene vægter fagligt niveau, den anden venskaber. Når modellerne bliver prøvet af på opdigtede elevprofiler, bliver det tydeligt, at valgene afspejler bestemte perspektiver.",
   "scene": "To diagrammer står side om side og parrer de samme elevfigurer forskelligt. Undervejs dukker det op, hvad hver model ikke tog højde for."
  },
  {
@@ -320,7 +320,7 @@
   "room": "hal-c",
   "title": "Ind i området",
   "exit": false,
-  "text": "Fagplanen siger, at eleverne her undersøger samspillet og den gensidige påvirkning mellem mennesker og digitale teknologier i form af digitale fænomener. Et digitalt fænomen er ikke bare en app. Det er det, der sker, når mennesker og teknologi mødes, fx at få anbefalet videoer eller at betale med telefonen. Mennesker bruger teknologien i bestemte sammenhænge, og teknologien former omvendt både brugen og sammenhængen. Eleverne tager primært udgangspunkt i deres eget hverdagsliv, også fænomener med kunstig intelligens. De møder også fænomener uden for deres egen erfaringshorisont. Det, de undersøger, danner grundlag for deres egen stillingtagen.",
+  "text": "Fagplanen siger, at eleverne her undersøger samspillet og den gensidige påvirkning mellem mennesker og digitale teknologier i form af digitale fænomener. Et digitalt fænomen er ikke bare en app. Det er det, der sker, når mennesker og teknologi mødes, for eksempel at få anbefalet videoer eller at betale med telefonen. Mennesker bruger teknologien i bestemte sammenhænge, og teknologien former omvendt både brugen og sammenhængen. Eleverne arbejder primært med fænomener fra deres eget hverdagsliv, også fænomener, hvor kunstig intelligens indgår. De møder også fænomener uden for deres egen erfaringshorisont, som har betydning for andre mennesker eller verden. Det, de undersøger, danner grundlag for deres egen stillingtagen.",
   "scene": "Gaden vågner. En person ved busstoppestedet kigger på sin telefon, og tynde lyslinjer forbinder telefonen med personen, gaden og en server i det fjerne."
  },
  {
@@ -347,7 +347,7 @@
   "room": "c1",
   "title": "Kortlægning af hverdagens fænomener",
   "exit": false,
-  "text": "Første punkt er at kortlægge digitale fænomener i elevernes hverdagsliv. Fagplanen nævner fænomener med betydning for daglige gøremål, for fællesskaber og for, hvordan man får information om verden. Et eksempel kunne være, at eleverne fører log over et døgn og noterer hver gang, en teknologi er med. Bagefter sorterer de i de tre kategorier og ser, hvor meget af hverdagen der går gennem en skærm.",
+  "text": "Første punkt er at kortlægge digitale fænomener i elevernes hverdagsliv. Fagplanen nævner fænomener med betydning for daglige gøremål, for fællesskaber og for, hvordan man får information om verden. Et eksempel kunne være, at eleverne fører log over et døgn og noterer, hver gang en digital teknologi er med. Bagefter sorterer de i de tre kategorier og ser, hvor meget af hverdagen der går gennem digitale teknologier.",
   "scene": "En stor døgnurskive ligger på gulvet, og prikker i tre farver dukker op time for time, én farve pr. kategori."
  },
  {
@@ -374,7 +374,7 @@
   "room": "c2",
   "title": "Teknologiens rolle og intention",
   "exit": false,
-  "text": "Den anden del åbner teknologien. Fagplanen siger, at eleverne undersøger, hvordan teknologierne bag fænomenet er opbygget og fungerer, herunder hvordan data, algoritmer og menneskelig brugspraksis spiller sammen. Eleverne afmaskerer tekniske designvalg gennem praktiske eksperimenter, så de selv oplever den modellering, de intentioner og de perspektiver, der er bygget ind. Hjorth henviser til en analyse af teknologiers interaktion, anvendelse, formål, begrundelse og konsekvens som en måde at strukturere undersøgelsen på.",
+  "text": "Den anden del åbner teknologien. Fagplanen siger, at eleverne undersøger, hvordan teknologierne bag fænomenet er opbygget og fungerer, herunder hvordan data, algoritmer og menneskelig brugspraksis spiller sammen. Eleverne afmaskerer tekniske designvalg gennem praktiske eksperimenter, så de selv oplever den modellering, de intentioner og de perspektiver, der er bygget ind. Mikkel Hjorth foreslår at strukturere undersøgelsen ved at spørge til teknologiens interaktion, anvendelse, formål, begrundelse og konsekvens.",
   "scene": "Telefonen på bordet folder sig ud i sine lag, og hvert lag får et lille mærke."
  },
  {
@@ -392,7 +392,7 @@
   "room": "c2",
   "title": "At afmaskere algoritmer",
   "exit": false,
-  "text": "Andet punkt er eksperimenter med at afmaskere algoritmer. Fagplanen nævner tre slags: deterministiske, adaptive og generative. En deterministisk algoritme giver altid samme svar på samme input, som en lommeregner. En adaptiv algoritme ændrer sig efter brugen, som et feed, der lærer, hvad du ser. En generativ algoritme frembringer nyt indhold, som en chatbot. Et eksempel kunne være at oprette to nye profiler med forskellig adfærd og sammenligne, hvad de får vist efter en uge.",
+  "text": "Andet punkt er eksperimenter med at afmaskere algoritmer. Fagplanen nævner tre slags: deterministiske, adaptive og generative. En deterministisk algoritme giver altid samme svar på samme input, som en lommeregner. En adaptiv algoritme ændrer sig efter brugen, som et feed, der lærer, hvad du ser. En generativ algoritme frembringer nyt indhold, som en chatbot. Et eksempel kunne være, at to grupper bruger den samme videotjeneste på hver sin nye skolekonto med forskellig adfærd og sammenligner, hvad de får vist efter en uge.",
   "scene": "Tre maskiner står side om side. Den første giver det samme hver gang. Den anden ændrer sig efter brugeren. Den tredje laver noget nyt."
  },
  {
@@ -401,7 +401,7 @@
   "room": "c2",
   "title": "At afmaskere datagørelse og digitale dobbeltgængere",
   "exit": false,
-  "text": "Tredje punkt er eksperimenter med at afmaskere datagørelse og modelleringsvalg, herunder om der bliver lavet og brugt digitale dobbeltgængere. En digital dobbeltgænger er den model af dig, som en tjeneste bygger ud fra dine data og bruger til at forudsige, hvad du vil gøre. Et eksempel kunne være, at eleverne finder de interesser, en tjeneste har registreret om dem i indstillingerne, og sammenligner med, hvem de selv mener, de er.",
+  "text": "Tredje punkt er eksperimenter med at afmaskere datagørelse og modelleringsvalg, herunder om der bliver lavet og brugt digitale dobbeltgængere. En digital dobbeltgænger kan være den model af dig, som en tjeneste bygger ud fra dine data. Tjenesten bruger den til at forudsige, hvad du vil gøre. Et eksempel kunne være, at eleverne finder de interesser, en tjeneste har registreret om dem i indstillingerne, og sammenligner med, hvem de selv mener, de er.",
   "scene": "Spejlvæggen viser en silhuet af brugeren, der langsomt bliver bygget op af data. Silhuetten ligner, men ikke helt."
  },
  {
@@ -410,7 +410,7 @@
   "room": "c2",
   "title": "Teknologier med andre valg og værdier",
   "exit": false,
-  "text": "Fjerde punkt er at afprøve teknologier, der bygger på andre tekniske designvalg eller indlejrer andre værdier eller intentioner. Hvor brugseksperimentet i Stuen ser på adfærden, ser dette punkt på designet. Et eksempel kunne være at sammenligne et feed, der sorteres efter tid, med et, der sorteres af en algoritme, eller en tjeneste, der lever af reklamer, med en, der ikke gør. Hvilke valg kunne være truffet anderledes?",
+  "text": "Fjerde punkt er at afprøve teknologier, der bygger på andre tekniske designvalg eller indlejrer andre værdier eller intentioner. Hvor brugseksperimentet i Stuen ser på adfærden, ser dette punkt på designet. Et eksempel kunne være at sammenligne et feed, der sorteres efter tid, med et, der sorteres af en algoritme. Eller at sammenligne en tjeneste, der lever af reklamer, med en, der ikke gør. Hvilke valg kunne være truffet anderledes?",
   "scene": "To versioner af samme app står side om side. Forskellene i deres valg lyser op én efter én."
  },
  {
@@ -428,7 +428,7 @@
   "room": "c3",
   "title": "Aktuelle samfundsdebatter",
   "exit": false,
-  "text": "Første punkt er aktuelle samfundsdebatter om teknologiens rolle og betydning. Debatterne skifter, men lige nu kunne det fx være aldersgrænser på sociale medier, kunstig intelligens i skolen eller mobilfri skoletid. Eleverne skal kunne se, hvordan deres egne undersøgelser kan bruges som argumenter i debatten, og de skal kunne gengive positioner, de ikke selv deler.",
+  "text": "Første punkt er aktuelle samfundsdebatter om teknologiens rolle og betydning. Debatterne skifter. Et eksempel kunne være debatten om aldersgrænser på sociale medier eller om kunstig intelligens i skolen. Eleverne kan bruge deres egne undersøgelser som argumenter og øve sig i at forstå positioner, de ikke selv deler.",
   "scene": "Bag den første dør hænger avisoverskrifter og citatbobler i mange retninger."
  },
  {
@@ -437,7 +437,7 @@
   "room": "c3",
   "title": "Teknologiforestillinger og historiske eksempler",
   "exit": false,
-  "text": "Andet punkt er perspektivering til teknologiforestillinger eller historiske eksempler. En teknologiforestilling er en idé om, hvad en teknologi vil gøre ved verden, fx håbet i 1990'erne om, at internettet ville gøre alle lige. Historiske eksempler viser, at debatter om ny teknologi ikke er nye, fra trykpressen til vævestolen. Det giver afstand til nutiden og passer til erkendeformen om at forestille sig alternativer.",
+  "text": "Andet punkt er perspektivering til teknologiforestillinger eller historiske eksempler. En teknologiforestilling er en idé om, hvad en teknologi vil gøre ved verden, for eksempel håbet i halvfemserne om, at internettet ville gøre alle lige. Historiske eksempler viser, at debatter om ny teknologi ikke er nye, fra trykpressen til vævestolen. Det giver afstand til nutiden og hjælper eleverne til at forestille sig alternativer.",
   "scene": "Bag den anden dør ligger et arkiv med gamle fremtidsbilleder, fra flyvende biler til tegninger af tidlige computere."
  },
  {
@@ -446,7 +446,7 @@
   "room": "c3",
   "title": "Etiske og filosofiske spørgsmål",
   "exit": false,
-  "text": "Tredje punkt er at inddrage etiske og filosofiske spørgsmål. Hvem har ansvaret, når en algoritme tager fejl? Må en maskine afgøre, hvem der får et job? Er en digital dobbeltgænger en del af mig? Et eksempel kunne være en filosofisk samtale, hvor eleverne tager udgangspunkt i et fænomen, de selv har undersøgt, og bruger det til at teste deres egne principper.",
+  "text": "Tredje punkt er at inddrage etiske og filosofiske spørgsmål. Hvem har ansvaret, når en algoritme tager fejl? Må en maskine afgøre, hvem der får et job? Er en digital dobbeltgænger en del af mig? Et eksempel kunne være en filosofisk samtale om et fænomen, eleverne selv har undersøgt. De bruger det til at teste deres egne principper.",
   "scene": "Bag den tredje dør sidder en rundkreds af stole om et enkelt spørgsmål, der svæver i luften."
  },
  {
@@ -455,7 +455,7 @@
   "room": "udsigt",
   "title": "Samme samspil, tre vinkler",
   "exit": false,
-  "text": "Fagplanen siger, at alle tre indholdsområder handler om samspillet mellem digitale teknologier, mennesker og verden. De ser bare på det fra forskellige vinkler og med forskellige prioriteter. I Atelieret er teknologien noget, mennesker skaber. I Tårnet er den et materielt grundlag, der indlejrer perspektiver. På Gaden er den et fænomen, hvor mennesker og teknik spiller sammen. Områderne supplerer hinanden og giver forskellige muligheder for læring og fordybelse.",
+  "text": "Fagplanen siger, at alle tre indholdsområder handler om samspillet mellem digitale teknologier, mennesker og verden. De ser bare på det fra forskellige vinkler og med forskellige prioriteter. I Atelieret, digital kreativitet og design, er teknologien noget, mennesker skaber. I Tårnet, programmering og modellering, er den et materielt grundlag, der indlejrer perspektiver. På Gaden, undersøgelse og stillingtagen, er den et fænomen, hvor mennesker og teknik spiller sammen. Områderne supplerer hinanden og giver forskellige muligheder for læring og fordybelse.",
   "scene": "De tre fløje lyser op én efter én med deres vinkel skrevet over taget."
  },
  {
@@ -473,7 +473,7 @@
   "room": "udsigt",
   "title": "Et forløb på tværs",
   "exit": false,
-  "text": "Fagplanen siger, at et forløb kan have fokus på ét område, men ofte trækker på de andre. Et eksempel kunne være et forløb om et anbefalingsfeed. Eleverne begynder på Gaden og kortlægger, hvordan de bruger feedet. I Tårnet modellerer de, hvad feedet registrerer, og bygger en simpel anbefalingsalgoritme. I Atelieret designer de et alternativ med andre værdier. Undervejs møder de alle tre erkendeformer: at skabe, at omskabe og at forestille sig noget andet.",
+  "text": "Fagplanen siger, at et forløb kan have fokus på ét område, men ofte trækker på de andre. Et eksempel kunne være et forløb om et anbefalingsfeed. Eleverne begynder på Gaden og kortlægger, hvordan de bruger feedet. I Tårnet modellerer de, hvad feedet registrerer, og bygger en simpel anbefalingsalgoritme. I Atelieret designer de et alternativ med andre værdier. Undervejs møder de alle tre erkendeformer: at skabe, at omskabe eller modvirke og at forestille sig alternativer.",
   "scene": "En lysende sti går fra Gaden op gennem Tårnet og ind i Atelieret. De tre erkendeformstegn lyser op, hvor stien passerer dem."
  },
  {
@@ -482,7 +482,7 @@
   "room": "udsigt",
   "title": "Det, der stadig er åbent",
   "exit": false,
-  "text": "Til sidst skal du vide, hvad der endnu ikke er på plads. Afsnittet om undervisning og evaluering er stadig en pladsholder i udkastet. Det bliver først afprøvet i dansk, matematik og historie. Fagplanen skal justeres efter efterårets afprøvning og træder i kraft i skoleåret 2027/28. Prøven i valgfaget bliver udviklet af en arbejdsgruppe og ventes holdt første gang i 2028/29. Det, du har set her, er altså et øjebliksbillede af et fag, der stadig er ved at blive til.",
+  "text": "Til sidst skal du vide, hvad der endnu ikke er på plads. Afsnittet om undervisning og evaluering er stadig en pladsholder i udkastet. Det bliver først afprøvet i dansk, matematik og historie. Fagplanen skal justeres efter efterårets afprøvning og træder i kraft i skoleåret, der begynder i 2027. Prøven i valgfaget bliver udviklet af en arbejdsgruppe, og ifølge fagudvalget ventes den holdt første gang året efter. Det, du har set her, er altså et øjebliksbillede af et fag, der stadig er ved at blive til.",
   "scene": "Et felt ved siden af kernen står tomt og er tegnet med stiplede linjer. Kernen dæmpes langsomt, og platformen bliver mørk."
  }
 ]
