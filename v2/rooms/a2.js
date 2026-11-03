@@ -137,7 +137,7 @@ export default function build(ctx) {
     g.fillStyle = "#1f2a4a"; g.font = 'italic 700 48px "Source Sans 3", sans-serif';
     K.wrap(g, it.nu, w - 80).forEach((l, i) => g.fillText(l, 40, y + 10 + i * 54));
   }));
-  const kortStativ = kit.grp(ctx.root, `${SP.x + 1.75} 0 ${SP.z + 1.1}`, { rotation: "0 -22 0", scale: "1.3 1.3 1.3" });
+  const kortStativ = kit.grp(ctx.root, `${SP.x + 1.6} 0 ${SP.z + 2.3}`, { rotation: "0 -18 0", scale: "1.3 1.3 1.3" });
   const KS = new Batch(); KS.cyl("#2b2f40", [0, 0.02, 0], 0.22, 0.04, null, 16); KS.cyl("#6b7299", [0, 0.6, -0.08], 0.015, 1.2, null, 6); KS.box("#2b2f40", [0, 1.18, -0.02], [0.92, 0.03, 0.06]);
   T.mesh(kortStativ, KS.merge(), T.lit());
   const kortM = T.hold(new THREE.MeshBasicMaterial({ map: kortTex[0], color: "#ccc" }));
@@ -145,7 +145,7 @@ export default function build(ctx) {
   lampe("a2-2", SP.x, SP.z + 0.3);
   ctx.station("a2-2", spiral);
   skilt("a2-2", ctx.step("a2-2").title, { position: `${SP.x - 1.7} 2.35 ${SP.z + 0.9}`, rotation: "0 18 0", width: 1.6, size: 72 });
-  ctx.view("a2-2", { position: [0.75, 0, 2.3], lookAt: [0.75, 1.75, SP.z], pitch: 3 });
+  ctx.view("a2-2", { position: [0.55, 0, 2.3], lookAt: [0.5, 1.75, SP.z], pitch: 3 });
 
   /* ---------- a2-1 · Indramning: et ark med fire felter på et skråbord ---------- */
   const IR = { x: -3.7, z: 0.6, yaw: 40 };
@@ -399,7 +399,7 @@ export default function build(ctx) {
   ctx.door(ctx.room.parent, { position: `3.6 0 ${Z0 + 0.15}` });
   T.mesh(ctx.root, T.hold(new THREE.PlaneGeometry(1.6, 2.5)), T.hold(new THREE.MeshBasicMaterial({ color: "#04050b" })), `3.6 1.25 ${Z0 + 0.06}`);
   // rumskiltet står frit på bagvæggen, uden for spiralens og intentionskortets sigtelinje fra indgangen
-  ctx.sign(ctx.room.name, { sub: ctx.room.sub, position: `3.6 3.75 ${Z0 + 0.08}`, width: 4.0 });
+  ctx.sign(ctx.room.name, { sub: ctx.room.sub, position: `3.6 4.05 ${Z0 + 0.08}`, width: 4.0 });
   const erk = T.erkendeformer(ctx.root, `-1.9 3.85 ${Z0 + 0.1}`, "0 0 0", 1.0);
   const lysA = kit.el("a-entity", { position: `${SP.x} 3.8 ${SP.z + 1.2}`, light: "type: point; color: #ffcf96; intensity: 1.2; distance: 11; decay: 1.1" });
   const lysB = kit.el("a-entity", { position: "0 2.6 0", light: "type: point; color: #ffcf96; intensity: 0; distance: 4.5; decay: 1.3" });

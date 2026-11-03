@@ -425,6 +425,10 @@ export default function build(ctx) {
     drawer.add(B.build(litMat));
   }
   addObj(drawer);
+  // telefonen, der ligger i skuffen (barn af skuffen, så den følger den ud og ind); skærmen lyser svagt rosa, så den ses
+  const drawerPhone = makeDevice("phone"); drawerPhone.rotation.set(-90 * D, 0, 0.3); drawerPhone.position.set(0.05, -0.065, -0.14); drawerPhone.scale.setScalar(1.6);
+  drawer.add(drawerPhone); drawerPhone.visible = false;
+  const dpGlow = quad(0.5, 0.5, basic({ map: K.glowTex("#cfe2ff"), blending: THREE.AdditiveBlending, opacity: 0 })); dpGlow.rotation.x = -90 * D; dpGlow.position.set(0.05, -0.05, -0.14); drawer.add(dpGlow);
   // dagbogen på skænken
   const diary = new THREE.Group(); diary.position.set(SB.x + 0.15, 0.655, SB.z + 0.02); diary.rotation.y = -10 * D;
   {
@@ -444,14 +448,14 @@ export default function build(ctx) {
   const st3 = kit.grp(root, `${SB.x} 0 ${SB.z + 0.7}`);
   kit.box(st3, "0 0.35 -0.7", 2.0, 0.7, 0.6, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c1-3", st3);
-  const s13 = ctx.sign(ctx.step("c1-3").title, { position: `${SB.x} 2.55 ${ZB + 0.2}`, width: 1.9 });
-  view("c1-3", { position: [-1.7, 0, 0.6], lookAt: [-3.6, 0.9, -3.6], pitch: -8 });
+  const s13 = ctx.sign(ctx.step("c1-3").title, { position: `${SB.x} 2.25 ${ZB + 0.2}`, width: 1.9 });
+  view("c1-3", { position: [-1.9, 0, -0.2], lookAt: [-3.3, 0.7, -4.5], pitch: -14 });
   // glød om skuffen i det øjeblik, telefonen lægges i
   const drawerGlow = quad(1.6, 1.0, basic({ map: K.glowTex(ROSE), blending: THREE.AdditiveBlending, opacity: 0 })); drawerGlow.position.set(SB_DRAWER.x, 0.55, SB.z + 0.5); addObj(drawerGlow);
   // "før" og "efter": to små felter over familien, der skifter
   const phaseTex = (t, c) => K.canvasTexture(420, 110, (g, w, h) => { g.fillStyle = "rgba(24,14,22,0.92)"; K.roundRect(g, 3, 3, w - 6, h - 6, 40); g.fill(); g.strokeStyle = c; g.lineWidth = 6; g.stroke(); g.fillStyle = "#fff"; g.font = FONT(700, 54); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(t, w / 2, h / 2 + 3); });
   const phaseBefore = quad(0.7, 0.183, basic({ map: phaseTex("før", "#a9b0d6"), opacity: 0 })), phaseAfter = quad(0.7, 0.183, basic({ map: phaseTex("efter", ROSE), opacity: 0 }));
-  for (const q of [phaseBefore, phaseAfter]) { q.position.set(-4.4, 2.15, -1.6); q.lookAt(-1.7, 2.15, 0.6); addObj(q); }
+  for (const q of [phaseBefore, phaseAfter]) { q.position.set(-4.4, 1.95, -1.6); q.lookAt(-1.7, 1.95, 0.6); addObj(q); }
 
   /* ---------- Tilstand og animation ---------- */
   let cur = null, t0 = null;
@@ -549,7 +553,8 @@ export default function build(ctx) {
             m.dev.position.set(lerp(tmpV.x, dx, put), lerp(tmpV.y, dy, put) + Math.sin(put * Math.PI) * 0.12, lerp(tmpV.z, dz, put));
             m.dev.rotation.set(lerp(-50 * D, -90 * D, put), Math.PI, 0, "YXZ");
             devOn(m, put < 0.9);
-            drawerOpen = ease((e - out.end + 0.4) / 0.5) * (1 - ease((e - out.end - 1.2) / 0.5));
+            drawerOpen = ease((e - out.end + 0.4) / 0.5) * (1 - 0.35 * ease((e - out.end - 2.4) / 1.0));   // bliver stående åben
+            drawerPhone.visible = put > 0.97 || home.t > 0;
             if (home.done) { pose(m, ax, az, ay, true, lerp(6, 14, ease((e - home.end) / 2)), false, 0); }
             return;
           }
@@ -613,7 +618,10 @@ export default function build(ctx) {
       const C3 = cur === "c1-3";
       drawer.position.z = SB_DRAWER.z + (C3 ? drawerOpen : 0) * 0.34;
       drawerGlow.material.opacity = C3 ? 0.9 * drawerOpen : 0;
-      phaseBefore.material.opacity = C3 ? 1 - ease((e - 4.6) / 0.5) : 0; phaseAfter.material.opacity = C3 ? ease((e - 6.8) / 0.6) : 0;
+      if (!C3) drawerPhone.visible = false;
+      dpGlow.material.opacity = C3 && drawerPhone.visible ? 0.8 + 0.2 * Math.sin(s * 3) : 0;
+      // "før" vises, mens alle har skærmene fremme; det skifter til "efter", når familien har lagt tingene væk
+      phaseBefore.material.opacity = C3 ? 1 - ease((e - 6.2) / 0.5) : 0; phaseAfter.material.opacity = C3 ? ease((e - 6.6) / 0.6) : 0;
       board.material.opacity = C3 ? ease((e - 7.0) / 1.2) : 0;
       pieces.visible = C3 && e > 7.5;
       ripples.forEach((r, i) => {

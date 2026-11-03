@@ -99,7 +99,7 @@ export default function build(ctx) {
     mesh(wall, wallMat, [0, y, 0], tower);
     // lagets navn hænger ved etagens forkant til venstre og drejer mod beskueren;
     // i b0-2 kommer det, der sker med data på laget, frem som en undertekst lige under navnet
-    const lp = [-FR - 0.45, y + 0.05, 1.4];
+    const lp = [-1.45, y - 0.3, FR + 0.08];
     const lblMat = basic("#ffffff", { map: K.labelTex(LAYERS[k].name, B, { w: 1024, h: 220, size: k === 1 ? 62 : 76, sub: LAYERS[k].n, ink: "#eef1ff" }), transparent: true, side: T.DoubleSide, depthWrite: false });
     const ry = face([lp[0], lp[2] + CZ], EYE);
     // lagnavn og undertekst tegnes efter de fjerne dørskilte, så de aldrig skæres over af dem
@@ -107,7 +107,7 @@ export default function build(ctx) {
     const capMat = basic("#ffffff", { map: K.labelTex(LAYERS[k].what, B, { w: 1024, h: 150, size: 64, bg: true, ink: "#dffffb" }), transparent: true, side: T.DoubleSide, depthWrite: false, opacity: 0 });
     mesh(new T.PlaneGeometry(1.9, 1.9 * 150 / 1024), capMat, [lp[0], lp[1] - 0.42, lp[2] + 0.02], tower, ry).getObject3D("mesh").renderOrder = 3;
     // en tynd streg fra skiltet ind til etagekanten
-    const tie = new T.BoxGeometry(0.45, 0.015, 0.015); tie.translate(-FR + 0.05, y, 1.2);
+    const tie = new T.BoxGeometry(0.015, 0.1, 0.015); tie.translate(-1.45, y - 0.06, FR + 0.04);
     mesh(tie, rimMat, [0, 0, 0], tower);
     return { y, discMat, rimMat, bandMat, wallMat, lblMat, capMat, g: 0 };
   });
@@ -174,7 +174,14 @@ export default function build(ctx) {
   const trail = mesh(trailGeo, basic("#7ffff0", { transparent: true, opacity: 0.5, depthWrite: false }), [0, 0, 0], hiGrp);
 
   /* ---------- døre: elevatorportaler til lagene og døren tilbage ---------- */
-  const lifts = [["b1", -88, 0], ["b2", -56, 1], ["b3", 56, 2]];   // spredt ud, så ingen står bag tårnet set fra indgangen
+  // rammens dørskilt er beregnet til tættere afstand; her står dørene 7 m væk, så skiltet gøres større og løftes
+  function bigDoorSign(d, sc = 1.6) {
+    const sg = [...d.children].find(c => c.tagName === "A-PLANE" && c !== d.portal);
+    if (!sg) return;
+    sg.setAttribute("scale", `${sc} ${sc} 1`);
+    sg.setAttribute("position", "0 3.3 0.04");
+  }
+  const lifts = [["b1", -100, 0], ["b2", -62, 1], ["b3", 62, 2]];   // spredt ud, så ingen står bag tårnet set fra indgangen
   const shaftMat = std(B, { emissive: new T.Color(B), emissiveIntensity: 0.6 });
   const shaftMats = [];
   const shaftGlass = std("#7fe9df", { transparent: true, opacity: 0.1, depthWrite: false, side: T.DoubleSide });
@@ -182,12 +189,13 @@ export default function build(ctx) {
   const shaftParts = [], glassParts = [], bridgeParts = [];
   for (const [id, deg, k] of lifts) {
     const w = onWall(deg);
-    ctx.door(id, { position: `${w.x} 0 ${w.z}`, rotation: `0 ${w.ry / D2R} 0` });
-    // stort lagnummer over døren, så det matcher etagernes navneskilte
+    const d = ctx.door(id, { position: `${w.x} 0 ${w.z}`, rotation: `0 ${w.ry / D2R} 0` });
+    bigDoorSign(d);
+    // stort lagnummer over dørskiltet, så det matcher etagernes navneskilte (ingen overlap)
     const lg = group([w.x, 0, w.z], root, w.ry / D2R);
-    kit.textPlane(lg, "0 3.35 0.12", LAYERS[k].n, B, { width: 1.0, aspect: 0.3, size: 150, bg: true, ink: "#eef1ff" });
+    kit.textPlane(lg, "0 4.15 0.06", LAYERS[k].n, B, { width: 1.1, aspect: 0.3, size: 150, bg: true, ink: "#eef1ff" });
     // elevatorskakt: lysende skinner fra over døren op til lagets højde, glasvæg og en repos
-    const y = FLOORS[k], y0 = 3.55, local = [];
+    const y = FLOORS[k], y0 = 4.4, local = [];
     for (const sx of [-0.95, 0.95]) { const g = new T.BoxGeometry(0.06, Math.max(0.1, y + 0.5 - y0), 0.06); g.translate(sx, (y + 0.5 + y0) / 2, 0.05); local.push(g); }
     const top = new T.BoxGeometry(1.96, 0.06, 0.06); top.translate(0, y + 0.5, 0.05); local.push(top);
     const landing = new T.BoxGeometry(1.96, 0.06, 0.9); landing.translate(0, y, 0.45); local.push(landing);
@@ -201,8 +209,9 @@ export default function build(ctx) {
   }
   mesh(merge(glassParts), shaftGlass);
   mesh(merge(bridgeParts), bridgeMat);
-  const exitW = onWall(92);
-  const exitDoor = ctx.door(ctx.room.parent, { position: `${exitW.x} 0 ${exitW.z}`, rotation: `0 ${exitW.ry / D2R} 0` });
+  const exitW = onWall(100);
+  const exitDoor = ctx.door(ctx.room.parent, { position: `${exitW.x} 0 ${exitW.z}`, rotation: `0 ${exitW.ry / D2R} 0`, quiet: true, glow: 0.12 });
+  bigDoorSign(exitDoor, 1.3);
 
   /* ---------- rummets skilt ---------- */
   // lavt foran tårnets sokkel, så det ikke dækker dørene bagved
@@ -281,7 +290,7 @@ export default function build(ctx) {
 
   /* ---------- views ---------- */
   ctx.view("b0-1", { position: [0, 0, 5.4], lookAt: [0, 0, CZ] });
-  ctx.view("b0-2", { position: [-0.6, 0, 4.5], lookAt: [0.2, 0, CZ] });
+  ctx.view("b0-2", { position: [-0.4, 0, 5.4], lookAt: [0.1, 0, CZ] });
   ctx.view("b0-3", { position: [1.2, 0, 5.4], lookAt: [3.5, 0, 2.3] });
 
   /* ---------- tilstand og animation ---------- */
@@ -308,7 +317,9 @@ export default function build(ctx) {
 
   return {
     onStep(id) { mode = id; fresh = true;
-      Object.entries(stationEls).forEach(([k, els]) => els.forEach(e => dim(e, k === id ? 1 : 0.35)));  },
+      Object.entries(stationEls).forEach(([k, els]) => els.forEach(e => dim(e, k === id ? 1 : 0.35)));
+      plate.object3D.visible = id === "b0-3";
+      st2.object3D.visible = id !== "b0-3"; st1.object3D.visible = id !== "b0-3"; },
     tick(t) {
       if (fresh) { t0 = t; fresh = false; }
       // testkrog: window.__roomS låser animationstiden (bruges kun af skærmbilledværktøjet)
