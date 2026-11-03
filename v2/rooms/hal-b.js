@@ -264,7 +264,8 @@ export default function build(ctx) {
     onStep(id) { mode = id; fresh = true; },
     tick(t) {
       if (fresh) { t0 = t; fresh = false; }
-      const s = (t - t0) / 1000;
+      // testkrog: window.__roomS låser animationstiden (bruges kun af skærmbilledværktøjet)
+      const s = typeof window.__roomS === "number" ? window.__roomS : (t - t0) / 1000;
 
       // datapakkerne stiger altid i en langsom spiral; i b0-2 dæmpes de, så den fremhævede pakke står frem
       packMat.opacity = mode === "b0-2" ? 0.25 : 0.95;

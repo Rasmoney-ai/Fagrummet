@@ -83,14 +83,14 @@ export default function build(ctx) {
   kit.el("a-entity", { light: `type: point; color: ${B}; intensity: 0.5; distance: 10; decay: 1.3`, position: "0 4.2 -3" });
 
   /* ---------- skilte og dør ---------- */
-  ctx.sign(ctx.room.name, { position: `0 4.15 ${Z0 + 0.25}`, width: 2.6, sub: ctx.room.sub });
+  ctx.sign(ctx.room.name, { position: `3.4 3.6 ${Z0 + 0.25}`, width: 2.4, sub: ctx.room.sub });
   ctx.door(ctx.room.parent, { position: `${X0 + 0.15} 0 3.6`, rotation: "0 90 0" });
 
   /* ---------- fem stationer: placering, lampe og gulvplade ---------- */
   const EYE = [0, 5.4];
   const ST = {
     "b2-1": { p: [-5.0, -0.2], view: [-2.5, 1.5] },
-    "b2-2": { p: [-5.6, -6.2], view: [-4.0, -1.6], look: [-5.9, -6.6] },
+    "b2-2": { p: [-5.6, -6.2], view: [-3.6, -2.4], look: [-5.6, -6.4] },
     "b2-3": { p: [0, -8.75], view: [0, -4.9] },
     "b2-4": { p: [4.8, -6.0], view: [3.2, -3.6] },
     "b2-5": { p: [5.2, -0.4], view: [2.6, 1.6] },
@@ -228,8 +228,8 @@ export default function build(ctx) {
   /* ================= B2.2 · Det skærmløse hjørne ================= */
   const S2 = ST["b2-2"].g;
   S2.setAttribute("rotation", "0 0 0"); S2.object3D.rotation.set(0, 0, 0);   // hjørnet følger rummets akser
-  const TS = 0.7, GC = 4, GR = 5;                 // flisestørrelse, kolonner, rækker
-  const gx = i => -1.4 + i * TS, gz = j => -2.3 + j * TS;   // flisecentre i S2-koordinater
+  const TS = 0.8, GC = 4, GR = 5;                 // flisestørrelse, kolonner, rækker
+  const gx = i => -1.4 + i * TS, gz = j => -2.1 + j * TS;   // flisecentre i S2-koordinater
   const tapeTex = K.canvasTexture(512, 640, (g, w, h) => {
     g.fillStyle = "#1a2236"; g.fillRect(0, 0, w, h);
     g.strokeStyle = "#d8dde8"; g.lineWidth = 7; g.setLineDash([]);
@@ -259,12 +259,12 @@ export default function build(ctx) {
   mesh(new T.PlaneGeometry(2.6, 1.3), std("#ffffff", { map: chalk }), [gx(1.5), 1.75, -2.56], S2);
   mesh(merge([bx(2.75, 0.08, 0.1, gx(1.5), 2.43, -2.58), bx(2.75, 0.08, 0.16, gx(1.5), 1.07, -2.55), bx(0.08, 1.4, 0.1, gx(1.5) - 1.34, 1.75, -2.58), bx(0.08, 1.4, 0.1, gx(1.5) + 1.34, 1.75, -2.58)]), std("#6b5440"), [0, 0, 0], S2);
   const desks = [];
-  for (const [x, z] of [[1.7, -1.6], [1.7, -0.2]]) {
+  for (const [x, z] of [[2.3, -1.6], [2.3, -0.2]]) {
     desks.push(bx(0.9, 0.04, 0.55, x, 0.72, z), bx(0.04, 0.72, 0.04, x - 0.4, 0.36, z - 0.22), bx(0.04, 0.72, 0.04, x + 0.4, 0.36, z - 0.22), bx(0.04, 0.72, 0.04, x - 0.4, 0.36, z + 0.22), bx(0.04, 0.72, 0.04, x + 0.4, 0.36, z + 0.22));
     desks.push(bx(0.4, 0.04, 0.4, x, 0.44, z + 0.5), bx(0.4, 0.4, 0.04, x, 0.66, z + 0.7), bx(0.04, 0.44, 0.04, x - 0.17, 0.22, z + 0.33), bx(0.04, 0.44, 0.04, x + 0.17, 0.22, z + 0.33), bx(0.04, 0.44, 0.04, x - 0.17, 0.22, z + 0.67), bx(0.04, 0.44, 0.04, x + 0.17, 0.22, z + 0.67));
   }
   mesh(merge(desks), std("#7a6550"), [0, 0, 0], S2);
-  mesh(merge([bx(0.3, 0.02, 0.22, 1.6, 0.75, -1.6), bx(0.3, 0.02, 0.22, 1.8, 0.75, -0.2)]), std("#e6e1d3"), [0, 0, 0], S2);
+  mesh(merge([bx(0.3, 0.02, 0.22, 2.2, 0.75, -1.6), bx(0.3, 0.02, 0.22, 2.4, 0.75, -0.2)]), std("#e6e1d3"), [0, 0, 0], S2);
   // instruktionskortene på gulvet foran feltet (vippet op, så de kan læses)
   const CARDS = [["↑", "1 frem"], ["↑", "1 frem"], ["↷", "drej højre"], ["↑", "1 frem"], ["?", "drej"], ["↑", "2 frem"]];
   const cardTex = ([ic, t], unclear) => K.canvasTexture(256, 340, (g, w, h) => {
@@ -275,25 +275,28 @@ export default function build(ctx) {
     g.font = '700 50px "Familjen Grotesk", sans-serif'; g.fillText(t, w / 2, 270);
   });
   // kortene ligger i en række foran feltet; rækkens gruppe er stationen (ringen lægges foran kortene)
-  const cardRow = group([gx(1.5), 0, gz(GR - 1) + 1.65], S2);
+  const cardRow = group([gx(1.5), 0, gz(GR - 1) + 0.95], S2);
   const cards = CARDS.map((c, k) => {
-    const e = group([(k - 2.5) * 0.5, 0.02, -0.88], cardRow, [-62, 0, 0]);
+    const e = group([(k - 2.5) * 0.55, 0.02, 0], cardRow, [-62, 0, 0]);
     const m = texMat(cardTex(c, c[0] === "?"));
-    mesh(new T.PlaneGeometry(0.38, 0.5), m, [0, 0.25, 0], e);
+    mesh(new T.PlaneGeometry(0.44, 0.58), m, [0, 0.29, 0], e);
     const hl = basic(B, { transparent: true, opacity: 0 });
-    mesh(new T.PlaneGeometry(0.44, 0.56), hl, [0, 0.25, -0.005], e);
+    mesh(new T.PlaneGeometry(0.5, 0.64), hl, [0, 0.29, -0.005], e);
     return { e, hl };
   });
   // figuren, der udfører kortene
   const fig2 = group([gx(0), 0, gz(4)], S2);
   const fig2Mat = std("#e8ecf6", { emissive: new T.Color("#9fb6d8"), emissiveIntensity: 0.15 });
-  mesh(figureGeo(1.55), fig2Mat, [0, 0, 0], fig2);
-  const qMark = label("?", [0, 1.35, 0], fig2, 0.34, { edge: RED, ink: "#ffffff" });
+  mesh(figureGeo(1.5), fig2Mat, [0, 0, 0], fig2);
+  const qMark = label("?", [0, 1.3, 0], fig2, 0.3, { edge: RED, ink: "#ffffff" });
   // den tiltænkte rute (vises, når figuren er gået forkert)
   const ghostPts = [[gx(1), gz(2)], [gx(1), gz(0)]];
-  const ghostG = []; for (let i = 0; i < 6; i++) { const f = i / 6; ghostG.push(bx(0.06, 0.01, 0.12, gx(1), 0.015, gz(2) - 0.12 - f * 1.3)); }
+  const ghostG = []; for (let i = 0; i < 7; i++) ghostG.push(bx(0.09, 0.012, 0.13, gx(1), 0.016, gz(2) - 0.1 - i * 0.22));
   const ghostMat = basic(B, { transparent: true, opacity: 0 });
   mesh(merge(ghostG), ghostMat, [0, 0, 0], S2);
+  const endG = new T.PlaneGeometry(TS * 0.9, TS * 0.9); endG.rotateX(-Math.PI / 2);
+  const endMat = basic(RED, { transparent: true, opacity: 0, depthWrite: false });
+  mesh(endG, endMat, [gx(1), 0.014, gz(4)], S2);
   // programmet: hvert kort giver en handling (pos i, j og retning d: 0 = −z, 1 = +x, 2 = +z, 3 = −x)
   const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]];
   const plan = [];   // tilstande efter hvert kort
@@ -305,8 +308,10 @@ export default function build(ctx) {
       else d = (d + 1) % 4;   // den uklare "drej": figuren gætter på højre, men der var ment venstre
       plan.push({ i, j, d });
     } }
-  signAt("b2-2", `${gx(1.5)} 2.95 -2.5`, 2.0);
-  ctx.station("b2-2", cardRow);
+  signAt("b2-2", `${gx(1.5)} 2.85 -2.45`, 2.0);
+  // stationens ring lægges foran kortrækken, så den ikke dækker kortene
+  const st2 = group([0, 0, 1.05], cardRow);
+  ctx.station("b2-2", st2);
 
   /* ================= B2.3 · Blokke og tekst side om side ================= */
   const S3 = ST["b2-3"].g;
@@ -514,7 +519,8 @@ export default function build(ctx) {
     tick(t) {
       now = t;
       if (fresh) { t0 = t; fresh = false; }
-      const s = (t - t0) / 1000;
+      // testkrog: window.__roomS låser animationstiden (bruges kun af skærmbilledværktøjet)
+      const s = typeof window.__roomS === "number" ? window.__roomS : (t - t0) / 1000;
 
       /* flowdiagrammet kører altid; i b2-0 er det tydeligst */
       const fOn = mode === "b2-0" ? 1 : 0.55;
@@ -568,6 +574,7 @@ export default function build(ctx) {
       qMark.object3D.rotation.y = -fig2.object3D.rotation.y;
       fig2Mat.emissive.set(a2 && c2 >= 8.4 ? RED : "#9fb6d8"); fig2Mat.emissiveIntensity = a2 && c2 >= 8.4 ? 0.4 : 0.15;
       ghostMat.opacity = a2 && c2 >= 8.6 ? 0.85 * ((Math.floor(t / 350) % 2) ? 1 : 0.4) : 0;
+      endMat.opacity = a2 && c2 >= 8.4 ? 0.55 : 0;
       goalMat.color.set(a2 && c2 >= 8.6 ? "#eafffb" : B);
 
       /* B2.3: samme linje markeres i blokkene og i teksten */

@@ -372,7 +372,8 @@ export default function build(ctx) {
     onStep(id) { mode = id; fresh = true; },
     tick(t, dt) {
       if (fresh) { t0 = t; fresh = false; lastNum = 0; }
-      const s = (t - t0) / 1000;
+      // testkrog: window.__roomS låser animationstiden (bruges kun af skærmbilledværktøjet)
+      const s = typeof window.__roomS === "number" ? window.__roomS : (t - t0) / 1000;
       const k = Math.min(dt || 16, 50) / 1000;
 
       /* kabler: i b1-0 flyder lyset i alle kabler; ellers kun i den aktive stations kabel */
