@@ -4,7 +4,7 @@ Nov 3, 2026 · @Rasmus Broe
 
 ## Grundlag og vægtning
 
-Version 2 giver hvert af fagplanens otte delområder sit eget rum. Hvert punkt under "Undervisningen omfatter" får sin egen station med omtrent samme taletid. Det betyder, at det er fagplanen, der bestemmer, hvor meget plads hvert begreb får – ikke hvad vi selv finder interessant. Grundlaget er andet udkast fra juni 2026: 3 indholdsområder, 8 delområder, 29 punkter og 5 mål.
+Version 2 giver hvert af fagplanens otte delområder sit eget rum. Hvert punkt under "Undervisningen omfatter" får sin egen station med omtrent samme taletid. Det betyder, at det er fagplanen, der bestemmer, hvor meget plads hvert begreb får – ikke hvad vi selv finder interessant. Grundlaget er andet udkast fra juni to tusind og seksogtyve: 3 indholdsområder, 8 delområder, 29 punkter og 5 mål.
 
 ### Det, der var skævt i version 1
 
@@ -19,7 +19,7 @@ Version 2 giver hvert af fagplanens otte delområder sit eget rum. Hvert punkt u
 1. **Fagplanens struktur fordeler pladsen.** Ét rum pr. delområde, én station pr. punkt og cirka 30–45 sekunders tale pr. station. Målene står i områdets hal, så man møder dem på vej ind og ud.
 2. **To lag i hver tekst.** Først hvad fagplanen siger, gengivet tæt på dens ordlyd. Derefter en forklaring eller et eksempel. Skiftet markeres hørbart med faste formuleringer: "fagplanen siger …" og "et eksempel kunne være …".
 3. **Kildevægtning.** Fagplanen styrer. Forklaringer bygger først på fagudvalget og Videnscenter for Digital Teknologiforståelse (Mark Holler, Mikkel Hjorth, Ole Sejer Iversen). Workshopforløb bruges kun som eksempler og præsenteres ikke som norm.
-4. **Status og forbehold samles ét sted.** At det er et udkast, at det afprøves i efteråret 2026, og at prøven ikke er fastlagt endnu, står i forhallen og i sammenhængsrummet. Det står ikke spredt ud i stationerne.
+4. **Status og forbehold samles ét sted.** At det er et udkast, at det afprøves i efteråret to tusind og seksogtyve, og at prøven ikke er fastlagt endnu, står i forhallen og i sammenhængsrummet. Det står ikke spredt ud i stationerne.
 5. **Erkendeformerne får deres egen neutrale farve** (kernens lyse lavendel). De går igen i alle rum som små tegn, men de bliver ikke knyttet til et bestemt område.
 
 6) **Overskrifter står også som tekst i rummet.** Rummets navn, delområdets navn og hver stations titel vises som tekst i 3D-scenen, fx over en dør eller på et skilt ved stationen. Selve forklaringen bliver talt.
@@ -42,7 +42,7 @@ Forhallen er en rund sal med en svævende kerne i midten. Her møder man fagets 
 
 **F1 · Velkommen**
 
-Velkommen til Fagrummet. Teknologiforståelse bliver et toårigt praktisk-musisk valgfag i 7.-8. eller 8.-9. klasse fra skoleåret 2027/28. Det, du hører, bygger på andet udkast til fagplanen fra juni 2026. Skoler i udviklingsprogrammet afprøver udkastet i efteråret 2026, og derefter justerer fagudvalget det. Fagplanen kan altså stadig ændre sig. Du kan bevæge dig frit mellem rummene, og du kan altid vende tilbage hertil.
+Velkommen til Fagrummet. Teknologiforståelse bliver et toårigt praktisk-musisk valgfag i 7.-8. eller 8.-9. klasse fra skoleåret 2027/28. Det, du hører, bygger på andet udkast til fagplanen fra juni to tusind og seksogtyve. Skoler i udviklingsprogrammet afprøver udkastet i efteråret to tusind og seksogtyve, og derefter justerer fagudvalget det. Fagplanen kan altså stadig ændre sig. Du kan bevæge dig frit mellem rummene, og du kan altid vende tilbage hertil.
 
 *Scene:* Kernen lyser op, og portene står i halvmørke.
 

@@ -431,7 +431,7 @@ export default function build(ctx) {
     for (const x of segs) if (d <= x[2] + x[3]) { sg = x; break; }
     const k = sg[3] ? (d - sg[2]) / sg[3] : 1;
     return { x: lerp(sg[0][0], sg[1][0], k), z: lerp(sg[0][1], sg[1][1], k), yaw: Math.atan2(sg[1][0] - sg[0][0], sg[1][1] - sg[0][1]) / D,
-      moving: t > 0 && !end, done: end, t, end: dur + (pts === pts ? 0.3 : 0) };
+      moving: t > 0 && !end, done: end, t, dur };
   }
   let drawerOpen = 0;
   return {
@@ -462,9 +462,9 @@ export default function build(ctx) {
           if (m.who === "Storesøster") {
             // hun rejser sig, går rundt om skænken, lægger telefonen i skuffen og går tilbage til sofaen
             const path = [[ax, az], [ax, SOF.z + 1.55], [SB.x + 0.85, SOF.z + 1.55], [SB.x + 0.8, SB.z - 0.44]];
-            const out = walkPath(path, e - 0.3, 1.1);                 // ud til skuffen
+            const out = walkPath(path, e - 0.3, 1.1); out.end = 0.3 + out.dur;   // ud til skuffen
             const put = ease((e - out.end - 0.2) / 1.0);
-            const home = walkPath(path.slice().reverse(), e - out.end - 1.5, 1.1);
+            const home = walkPath(path.slice().reverse(), e - out.end - 1.5, 1.1); home.end = out.end + 1.5 + home.dur;
             const p = home.t > 0 ? home : out;
             const moving = p.moving;
             const seated = e < 0.3 || home.done;

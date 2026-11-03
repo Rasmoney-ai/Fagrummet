@@ -439,7 +439,7 @@ export default function build(ctx) {
           const bølger = [0, 1, 2, 3].map(() => { const m = fladM("#7fd0ff"); return { m, e: T.mesh(p, RG, m, "-0.04 0.06 0") }; });
           const tal = fladM(A);
           const bar = T.mesh(p, add(new THREE.PlaneGeometry(0.018, 0.2).translate(0, 0.1, 0)), tal, "0.12 0.02 0");
-          return (t, on) => { const hy = 0.13 + 0.09 * (0.5 + 0.5 * Math.sin(t * 1.3)); hånd.object3D.position.y = hy; hm.opacity = on ? 1 : 0;
+          return (t, on) => { const hy = 0.1 + 0.07 * (0.5 + 0.5 * Math.sin(t * 1.3)); hånd.object3D.position.y = hy; hm.opacity = on ? 1 : 0;
             bølger.forEach((b, k) => { const f = (t * 1.2 + k / 4) % 1; b.e.object3D.position.set(k % 2 ? 0.04 : -0.04, 0.055 + f * (hy - 0.07), 0); b.e.object3D.scale.setScalar(1 + f * 1.4); b.m.opacity = on ? (1 - f) * 0.9 : 0; });
             tal.opacity = on ? 0.9 : 0; bar.object3D.scale.y = (hy - 0.1) / 0.2; }; } },
       { navn: "ledende tråd", pos: [0, -0.11], tilt: 55, sk: 1.5,
@@ -473,7 +473,7 @@ export default function build(ctx) {
     });
     const navn = fakt.map(f => { const tp = kit.textPlane(g, `0 ${Y + 0.72} 0.1`, f.navn, A, { width: 0.62, aspect: 0.22, size: 110, bg: true, ink: "#eef1ff" }); tp.object3D.visible = false; return tp; });
     // et lille hint: "klik på en komponent"
-    const hint = kit.textPlane(g, `0 ${Y + 0.03} ${BD / 2 + 0.09}`, "klik på en komponent", "#a9b0d6", { width: 0.6, aspect: 0.14, size: 90, bg: false, ink: "#a9b0d6", rotation: "-70 0 0" });
+    const hint = kit.textPlane(g, `0 ${Y + 0.03} ${BD / 2 + 0.09}`, "klik på en komponent", "#a9b0d6", { width: 0.6, aspect: 0.14, size: 90, bg: false, ink: "#d6dbf5", rotation: "-70 0 0" });
     let valgt = -1, tValgt = 0;
     return {
       nulstil() { valgt = -1; },

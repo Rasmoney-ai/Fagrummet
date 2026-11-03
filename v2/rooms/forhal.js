@@ -156,10 +156,10 @@ export default function build(ctx) {
   const ST = {
     f1: { phi: 0, vr: 4.9, side: 1 },
     f2: { phi: -40, vr: 4.7, side: 1 },
-    f3: { phi: 40, vr: 4.9, side: -1 },
-    f4: { phi: -92, vr: 4.9, side: -1 },
-    f5: { phi: 100, vr: 4.7, side: 1 },
-    f6: { phi: 180, vr: 1.2, side: 1, out: true },
+    f3: { phi: 40, vr: 4.9, side: 1, off: 1.45 },
+    f4: { phi: -92, vr: 4.9, side: 1, off: 1.45 },
+    f5: { phi: 100, vr: 4.8, side: -1, off: 1.45 },
+    f6: { phi: 180, vr: 0.9, side: 1, out: true, dist: 1.5, off: 1.0 },
   };
   const steleGeo = (() => {
     const parts = [[0.42, 0.05, 0.3, 0, 0.025, 0], [0.16, 1.0, 0.1, 0, 0.55, -0.02], [0.3, 0.04, 0.16, 0, 0.06, 0]];
@@ -176,7 +176,7 @@ export default function build(ctx) {
     const [vx, vz] = polar(cfg.phi, cfg.vr);
     const fwd = cfg.out ? polar(cfg.phi, 1) : polar(cfg.phi + 180, 1);          // blikretning
     const rgt = [-fwd[1], fwd[0]];                                              // højre for blikket
-    const dist = cfg.out ? 2.0 : 2.0, off = cfg.out ? 0.95 : 0.95;
+    const dist = cfg.dist ?? 1.9, off = cfg.off ?? 1.3;
     const x = vx + fwd[0] * dist + rgt[0] * off * cfg.side, z = vz + fwd[1] * dist + rgt[1] * off * cfg.side;
     const face = Math.atan2(vx - x, vz - z) / D2R;                              // stelen vender mod brugeren
     const g = kit.grp(root, `${x} 0 ${z}`, { rotation: `0 ${face} 0` });
@@ -212,7 +212,7 @@ export default function build(ctx) {
   const words = [["med", "udtrykke sig med teknologierne", -1], ["om", "udtrykke sig om teknologierne", 1]].map(([w, sub, side]) => {
     const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.7, 0.85)), label(wordTex(w, sub)));
     const [rx, rz] = right(f2.phi), [fx, fz] = polar(f2.phi, 0.7);
-    m.position.set(rx * side * 1.75 + fx, CORE_Y + 0.05, rz * side * 1.75 + fz); m.rotation.y = f2.phi * D2R; add(m);
+    m.position.set(rx * side * 1.75 + fx, CORE_Y + 0.05, rz * side * 1.75 + fz); m.rotation.y = f2.phi * D2R; m.renderOrder = 20; add(m);
     return { m, side };
   });
   // en tynd bue fra hvert ord ind til kernen
@@ -265,7 +265,7 @@ export default function build(ctx) {
     // navn ved rodens fod, stående, vendt mod F3-stationen
     const [bx, bz] = [Math.sin(a0) * 2.6, Math.cos(a0) * 2.6];
     const lbl = new THREE.Mesh(keep(new THREE.PlaneGeometry(0.9, 0.193)), label(keep(K.labelTex(name, col, { w: 1024, h: 220, size: 70, bg: true, weight: 700 }))));
-    lbl.position.set(bx, 0.36, bz);
+    lbl.position.set(bx, 0.36, bz); lbl.renderOrder = 15;
     const [vx, vz] = polar(ST.f3.phi, ST.f3.vr); lbl.rotation.y = Math.atan2(vx - bx, vz - bz);
     add(lbl);
     return { mesh, geo, mat, lbl, count: geo.index.count };
@@ -299,7 +299,7 @@ export default function build(ctx) {
     const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.2, 0.258)), label(keep(K.labelTex(f.label, C.core, { w: 1024, h: 220, size: f.label.length > 12 ? 72 : 84, bg: true }))));
     const [fx, fz] = polar(f4.phi, 0.12);
     m.position.set(f.target.x + fx, CORE_Y + f.target.y - 0.5, f.target.z + fz);
-    m.rotation.y = f4.phi * D2R; add(m); return m;
+    m.rotation.y = f4.phi * D2R; m.renderOrder = 15; add(m); return m;
   });
 
   /* ---------- F5: erkendeformernes tre tegn ---------- */
@@ -348,7 +348,7 @@ export default function build(ctx) {
   }
   const ICONS = ["skabe", "omskabe", "nytænke"].map((label, i) => {
     const mat = keep(new THREE.SpriteMaterial({ map: tex(512, 512, g => drawIcon(g, i, label)), transparent: true, depthWrite: false, opacity: 0 }));
-    const s = new THREE.Sprite(mat); coreRig.add(s); return { s, mat, ph: i * Math.PI * 2 / 3 };
+    const s = new THREE.Sprite(mat); s.renderOrder = 18; coreRig.add(s); return { s, mat, ph: i * Math.PI * 2 / 3 };
   });
   const orbitMat = basic(C.core, { transparent: true, opacity: 0 });
   const orbit = new THREE.Mesh(keep(new THREE.TorusGeometry(1.75, 0.008, 3, 96)), orbitMat);
