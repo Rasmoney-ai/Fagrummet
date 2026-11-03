@@ -415,22 +415,22 @@ export default function build(ctx) {
     const fladM = (c, o = 0) => add(new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o, side: THREE.DoubleSide, depthWrite: false }));
     // hver komponent: model + egen lille animation (som børn af komponenten, så de følger med, når den løftes)
     const fakt = [
-      { navn: "LED", pos: [-0.4, 0.11], tilt: 10,
+      { navn: "LED", pos: [-0.4, 0.11], tilt: 10, sk: 2.4,
         byg(b) { b.cyl("#ff5a3a", [0, 0.06, 0], 0.035, 0.05, null, 12); b.sph("#ff5a3a", [0, 0.085, 0], 0.035, [1, 1, 1], [12, 6]); b.cyl("#e8e4da", [0, 0.032, 0], 0.04, 0.008, null, 12); for (const x of [-0.012, 0.012]) b.cyl("#b9bfcc", [x, 0.0, 0], 0.003, 0.06, null, 4); },
         fx(p) { const m = glowM("#ff6a3a"); T.mesh(p, add(new THREE.PlaneGeometry(0.32, 0.32)), m, "0 0.075 0.05"); const kerne = fladM("#ffd0b0"); T.mesh(p, add(new THREE.SphereGeometry(0.02, 8, 6)), kerne, "0 0.08 0.03");
           return (t, on) => { const v = on ? 0.35 + 0.65 * Math.abs(Math.sin(t * 3.2)) : 0; m.opacity = v; kerne.opacity = v; }; } },
-      { navn: "servomotor", pos: [0, 0.11], tilt: 30,
+      { navn: "servomotor", pos: [0, 0.11], tilt: 30, sk: 2.2,
         byg(b) { b.box("#2f6fd1", [0, 0.035, 0], [0.12, 0.07, 0.06]); b.box("#2f6fd1", [0, 0.05, 0], [0.16, 0.01, 0.06]); b.cyl("#e8e4da", [0.03, 0.075, 0], 0.012, 0.012, null, 10); b.box("#d14b3c", [-0.04, 0.03, 0.031], [0.02, 0.012, 0.002]); },
         fx(p) { const arm = ctx.kit.grp(p, "0.03 0.085 0"); const m = fladM("#f3eee2"); T.mesh(arm, add(new THREE.BoxGeometry(0.11, 0.008, 0.022).translate(0.045, 0, 0)), m);
           // en lille skala bag armen, der viser udslaget
           const sk = fladM(A); const SG = add(new THREE.RingGeometry(0.1, 0.106, 24, 1, -0.1 * Math.PI, 1.2 * Math.PI)); SG.rotateX(-Math.PI / 2); T.mesh(p, SG, sk, "0.03 0.081 0");
           return (t, on) => { m.opacity = on ? 1 : 0; sk.opacity = on ? 0.7 : 0; arm.object3D.rotation.y = Math.sin(t * 2.2) * 1.0 + 0.5; }; } },
-      { navn: "summer", pos: [0.4, 0.11], tilt: 35,
+      { navn: "summer", pos: [0.4, 0.11], tilt: 35, sk: 2.2,
         byg(b) { b.cyl("#22232c", [0, 0.025, 0], 0.045, 0.05, null, 14); b.cyl("#3a3f55", [0, 0.052, 0], 0.012, 0.005, null, 8); for (const x of [-0.015, 0.015]) b.cyl("#b9bfcc", [x, -0.01, 0], 0.003, 0.03, null, 4); },
         fx(p) { const RG = add(new THREE.RingGeometry(0.05, 0.058, 28)); RG.rotateX(-Math.PI / 2);
           const ringe = [0, 1, 2].map(() => { const m = fladM(A); return { m, e: T.mesh(p, RG, m, "0 0.056 0") }; });
           return (t, on) => ringe.forEach((r, k) => { const f = (t * 1.4 + k / 3) % 1; r.e.object3D.scale.setScalar(1 + f * 2.4); r.e.object3D.position.y = 0.056 + f * 0.04; r.m.opacity = on ? (1 - f) * 0.95 : 0; }); } },
-      { navn: "afstandssensor", pos: [-0.4, -0.11], tilt: 20,
+      { navn: "afstandssensor", pos: [-0.4, -0.11], tilt: 20, sk: 2.0,
         byg(b) { b.box("#1d4f8a", [0, 0.008, 0], [0.16, 0.012, 0.07]); for (const x of [-0.04, 0.04]) { b.cyl("#c9cdd8", [x, 0.033, 0], 0.022, 0.035, null, 12); b.cyl("#2a2a33", [x, 0.051, 0], 0.016, 0.002, null, 10); } },
         fx(p) { const hånd = ctx.kit.grp(p, "0 0.2 0"); const hm = add(new THREE.MeshStandardMaterial({ color: "#c9a27e", flatShading: true, transparent: true, opacity: 0 }));
           const HB = new Batch({ uv: true }); HB.add(T.geo.box(), null, [0, 0, 0], null, [0.11, 0.02, 0.09]); for (let k = 0; k < 4; k++) HB.add(T.geo.box(), null, [-0.04 + k * 0.027, 0, 0.065], null, [0.018, 0.016, 0.05]); HB.add(T.geo.box(), null, [0.07, 0, 0.0], [0, 30, 0], [0.04, 0.016, 0.02]);
@@ -442,7 +442,7 @@ export default function build(ctx) {
           return (t, on) => { const hy = 0.13 + 0.09 * (0.5 + 0.5 * Math.sin(t * 1.3)); hånd.object3D.position.y = hy; hm.opacity = on ? 1 : 0;
             bølger.forEach((b, k) => { const f = (t * 1.2 + k / 4) % 1; b.e.object3D.position.set(k % 2 ? 0.04 : -0.04, 0.055 + f * (hy - 0.07), 0); b.e.object3D.scale.setScalar(1 + f * 1.4); b.m.opacity = on ? (1 - f) * 0.9 : 0; });
             tal.opacity = on ? 0.9 : 0; bar.object3D.scale.y = (hy - 0.1) / 0.2; }; } },
-      { navn: "ledende tråd", pos: [0, -0.11], tilt: 55,
+      { navn: "ledende tråd", pos: [0, -0.11], tilt: 55, sk: 1.5,
         byg(b) { b.box("#b0413e", [0, 0.006, 0], [0.24, 0.012, 0.16]); b.cyl("#c9cdd8", [-0.12, 0.02, 0.06], 0.022, 0.03, null, 12); b.cyl("#fff1c9", [0.1, 0.018, -0.05], 0.012, 0.012, null, 8); },
         fx(p) { const pts = []; for (let k = 0; k <= 22; k++) { const u = k / 22; pts.push([-0.1 + u * 0.2, 0.013, 0.05 - u * 0.1 + Math.sin(u * Math.PI * 3) * 0.035]); }
           const TB = new Batch({ uv: true }); pts.forEach(q => TB.add(T.geo.box(), null, q, [0, 0, 0], [0.008, 0.002, 0.008]));
@@ -452,11 +452,11 @@ export default function build(ctx) {
           const gm = grå; const gråM = p.lastElementChild.previousElementSibling;
           return (t, on) => { const f = Math.min(1, (t % 2.6) / 1.8); lys.setDrawRange(0, Math.floor(f * N / 36) * 36); lm.opacity = on ? 1 : 0; lm2.opacity = on && f >= 1 ? 1 : 0;
             const mm = gråM.getObject3D("mesh"); if (mm) mm.material.opacity = on ? 0.9 : 0; }; } },
-      { navn: "lyssensor", pos: [0.4, -0.11], tilt: 20,
+      { navn: "lyssensor", pos: [0.4, -0.11], tilt: 20, sk: 2.0,
         byg(b) { b.box("#2a5c43", [0, 0.008, 0], [0.12, 0.012, 0.08]); b.cyl("#d6b85a", [0, 0.025, 0], 0.022, 0.014, null, 12); b.box("#8a5a2a", [0, 0.033, 0], [0.03, 0.002, 0.004]); },
-        fx(p) { const sm = glowM("#ffe08a"); const sol = T.mesh(p, add(new THREE.PlaneGeometry(0.22, 0.22)), sm, "-0.06 0.2 0.02"); const kerne = fladM("#fff3c0"); T.mesh(p, add(new THREE.CircleGeometry(0.025, 14)), kerne, "-0.06 0.2 0.03");
-          const tal = fladM(A); const bar = T.mesh(p, add(new THREE.PlaneGeometry(0.03, 0.2).translate(0, 0.1, 0)), tal, "0.1 0.02 0");
-          const ramme = fladM("#6b7299"); T.mesh(p, add(new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.04, 0.21).translate(0, 0.105, 0))), ramme, "0.1 0.02 0.001");
+        fx(p) { const sm = glowM("#ffe08a"); T.mesh(p, add(new THREE.PlaneGeometry(0.2, 0.2)), sm, "-0.09 0.13 0.02"); const kerne = fladM("#fff3c0"); T.mesh(p, add(new THREE.CircleGeometry(0.022, 14)), kerne, "-0.09 0.13 0.03");
+          const tal = fladM(A); const bar = T.mesh(p, add(new THREE.PlaneGeometry(0.024, 0.13).translate(0, 0.065, 0)), tal, "0.09 0.03 0");
+          const ramme = fladM("#6b7299"); const RB2 = new Batch({ uv: true }); for (const [x, y, w, h] of [[-0.016, 0.068, 0.004, 0.14], [0.016, 0.068, 0.004, 0.14], [0, 0.0, 0.036, 0.004], [0, 0.138, 0.036, 0.004]]) RB2.plane([x, y, 0], [w, h]); T.mesh(p, RB2.merge(), ramme, "0.09 0.03 0.001");
           return (t, on) => { const v = 0.5 + 0.5 * Math.sin(t * 1.8); sm.opacity = on ? v : 0; kerne.opacity = on ? 0.3 + 0.7 * v : 0; tal.opacity = on ? 1 : 0; ramme.opacity = on ? 1 : 0; bar.object3D.scale.y = 0.08 + 0.92 * v; }; } },
     ];
     const komp = fakt.map((f, i) => {
@@ -469,7 +469,7 @@ export default function build(ctx) {
       const hit = kit.box(e, "0 0.05 0", 0.34, 0.14, 0.2, "shader: flat; visible: false");
       ctx.onClick(hit, () => { valgt = i; tValgt = tNu; if (aktiv !== "a1-3") ctx.goStep("a1-3"); });
       const home = [f.pos[0], Y + 0.022, f.pos[1]];
-      return { e, inner, anim, home, tilt: f.tilt };
+      return { e, inner, anim, home, tilt: f.tilt, sk: f.sk };
     });
     const navn = fakt.map(f => { const tp = kit.textPlane(g, `0 ${Y + 0.72} 0.1`, f.navn, A, { width: 0.62, aspect: 0.22, size: 110, bg: true, ink: "#eef1ff" }); tp.object3D.visible = false; return tp; });
     // et lille hint: "klik på en komponent"
@@ -490,7 +490,7 @@ export default function build(ctx) {
           const o = k.inner.object3D;
           o.position.set((DEMO[0] - k.home[0]) * op, (DEMO[1] - k.home[1]) * op, (DEMO[2] - k.home[2]) * op);
           o.rotation.set(op * k.tilt * D, 0, 0);
-          o.scale.setScalar(1 + op * 1.7);
+          o.scale.setScalar(1 + op * (k.sk - 1));
           k.anim(ls, op > 0.95);
         });
         navn.forEach((n, j) => { n.object3D.visible = j === i; });

@@ -396,6 +396,7 @@ export default function build(ctx) {
   const s13 = ctx.sign(ctx.step("c1-3").title, { position: `${SB.x - 0.2} 2.35 ${SB.z - 1.25}`, width: 1.8, rotation: "0 50 0" });
   ctx.view("c1-3", { position: [0.6, 0, 1.5], lookAt: [-2.4, 0.9, -1.7] });
 
+  window.__dbgC1 = fam; /*DBG*/
   /* ---------- Tilstand og animation ---------- */
   let cur = null, t0 = null;
   const tmpV = new THREE.Vector3();

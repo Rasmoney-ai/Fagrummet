@@ -65,10 +65,10 @@ export default function build(ctx) {
   floor.rotation.x = -Math.PI / 2; add(floor);
 
   /* ---------- Væg, pilastre, gesims, kuppel og oculus ---------- */
-  const wall = new THREE.Mesh(keep(new THREE.CylinderGeometry(RW, RW, WALL_H, 64, 1, true)), std("#171c38", { side: THREE.BackSide, roughness: 0.9 }));
+  const wall = new THREE.Mesh(keep(new THREE.CylinderGeometry(RW, RW, WALL_H, 64, 1, true)), std("#141933", { side: THREE.BackSide, roughness: 0.95 }));
   wall.position.y = WALL_H / 2; add(wall);
   const GATE_PHI = { "hal-a": 180 + 28, "hal-b": 180, "hal-c": 180 - 28 };
-  const UP_PHI = 108;                                   // trappen op til Udsigten
+  const UP_PHI = 248;                                   // trappen op til Udsigten
   const busy = [...Object.values(GATE_PHI), UP_PHI];
   const pil = [];
   for (let i = 0; i < 28; i++) {
@@ -92,7 +92,7 @@ export default function build(ctx) {
     for (let i = 0; i < 24; i++) { const x = i * w / 24; g.beginPath(); g.moveTo(x, h * 0.06); g.lineTo(x, h); g.stroke(); }
     g.strokeStyle = "rgba(201,209,255,0.10)"; [0.35, 0.62, 0.86].forEach(v => { g.beginPath(); g.moveTo(0, v * h); g.lineTo(w, v * h); g.stroke(); });
   });
-  const dome = new THREE.Mesh(keep(new THREE.SphereGeometry(RW, 48, 12, 0, Math.PI * 2, 0, Math.PI / 2)), std("#ffffff", { map: domeTex, side: THREE.BackSide, roughness: 1, flatShading: false }));
+  const dome = new THREE.Mesh(keep(new THREE.SphereGeometry(RW, 48, 12, 0, Math.PI * 2, 0, Math.PI / 2)), std("#8a90b4", { map: domeTex, side: THREE.BackSide, roughness: 1, flatShading: false }));
   dome.scale.y = 0.36; dome.position.y = WALL_H; add(dome);
   const ocMat = basic(C.core, { transparent: true, opacity: 0.8 });
   const oculus = new THREE.Mesh(keep(new THREE.TorusGeometry(1.3, 0.05, 4, 48)), ocMat);
@@ -157,29 +157,33 @@ export default function build(ctx) {
     f1: { phi: 0, vr: 4.9, side: 1 },
     f2: { phi: -40, vr: 4.7, side: 1 },
     f3: { phi: 40, vr: 4.9, side: -1 },
-    f4: { phi: -100, vr: 5.0, side: -1 },
+    f4: { phi: -92, vr: 4.9, side: -1 },
     f5: { phi: 100, vr: 4.7, side: 1 },
-    f6: { phi: 180, vr: 1.7, side: -1, out: true },
+    f6: { phi: 180, vr: 1.2, side: 1, out: true },
   };
   const steleGeo = (() => {
-    const parts = [[0.42, 0.05, 0.3, 0, 0.025, 0], [0.22, 0.95, 0.14, 0, 0.5, 0], [0.34, 0.05, 0.22, 0, 0.995, 0]];
+    const parts = [[0.42, 0.05, 0.3, 0, 0.025, 0], [0.16, 1.0, 0.1, 0, 0.55, -0.02], [0.3, 0.04, 0.16, 0, 0.06, 0]];
     return mergeBoxes(parts);
   })();
   const steleMat = std("#262d55", { roughness: 0.45, metalness: 0.35 });
-  const capGeo = keep(new THREE.BoxGeometry(0.3, 0.012, 0.18)); capGeo.translate(0, 1.025, 0);
+  const capGeo = keep(new THREE.BoxGeometry(0.43, 0.012, 0.31)); capGeo.translate(0, 0.056, 0);
   const capMat = basic(C.core, { transparent: true, opacity: 0.75 });
   const viewPos = {};
+  const backGeo = keep(new THREE.BoxGeometry(0.95, 0.215, 0.02)); backGeo.translate(0, 0, -0.008);
+  const neckGeo = null;
   for (const s of ctx.steps) {
     const cfg = ST[s.id]; if (!cfg) continue;
     const [vx, vz] = polar(cfg.phi, cfg.vr);
     const fwd = cfg.out ? polar(cfg.phi, 1) : polar(cfg.phi + 180, 1);          // blikretning
     const rgt = [-fwd[1], fwd[0]];                                              // højre for blikket
-    const dist = cfg.out ? 2.3 : 2.1, off = cfg.out ? 1.15 : 1.05;
+    const dist = cfg.out ? 2.0 : 2.0, off = cfg.out ? 0.95 : 0.95;
     const x = vx + fwd[0] * dist + rgt[0] * off * cfg.side, z = vz + fwd[1] * dist + rgt[1] * off * cfg.side;
     const face = Math.atan2(vx - x, vz - z) / D2R;                              // stelen vender mod brugeren
     const g = kit.grp(root, `${x} 0 ${z}`, { rotation: `0 ${face} 0` });
     const hm = new THREE.Group(); hm.add(new THREE.Mesh(steleGeo, steleMat), new THREE.Mesh(capGeo, capMat)); g.object3D.add(hm);
-    ctx.sign(s.title, { parent: g, position: "0 1.42 0", width: 1.05, color: C.core, size: 74 });
+    const sg = kit.grp(g, "0 1.2 0.02", { rotation: "-18 0 0" });
+    ctx.sign(s.title, { parent: sg, position: "0 0 0.006", width: 0.92, color: C.core, size: 74 });
+    sg.object3D.add(new THREE.Mesh(backGeo, steleMat));      // bagplade, så skiltet ikke ses spejlvendt bagfra
     ctx.station(s.id, g);
     const look = cfg.out ? [polar(cfg.phi, 8)[0], 1.6, polar(cfg.phi, 8)[1]] : [0, CORE_Y, 0];
     ctx.view(s.id, { position: [vx, 0, vz], lookAt: look });
@@ -192,6 +196,9 @@ export default function build(ctx) {
   /* ---------- F2: "med" og "om" på hver side af kernen ---------- */
   function wordTex(word, sub) {
     return tex(1024, 512, (g, w, h) => {
+      const bg = g.createRadialGradient(w / 2, h * 0.5, 10, w / 2, h * 0.5, w * 0.5);
+      bg.addColorStop(0, "rgba(7,10,22,0.85)"); bg.addColorStop(0.6, "rgba(7,10,22,0.6)"); bg.addColorStop(1, "rgba(7,10,22,0)");
+      g.fillStyle = bg; g.fillRect(0, 0, w, h);
       g.textAlign = "center"; g.textBaseline = "middle";
       g.font = '700 250px "Familjen Grotesk", "Segoe UI", sans-serif';
       g.shadowColor = "rgba(5,7,18,0.95)"; g.shadowBlur = 50; g.fillStyle = "#05070f"; g.fillText(word, w / 2, h * 0.4); g.fillText(word, w / 2, h * 0.4);
@@ -225,7 +232,7 @@ export default function build(ctx) {
   const roots = ROOTS.map(([name, col], i) => {
     // roden starter på gulvet foran F3-stationen, kryber ind til podiet, snor sig op i en fælles stamme
     // (fem tråde, der fletter sig om hinanden) og breder sig til sidst ud som fingre om kernens underside
-    const a0 = (ST.f3.phi + (i - 2) * 24) * D2R, braid = i * Math.PI * 2 / 5;
+    const a0 = (ST.f3.phi + (i - 2) * 38) * D2R, braid = i * Math.PI * 2 / 5;
     const pts = [];
     const N = 70, TRUNK_TOP = CORE_Y - CORE_R * 0.78;
     for (let k = 0; k <= N; k++) {
@@ -256,16 +263,16 @@ export default function build(ctx) {
     const mat = std(col, { roughness: 0.4, emissive: new THREE.Color(col), emissiveIntensity: 0.3, flatShading: false });
     const mesh = new THREE.Mesh(geo, mat); add(mesh);
     // navn ved rodens fod, stående, vendt mod F3-stationen
-    const [bx, bz] = [Math.sin(a0) * 2.75, Math.cos(a0) * 2.75];
+    const [bx, bz] = [Math.sin(a0) * 2.6, Math.cos(a0) * 2.6];
     const lbl = new THREE.Mesh(keep(new THREE.PlaneGeometry(0.9, 0.193)), label(keep(K.labelTex(name, col, { w: 1024, h: 220, size: 70, bg: true, weight: 700 }))));
-    lbl.position.set(bx, 0.32, bz);
+    lbl.position.set(bx, 0.36, bz);
     const [vx, vz] = polar(ST.f3.phi, ST.f3.vr); lbl.rotation.y = Math.atan2(vx - bx, vz - bz);
     add(lbl);
     return { mesh, geo, mat, lbl, count: geo.index.count };
   });
   // hvor rødderne begynder: små lysende knaster i gulvet
   const rootBaseMat = basic(C.core, { transparent: true, opacity: 0 });
-  { const gs = roots.map((r, i) => { const a0 = (ST.f3.phi + (i - 2) * 24) * D2R; const g = new THREE.CylinderGeometry(0.07, 0.09, 0.03, 10); g.translate(Math.sin(a0) * 2.55, 0.015, Math.cos(a0) * 2.55); return g; });
+  { const gs = roots.map((r, i) => { const a0 = (ST.f3.phi + (i - 2) * 38) * D2R; const g = new THREE.CylinderGeometry(0.07, 0.09, 0.03, 10); g.translate(Math.sin(a0) * 2.55, 0.015, Math.cos(a0) * 2.55); return g; });
     add(new THREE.Mesh(keep(BGU.mergeGeometries(gs)), rootBaseMat)); gs.forEach(g => g.dispose()); }
 
   /* ---------- F4: fire facetter åbner sig ---------- */
@@ -278,12 +285,20 @@ export default function build(ctx) {
   const facetQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, f4.phi * D2R, 0));
   // tildel facetter til mål, så de flytter sig kortest muligt
   const order = []; { const left = [0, 1, 2, 3]; facetTargets.forEach((tg, ti) => { let bi = 0, bd = 1e9; left.forEach((fi, k) => { const d = facets[fi].c.distanceTo(tg); if (d < bd) { bd = d; bi = k; } }); order[ti] = left.splice(bi, 1)[0]; }); }
-  facets.forEach((f, i) => { const ti = order.indexOf(i); f.target = facetTargets[ti]; f.label = FACET_TXT[ti]; });
+  facets.forEach((f, i) => {
+    const ti = order.indexOf(i); f.target = facetTargets[ti]; f.label = FACET_TXT[ti];
+    // drej facetten i sit eget plan, så en spids peger op, når den står ude
+    const p0 = new THREE.Vector3().fromBufferAttribute(f.g.attributes.position, 0);
+    const pts = []; const P = f.g.attributes.position; for (let j = 0; j < P.count; j++) { const v = new THREE.Vector3().fromBufferAttribute(P, j); if (Math.abs(v.z) < 1e-4) pts.push(v); }
+    let best = pts[0]; pts.forEach(v => { if (v.length() > best.length() - 1e-4 && v.y > best.y) best = v; });
+    const a = Math.atan2(best.y, best.x);
+    f.tq = facetQ.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2 - a));
+  });
   // facetten drejes, så den står "på spidsen" eller "på kanten" ens for alle: vi måler dens egen top
   const facetLabels = facets.map(f => {
     const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.2, 0.258)), label(keep(K.labelTex(f.label, C.core, { w: 1024, h: 220, size: f.label.length > 12 ? 72 : 84, bg: true }))));
     const [fx, fz] = polar(f4.phi, 0.12);
-    m.position.set(f.target.x + fx, CORE_Y + f.target.y - 0.62, f.target.z + fz);
+    m.position.set(f.target.x + fx, CORE_Y + f.target.y - 0.5, f.target.z + fz);
     m.rotation.y = f4.phi * D2R; add(m); return m;
   });
 
@@ -423,7 +438,7 @@ export default function build(ctx) {
     T.light = n === 1 ? 9 : n === 6 ? 4 : 6;
     T.words = n === 2 ? 1 : 0;
     T.roots = n >= 3 ? 1 : 0;
-    T.rootDim = n === 3 ? 1 : 0.25;
+    T.rootDim = n === 3 ? 1 : 0.15;
     T.facets = n === 4 ? 1 : 0;
     T.icons = n >= 5 ? 1 : 0;
     T.iconBig = n === 5 ? 1 : 0;
@@ -467,7 +482,8 @@ export default function build(ctx) {
       r.geo.setDrawRange(0, cnt);
       r.mesh.visible = S.roots > 0.01 && cnt > 0;
       r.mat.emissiveIntensity = 0.12 + 0.4 * S.rootDim;
-      r.mat.color.set(ROOTS[i][1]).multiplyScalar(0.35 + 0.65 * S.rootDim);
+      r.mat.color.set(ROOTS[i][1]).multiplyScalar(0.2 + 0.8 * S.rootDim);
+      r.mat.emissiveIntensity = 0.04 + 0.48 * S.rootDim * S.rootDim;
       r.lbl.material.opacity = (step === "f3" ? ease((el - 400) / 900) : 0) * S.roots;
       r.lbl.visible = r.lbl.material.opacity > 0.01;
     });
@@ -478,7 +494,7 @@ export default function build(ctx) {
       const kk = ease(clamp01(S.facets * 1.3 - i * 0.08));
       tmpV.copy(f.c).applyQuaternion(spinQ);
       f.m.position.copy(tmpV).lerp(f.target, kk);
-      tmpQ.copy(spinQ).multiply(f.q); f.m.quaternion.copy(tmpQ).slerp(facetQ, kk);
+      tmpQ.copy(spinQ).multiply(f.q); f.m.quaternion.copy(tmpQ).slerp(f.tq, kk);
       f.m.scale.setScalar(1 + kk * 0.45);
       facetLabels[i].material.opacity = ease((S.facets - 0.55) / 0.45); facetLabels[i].visible = facetLabels[i].material.opacity > 0.01;
     });
@@ -489,10 +505,10 @@ export default function build(ctx) {
     ICONS.forEach(({ s, mat, ph }) => {
       const a = ph + t * 0.00024;
       // banen hælder, så det tegn, der er bag kernen, går hen over den
-      s.position.set(Math.sin(a) * R, -Math.cos(a - ORBIT_FACE) * 0.42 * big + lift, Math.cos(a) * R);
+      s.position.set(Math.sin(a) * R, -Math.cos(a - ORBIT_FACE) * 0.75 * big + lift, Math.cos(a) * R);
       s.scale.set(size, size, 1); mat.opacity = S.icons; s.visible = S.icons > 0.01;
     });
-    orbit.scale.setScalar(R / 1.75); orbitTilt.position.y = lift; orbit.rotation.x = Math.PI / 2 + Math.atan2(0.42 * big, R); orbitMat.opacity = S.icons * (0.12 + 0.4 * big); orbit.visible = S.icons > 0.01;
+    orbit.scale.setScalar(R / 1.75); orbitTilt.position.y = lift; orbit.rotation.x = Math.PI / 2 + Math.atan2(0.75 * big, R); orbitMat.opacity = S.icons * (0.12 + 0.4 * big); orbit.visible = S.icons > 0.01;
     // F6: portene åbner sig én ad gangen
     const keys = ["hal-a", "hal-b", "hal-c"];
     keys.forEach((key, i) => {
