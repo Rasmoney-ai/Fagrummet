@@ -250,7 +250,7 @@ export default function build(ctx) {
   const st0 = kit.grp(root, `${TBL.x} 0 ${TBL.z}`);
   kit.box(st0, `0 ${TBL.y + 0.5} 0`, 3.0, 1.2, 1.4, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c2-0", st0);
-  const s20 = ctx.sign(ctx.step("c2-0").title, { position: `${TBL.x} 2.95 ${TBL.z - 0.3}`, width: 2.1 });
+  const s20 = ctx.sign(ctx.step("c2-0").title, { position: `${TBL.x} 3.15 ${TBL.z - 0.3}`, width: 2.1 });
   view("c2-0", { position: [TBL.x + 0.35, 0, TBL.z + 3.2], lookAt: [TBL.x, 1.55, TBL.z], pitch: 0 });
 
   /* ---------- c2-1: luppen og spørgsmålene ---------- */
@@ -281,7 +281,7 @@ export default function build(ctx) {
   const st1 = kit.grp(root, `${TBL.x} 0 ${TBL.z + 0.4}`);
   kit.box(st1, "0 1.5 0", 0.4, 0.4, 0.4, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c2-1", st1);
-  const s21 = ctx.sign(ctx.step("c2-1").title, { position: `${TBL.x} 2.95 ${TBL.z - 0.28}`, width: 2.1 });
+  const s21 = ctx.sign(ctx.step("c2-1").title, { position: `${TBL.x} 3.15 ${TBL.z - 0.28}`, width: 2.1 });
   view("c2-1", { position: [TBL.x + 0.2, 0, TBL.z + 3.0], lookAt: [TBL.x, 1.55, TBL.z] });
   // klikbare lag: et usynligt plan pr. lag, der følger laget
   layerObjs.forEach((o, i) => {
@@ -578,7 +578,7 @@ export default function build(ctx) {
         Q.mark.scale.setScalar(on ? 1 + 0.12 * Math.sin(s * 6) : 0.8);
         const bo = Q.bubble.material.opacity; Q.bubble.material.opacity = lerp(bo, on ? 1 : seen ? 0.8 : 0, kf);
         // boblen står ud for laget, til venstre for stakken (fri af lagene og mærkerne)
-        const lp = layerObjs[Q.layer].grp.position; Q.bubble.position.set(TBL.x - LW / 2 - 0.72, lp.y + 0.05, lp.z + 0.1);
+        const lp = layerObjs[Q.layer].grp.position; Q.bubble.position.set(TBL.x - LW / 2 - 0.78, lp.y + 0.05, lp.z + 0.1);
         Q.bubble.quaternion.copy(root.sceneEl.camera.getWorldQuaternion(tmpQ));
         Q.bubble.scale.setScalar(on ? 1.08 : 0.92);
       });
