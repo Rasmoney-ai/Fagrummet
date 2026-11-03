@@ -249,7 +249,7 @@ export default function build(ctx) {
   // trappehus med døren tilbage til forhallen
   {
     // trappehuset står forrest til venstre på terrassen, med døren vendt ind mod terrassens midte
-    const DOOR_PSI = -52, dr = PR - 0.55;
+    const DOOR_PSI = -62, dr = PR - 0.5;
     const kx = PLAT.x + Math.sin(DOOR_PSI * D2R) * dr, kz = PLAT.z - Math.cos(DOOR_PSI * D2R) * dr;
     const kr = Math.atan2(PLAT.x - kx, PLAT.z - kz) / D2R;
     const kg = kit.grp(root, `${kx} 0 ${kz}`, { rotation: `0 ${kr} 0` });
@@ -302,14 +302,14 @@ export default function build(ctx) {
   const VIEWS = {
     s1: { psi: 0, look: [0.2, 0, -10], pitch: -9 },
     s2: { psi: -10, look: [CORE.x, CORE.y, CORE.z], pitch: 3 },
-    s3: { psi: 10, ur: PR - 1.7, look: [0.2, 0, -10], pitch: -8 },
-    s4: { psi: 180, ur: 0.5, look: [-1.25, 1.5, -4.0], pitch: 2 },
+    s3: { psi: 10, look: [0.2, 0, -10], pitch: -9 },
+    s4: { psi: 180, ur: 2.2, look: [-0.55, 1.35, -4.0], pitch: 2 },
   };
   const plaqueGeo = keep(new THREE.BoxGeometry(0.66, 0.17, 0.03));
   const plaqueMat = std("#2a3160", { roughness: 0.45, metalness: 0.4 });
   const viewAt = {}, plaques = {};
-  const dotGeo = keep(new THREE.SphereGeometry(0.035, 8, 6)); dotGeo.translate(0, 0.03, 0);
-  const dotMat = basic(C.core);
+  const dotGeo = keep(new THREE.SphereGeometry(0.016, 8, 6)); dotGeo.translate(0, 0.025, 0);
+  const dotMat = basic(C.core, { transparent: true, opacity: 0.7 });
   for (const s of ctx.steps) {
     const v = VIEWS[s.id]; if (!v) continue;
     const d = [Math.sin(v.psi * D2R), -Math.cos(v.psi * D2R)];
@@ -482,7 +482,7 @@ export default function build(ctx) {
     // mærket står mellem fløjen og pladsens midte, så alle tre er inden for billedet; bredden følger afstanden
     const mid = new THREE.Vector3(0.6, 0, -8.6);
     const p = w.grp.position.clone().lerp(mid, k === "b" ? 0.15 : 0.45); p.y = k === "b" ? w.top.y + 0.35 : w.top.y + 0.55;
-    const lw = 1.9 * p.distanceTo(s3View) / 8.5;
+    const lw = 2.5 * p.distanceTo(s3View) / 8.5;
     const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(lw, lw * 220 / 1024)), labelMat(keep(K.labelTex(txt, w.color, { w: 1024, h: 220, size: txt.length > 30 ? 56 : 66, ink: "#eef1ff" }))));
     m.position.copy(p); m.lookAt(s3View.x, p.y, s3View.z); m.renderOrder = 20; add(m);
     return { m, t: [0.04, 0.5, 0.93][i] };
@@ -515,7 +515,7 @@ export default function build(ctx) {
   });
   const FW = 2.9;
   const field = new THREE.Mesh(keep(new THREE.PlaneGeometry(FW, FW * 900 / 1600)), labelMat(dashTex, { side: THREE.DoubleSide }));
-  field.position.copy(CORE).add(new THREE.Vector3(-1.75, 0.05, 1.55)); field.lookAt(s4View); field.renderOrder = 20; add(field);
+  field.position.copy(CORE).add(new THREE.Vector3(1.95, -0.05, 1.2)); field.lookAt(s4View); field.renderOrder = 20; add(field);
 
   // S4: tegnene i en bue over kernen, vendt mod S4-blikket
   const satPos = (() => {
