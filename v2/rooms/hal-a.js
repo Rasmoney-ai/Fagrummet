@@ -119,8 +119,8 @@ export default function build(ctx) {
       }
     }
   }
-  // papplader og lister lænet op ad bagvæggen ved siden af udgangen
-  for (let i = 0; i < 5; i++) S.box(i % 2 ? "#b48659" : "#9d744b", [-6.0 + i * 0.1, 0.8, 8.3 - i * 0.05], [0.6, 1.6, 0.02], [-8 - i * 2, 0, 0]);
+  // papplader lænet op ad sidevæggen i hjørnet ved udgangen
+  for (let i = 0; i < 4; i++) S.box(i % 2 ? "#b48659" : "#9d744b", [-6.92 + i * 0.05, 0.75, 7.6 - i * 0.12], [0.02, 1.5, 0.8], [0, 0, 8 + i * 2]);
 
   /* ---------- Station a0-1: de to lange arbejdsborde med prototyper ---------- */
   const BORD_Z = -0.8;
@@ -148,10 +148,10 @@ export default function build(ctx) {
   }
   // pendellamper over bordene
   for (const bx of [-2.5, 2.5]) for (const lz of [-2.4, 0, 2.4]) {
-    S.box("#11131c", [bx, 4.6, lz + BORD_Z], [0.015, 2.8, 0.015]);
-    S.add(T.geo.cyl(14, 0.25), "#2b2420", [bx, 3.08, lz + BORD_Z], null, [0.6, 0.28, 0.6]);
-    L.cyl("#ffd9a0", [bx, 2.94, lz + BORD_Z], 0.26, 0.01, null, 14);
-    KEGLE.cone([bx, 2.93, lz + BORD_Z], 0.26, 0.95, 1.9, "#2a1a07");
+    S.box("#11131c", [bx, 4.8, lz + BORD_Z], [0.015, 2.4, 0.015]);
+    S.add(T.geo.cyl(14, 0.25), "#2b2420", [bx, 3.58, lz + BORD_Z], null, [0.5, 0.24, 0.5]);
+    L.cyl("#d9b888", [bx, 3.46, lz + BORD_Z], 0.22, 0.01, null, 14);
+    KEGLE.cone([bx, 3.45, lz + BORD_Z], 0.22, 0.9, 2.3, "#2a1a07");
   }
   T.mesh(bord, BB.merge(), T.lit());
 
@@ -175,7 +175,7 @@ export default function build(ctx) {
   });
 
   /* pulten for enden af bordene: ét fælles oplæg til hele klassen (stationen for a0-1) */
-  const PULT_Z = 3.75;
+  const PULT_Z = 3.45;
   const pult = kit.grp(ctx.root, `0 0 ${PULT_Z}`);
   const PB = new Batch();
   PB.box("#2b2f40", [0, 0.02, 0], [0.6, 0.04, 0.45]);
@@ -210,8 +210,8 @@ export default function build(ctx) {
   /* ---------- Målpladen ved udgangen (station a0-2) ---------- */
   // stationen står på gulvet foran væggen; pladen hænger på væggen bag den
   const PL = { x: 2.1, y: 2.3, z: 8.42 };
-  const pladeSt = kit.grp(ctx.root, `${PL.x} 0 7.45`, { rotation: "0 180 0" });
-  const plade = kit.grp(pladeSt, `0 ${PL.y} ${-(PL.z - 7.45)}`);
+  const pladeSt = kit.grp(ctx.root, `${PL.x} 0 7.3`, { rotation: "0 180 0" });
+  const plade = kit.grp(pladeSt, `0 ${PL.y} ${-(PL.z - 7.3)}`);
   const PW = 3.3, PH = 2.16, CW = 1040, CH = 680;
   // fire nøgleord på en løkke (arbejdet går rundt), og en pil ud til et produkt, der stadig er stiplet/ufærdigt
   const LCX = 400, LCY = 420, LRX = 250, LRY = 150;
@@ -305,12 +305,12 @@ export default function build(ctx) {
   const dorL = [-5.5 + 0.22 * 0.707, -5 + 0.22 * 0.707], dorR = [5.5 - 0.22 * 0.707, -5 + 0.22 * 0.707];
   ctx.door("a1", { position: `${dorL[0]} 0 ${dorL[1]}`, rotation: "0 45 0" });
   ctx.door("a2", { position: `${dorR[0]} 0 ${dorR[1]}`, rotation: "0 -45 0" });
-  ctx.door(ctx.room.parent, { position: "-3.9 0 8.28", rotation: "0 180 0" });
+  ctx.door(ctx.room.parent, { position: "-5.0 0 8.28", rotation: "0 180 0" });
   // mørk døråbning bag portalerne og en lysplet på gulvet foran dem
   const DO = new Batch({ uv: true });
   DO.plane([dorL[0] - 0.05, 1.25, dorL[1] - 0.05], [1.6, 2.5], [0, 45, 0]);
   DO.plane([dorR[0] + 0.05, 1.25, dorR[1] - 0.05], [1.6, 2.5], [0, -45, 0]);
-  DO.plane([-3.9, 1.25, 8.36], [1.6, 2.5], [0, 180, 0]);
+  DO.plane([-5.0, 1.25, 8.36], [1.6, 2.5], [0, 180, 0]);
   T.mesh(ctx.root, DO.merge(), T.hold(new THREE.MeshBasicMaterial({ color: "#04050b" })));
   // et symbol på gulvet foran hver dør: Værkstedet = kort → skitse → kasse, Metodelaboratoriet = spiral
   const symbol = tegn => T.canvas(256, 256, (g, w, h) => {
@@ -340,8 +340,8 @@ export default function build(ctx) {
   const erk = T.erkendeformer(ctx.root, "3.3 4.7 -6.38", "0 0 0", 1.5);
 
   /* ---------- Views ---------- */
-  ctx.view("a0-1", { position: [0, 0, 6.3], lookAt: [0, 1.25, -2.5] });
-  ctx.view("a0-2", { position: [2.0, 0, 3.9], lookAt: [2.05, 2.05, 8.5] });
+  ctx.view("a0-1", { position: [0, 0, 6.6], lookAt: [0, 1.35, -2.5] });
+  ctx.view("a0-2", { position: [1.7, 0, 4.2], lookAt: [1.85, 1.9, 8.5] });
 
   /* ---------- Trin og animation ---------- */
   let aktiv = null, t0 = null;
@@ -351,7 +351,7 @@ export default function build(ctx) {
     tick(t, dt) {
       if (t0 === null) t0 = t;
       const s = (t - t0) / 1000;
-      erk.tick(dt);
+      erk.tick(dt, aktiv === "a0-1" ? 1 : 0.4);
       // a0-1: prototyperne lyser op én efter én i en bølge rundt om bordene
       const N = protos.length, trin = 0.6, periode = N * trin + 2.2;
       protos.forEach(p => {
@@ -600,14 +600,17 @@ function vaerktoej(ctx) {
       g.strokeStyle = L; g.globalAlpha = 0.5; g.lineWidth = 3; g.beginPath(); g.arc(128, 128, 120, 0, 7); g.stroke(); g.globalAlpha = 1;
       g.fillStyle = L; g.font = '600 24px "JetBrains Mono", monospace'; g.textAlign = "center"; g.fillText("ERKENDEFORMER", 128, 290);
     });
-    mesh(grp, geo.plane(), hold(new THREE.MeshBasicMaterial({ map: pladeTex, transparent: true, depthWrite: false })), "0 -0.06 -0.005", { scale: "1.0 1.17 1" });
+    const pladeM = hold(new THREE.MeshBasicMaterial({ map: pladeTex, transparent: true, depthWrite: false }));
+    mesh(grp, geo.plane(), pladeM, "0 -0.06 -0.005", { scale: "1.0 1.17 1" });
+    const mats = [pladeM];
     const items = tegn.map((f, i) => {
       const tex = canvas(256, 256, g => { g.strokeStyle = L; g.fillStyle = L; g.lineWidth = 12; g.lineCap = "round"; g.lineJoin = "round"; f(g); });
-      const m = hold(new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.95, depthWrite: false }));
+      const m = hold(new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.95, depthWrite: false })); mats.push(m);
       return mesh(grp, geo.plane(), m, "0 0 0", { scale: "0.3 0.3 0.3" });
     });
     let a = 0;
-    return { tick(dt) { a += (dt || 16) * 0.00025; items.forEach((it, i) => { const v = a + i * 2.094; it.object3D.position.set(Math.cos(v) * 0.27, Math.sin(v) * 0.27, 0); }); } };
+    // alpha < 1 dæmper tegnet i trin, hvor det ikke er i fokus
+    return { tick(dt, alpha = 1) { mats.forEach((m, i) => { m.opacity = (i ? 0.95 : 1) * alpha; }); a += (dt || 16) * 0.00025; items.forEach((it, i) => { const v = a + i * 2.094; it.object3D.position.set(Math.cos(v) * 0.27, Math.sin(v) * 0.27, 0); }); } };
   }
   /* sæt et lys' styrke direkte (billigere end setAttribute hver frame) */
   function lys(el, v) { const l = el.getObject3D("light"); if (l) l.intensity = v; }

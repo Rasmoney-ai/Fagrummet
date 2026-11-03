@@ -31,8 +31,10 @@ export default function build(ctx) {
     const r = T.rng(5);
     g.fillStyle = "#262b40"; g.fillRect(0, 0, w, h);
     for (let i = 0; i < 400; i++) { g.fillStyle = `rgba(255,255,255,${r() * 0.03})`; g.fillRect(r() * w, r() * h * 0.6, 6, 6); }
-    const ty = h * 0.62, s = 32;
-    for (let y = ty; y < h; y += s) for (let x = 0; x < w; x += s) { const v = 168 + r() * 18; g.fillStyle = `rgb(${v},${v + 2},${v + 10})`; g.fillRect(x + 1.5, y + 1.5, s - 3, s - 3); }
+    // nederst mørke, lodrette træpaneler (lab'et er et værksted for metoder, ikke et hospital)
+    const ty = h * 0.62, pw = 64;
+    for (let x = 0; x < w; x += pw) { const v = 58 + r() * 10; g.fillStyle = `rgb(${v + 14},${v + 2},${v - 8})`; g.fillRect(x + 2, ty, pw - 4, h - ty);
+      g.fillStyle = "rgba(0,0,0,0.25)"; g.fillRect(x + pw - 6, ty, 4, h - ty); for (let k = 0; k < 6; k++) { g.fillStyle = "rgba(20,10,4,0.18)"; g.fillRect(x + 6 + r() * (pw - 16), ty + 4, 1.5, h - ty - 8); } }
     g.fillStyle = "#3a3f55"; g.fillRect(0, ty - 10, w, 10);
     g.fillStyle = A; g.fillRect(0, ty - 14, w, 4);
   });
@@ -60,7 +62,8 @@ export default function build(ctx) {
 
   /* ---------- Stationerne: fælles lysopsætning ---------- */
   const poolTex = T.glow(A);
-  const stationLys = {};
+  const stationLys = {}, stationSkilt = {};
+  const skilt = (id, tekst, o) => { const e = ctx.sign(tekst, o); (stationSkilt[id] = stationSkilt[id] || []).push(e); return e; };
   function lampe(id, x, z, y = H - 0.05) { // hængende rund lampe med lyskegle og lysplet på gulvet
     S.box("#11131c", [x, (y + H) / 2, z], [0.012, H - y + 0.01, 0.012]);
     const B = new Batch(); B.cone([0, 0, 0], 0.3, 1.25, y - 0.1, "#2e1d07");
@@ -87,17 +90,17 @@ export default function build(ctx) {
     SB.box("#" + c, [x * 0.82, y - 0.04, z * 0.82], [0.18, 0.05, 0.9], [0, a / D, 0]);
   }
   // gelænder: et rør langs ydersiden
-  const pts = []; for (let i = 0; i <= 90; i++) { const [x, y, z] = helix(i / 90); pts.push(new THREE.Vector3(x * 1.32, y + 0.5, z * 1.32)); }
+  const pts = []; for (let i = 0; i <= 90; i++) { const [x, y, z] = helix(i / 90); pts.push(new THREE.Vector3(x * 1.2, y + 0.42, z * 1.2)); }
   SB.add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 160, 0.018, 5, false), "#9aa3c7");
-  for (let i = 0; i <= 18; i++) { const [x, y, z] = helix(i / 18); SB.box("#6b7299", [x * 1.32, y + 0.25, z * 1.32], [0.016, 0.5, 0.016]); }
+  for (let i = 0; i <= 18; i++) { const [x, y, z] = helix(i / 18); SB.box("#6b7299", [x * 1.2, y + 0.19, z * 1.2], [0.016, 0.44, 0.016]); }
   // tre små hylder ud for hvert omløb, hvor prototypens versioner står
   const hylder = [1, 2, 3].map(k => { const [, y] = helix(k / OMLØB); return y; });
   hylder.forEach(y => { SB.box("#3a3f55", [0, y - 0.03, SR + 0.42], [0.52, 0.04, 0.36]); SB.box("#3a3f55", [0, y - 0.15, SR + 0.3], [0.04, 0.24, 0.04], [30, 0, 0]); });
   T.mesh(spiral, SB.merge(), T.lit());
   // kuglen og dens glød
   const kugle = kit.grp(spiral);
-  T.mesh(kugle, T.hold(new THREE.SphereGeometry(0.075, 16, 10)), T.hold(new THREE.MeshBasicMaterial({ color: "#fff1d6" })));
-  T.mesh(kugle, T.hold(new THREE.PlaneGeometry(0.6, 0.6)), T.hold(new THREE.MeshBasicMaterial({ map: T.glow(A), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })));
+  T.mesh(kugle, T.hold(new THREE.SphereGeometry(0.11, 16, 10)), T.hold(new THREE.MeshBasicMaterial({ color: "#fff1d6" })));
+  T.mesh(kugle, T.hold(new THREE.PlaneGeometry(0.9, 0.9)), T.hold(new THREE.MeshBasicMaterial({ map: T.glow(A), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })));
   // et lysende spor bag kuglen (trinene tegnes frem med drawRange)
   const SPB = new Batch({ uv: true });
   for (let i = 0; i < 180; i++) { const [x, y, z] = helix(i / 180); SPB.add(T.geo.sph(5, 3), null, [x * 0.82, y + 0.0, z * 0.82], null, [0.035, 0.035, 0.035]); }
@@ -110,7 +113,7 @@ export default function build(ctx) {
     const b = new Batch(); f(b);
     const m = T.lit({ emissive: new THREE.Color(A), emissiveIntensity: 0, transparent: true, opacity: 1 });
     T.mesh(g, b.merge(), m);
-    const nr = kit.textPlane(g, "0.32 0.08 0", `v${k + 1}`, A, { width: 0.2, aspect: 0.5, size: 260, bg: false, ink: A });
+    const nr = kit.textPlane(g, "0.25 0.06 0.02", `v${k + 1}`, A, { width: 0.16, aspect: 0.6, size: 300, bg: true, ink: "#eef1ff" });
     return { g, m, nr };
   });
   // intentionskortet på et lille stativ ved siden af trappen
@@ -126,21 +129,21 @@ export default function build(ctx) {
     g.fillText("INTENTION", 34, 40); g.textAlign = "right"; g.fillText(`version ${it.v}`, w - 34, 40); g.textAlign = "left";
     let y = 130;
     if (it.før) {
-      g.fillStyle = "#8a8578"; g.font = '500 32px "Source Sans 3", sans-serif';
-      const ls = K.wrap(g, it.før, w - 80); ls.forEach((l, i) => { g.fillText(l, 40, y + i * 40); const lw = g.measureText(l).width; g.fillStyle = "#c0392b"; g.fillRect(36, y + i * 40 - 2, lw + 8, 4); g.fillStyle = "#8a8578"; });
-      y += ls.length * 40 + 30;
+      g.fillStyle = "#7a7568"; g.font = '600 36px "Source Sans 3", sans-serif';
+      const ls = K.wrap(g, it.før, w - 80); ls.forEach((l, i) => { g.fillText(l, 40, y + i * 44); const lw = g.measureText(l).width; g.fillStyle = "#c0392b"; g.fillRect(36, y + i * 44 - 3, lw + 8, 6); g.fillStyle = "#7a7568"; });
+      y += ls.length * 44 + 26;
     }
-    g.fillStyle = "#1f2a4a"; g.font = 'italic 600 44px "Source Sans 3", sans-serif';
-    K.wrap(g, it.nu, w - 80).forEach((l, i) => g.fillText(l, 40, y + 10 + i * 52));
+    g.fillStyle = "#1f2a4a"; g.font = 'italic 700 48px "Source Sans 3", sans-serif';
+    K.wrap(g, it.nu, w - 80).forEach((l, i) => g.fillText(l, 40, y + 10 + i * 54));
   }));
-  const kortStativ = kit.grp(ctx.root, `${SP.x + 1.75} 0 ${SP.z + 1.75}`, { rotation: "0 -25 0", scale: "1.25 1.25 1.25" });
+  const kortStativ = kit.grp(ctx.root, `${SP.x + 1.55} 0 ${SP.z + 2.15}`, { rotation: "0 -12 0", scale: "1.3 1.3 1.3" });
   const KS = new Batch(); KS.cyl("#2b2f40", [0, 0.02, 0], 0.22, 0.04, null, 16); KS.cyl("#6b7299", [0, 0.6, -0.08], 0.015, 1.2, null, 6); KS.box("#2b2f40", [0, 1.5, -0.04], [0.94, 0.64, 0.03], [-10, 0, 0]);
   T.mesh(kortStativ, KS.merge(), T.lit());
   const kortM = T.hold(new THREE.MeshBasicMaterial({ map: kortTex[0], color: "#ccc" }));
   const kortE = T.mesh(kortStativ, T.hold(new THREE.PlaneGeometry(0.88, 0.58)), kortM, "0 1.5 -0.02", { rotation: "-10 0 0" });
   lampe("a2-2", SP.x, SP.z + 0.3);
   ctx.station("a2-2", spiral);
-  ctx.sign(ctx.step("a2-2").title, { position: `${SP.x - 1.95} 3.2 ${SP.z + 0.35}`, rotation: "0 18 0", width: 1.6, size: 72 });
+  skilt("a2-2", ctx.step("a2-2").title, { position: `${SP.x - 1.35} 3.45 ${SP.z + 0.7}`, rotation: "0 12 0", width: 1.6, size: 72 });
   ctx.view("a2-2", { position: [0.6, 0, 2.1], lookAt: [0.55, 2.2, SP.z] });
 
   /* ---------- a2-1 · Indramning: et ark med fire felter på et skråbord ---------- */
@@ -175,7 +178,8 @@ export default function build(ctx) {
   });
   // arket ligger på pladen; overlays med "håndskrift" fades ind felt for felt
   const ark = kit.grp(indr, "0 0.885 0.01", { rotation: "28 0 0" });
-  T.mesh(ark, T.hold(new THREE.PlaneGeometry(AW, AH)), T.hold(new THREE.MeshStandardMaterial({ map: arkTex, roughness: 0.9 })), "0 0.003 0", { rotation: "-90 0 0" });
+  const arkM = T.hold(new THREE.MeshStandardMaterial({ map: arkTex, roughness: 0.9 }));
+  T.mesh(ark, T.hold(new THREE.PlaneGeometry(AW, AH)), arkM, "0 0.003 0", { rotation: "-90 0 0" });
   const SKRIFT = [
     ["skolens værksted", "de yngste elever i frikvarteret"],
     ["vise, om der er plads", "uden at de skal spørge"],
@@ -193,6 +197,14 @@ export default function build(ctx) {
     T.mesh(ark, T.hold(new THREE.PlaneGeometry(FW / CW * AW, (FH - 120) / CH * AH)), m, `${px} 0.006 ${pz}`, { rotation: "-90 0 0" });
     return { m, px, pz };
   });
+  // når alle fire felter er udfyldt, vender eleverne tilbage: intentionen streges over og skrives om
+  const ret = skrift[1];
+  const stregM = T.hold(new THREE.MeshBasicMaterial({ color: "#c0392b", transparent: true, opacity: 0, depthWrite: false }));
+  const SB2 = new Batch({ uv: true }); SB2.plane([-0.03, 0.035, 0], [0.42, 0.007]); SB2.plane([-0.02, -0.03, 0], [0.42, 0.007]);
+  T.mesh(ark, SB2.merge(), stregM, `${ret.px} 0.009 ${ret.pz - 0.02}`, { rotation: "-90 0 0" });
+  const nyTex = T.canvas(FW, 90, (g, w, h) => { g.fillStyle = "#c0392b"; g.font = 'italic 700 34px "Source Sans 3", sans-serif'; g.fillText("vise, hvornår der bliver plads", 26, 58); });
+  const nyM = T.hold(new THREE.MeshBasicMaterial({ map: nyTex, transparent: true, opacity: 0, depthWrite: false }));
+  T.mesh(ark, T.hold(new THREE.PlaneGeometry(FW / CW * AW, 90 / CH * AH)), nyM, `${ret.px} 0.01 ${ret.pz + 0.085}`, { rotation: "-90 0 0" });
   // en ravgul ramme om det felt, der arbejdes på (et markeringsrektangel, ikke en billedramme)
   const markM = T.hold(new THREE.MeshBasicMaterial({ color: A, transparent: true, opacity: 0, depthWrite: false }));
   const mw = FW / CW * AW + 0.02, mh = FH / CH * AH + 0.02, tk = 0.008;
@@ -205,30 +217,31 @@ export default function build(ctx) {
   T.mesh(blyInner, BB.merge(), T.lit());
   lampe("a2-1", IR.x, IR.z);
   ctx.station("a2-1", indr);
-  ctx.sign(ctx.step("a2-1").title, { parent: indr, position: "0 1.9 -0.55", width: 1.6, size: 72 });
-  ctx.view("a2-1", { position: [IR.x + Math.sin(IR.yaw * D) * 1.45, 0, IR.z + Math.cos(IR.yaw * D) * 1.45], lookAt: [IR.x, 0.95, IR.z] });
+  skilt("a2-1", ctx.step("a2-1").title, { parent: indr, position: "0 1.72 -0.5", width: 1.6, size: 72 });
+  ctx.view("a2-1", { position: [IR.x + Math.sin(IR.yaw * D) * 1.85, 0, IR.z + Math.cos(IR.yaw * D) * 1.85], lookAt: [IR.x, 0.98, IR.z] });
 
   /* ---------- a2-3 · Benspændsvæggen og prototypen ---------- */
   const BV = { x: -X + 0.04, z: -3.6 };
   const væg = kit.grp(ctx.root, `${BV.x} 0 ${BV.z}`, { rotation: "0 90 0" });
   const REGLER = ["uden skærm", "til en bedstemor", "kun med lyd", "må bæres på kroppen", "maks. én knap", "skal virke i mørke", "lavet af genbrug", "til 30 personer", "uden tekst", "skal kunne gå i stykker", "reagerer på vejret", "til en hund"];
   const VALGT = [0, 1];   // de kort, der trækkes
-  const kortW = 0.46, kortH = 0.3;
+  const kortW = 0.56, kortH = 0.36;
   const VB = new Batch();
   VB.box("#2b2238", [0, 2.0, -0.02], [3.6, 2.0, 0.04]);
-  for (let i = 0; i < 12; i++) VB.box("#3a3f55", [-1.32 + (i % 4) * 0.88, 2.62 - Math.floor(i / 4) * 0.56 + kortH / 2 + 0.03, 0.005], [0.03, 0.03, 0.03]);
+  // hver regel har sit eget hul i væggen (en mørk lomme), så man ser, hvor kortet er trukket fra
+  for (let i = 0; i < 12; i++) { VB.box("#3a3f55", [-1.32 + (i % 4) * 0.88, 2.62 - Math.floor(i / 4) * 0.56 + kortH / 2 + 0.03, 0.005], [0.03, 0.03, 0.03]); VB.box("#120e18", [-1.32 + (i % 4) * 0.88, 2.62 - Math.floor(i / 4) * 0.56, 0.0], [kortW + 0.04, kortH + 0.04, 0.012]); }
   T.mesh(væg, VB.merge(), T.lit());
-  ctx.sign(ctx.step("a2-3").title, { parent: væg, position: "0 3.4 0.03", width: 1.9, size: 76 });
+  skilt("a2-3", ctx.step("a2-3").title, { parent: væg, position: "0 3.4 0.03", width: 1.9, size: 76 });
   const regelTex = REGLER.map((t, i) => T.canvas(460, 300, (g, w, h) => {
     g.fillStyle = "#f3eee2"; K.roundRect(g, 0, 0, w, h, 22); g.fill();
     g.strokeStyle = A; g.lineWidth = 8; K.roundRect(g, 10, 10, w - 20, h - 20, 16); g.stroke();
     g.fillStyle = "#8a8578"; g.font = '600 26px "JetBrains Mono", monospace'; g.textBaseline = "middle"; g.fillText("REGEL", 34, 46);
-    g.fillStyle = "#1f2a4a"; g.font = '700 52px "Familjen Grotesk", sans-serif'; g.textAlign = "center";
-    const ls = K.wrap(g, t, w - 60); ls.forEach((l, k) => g.fillText(l, w / 2, 160 + (k - (ls.length - 1) / 2) * 58));
+    g.fillStyle = "#1f2a4a"; g.font = '800 60px "Familjen Grotesk", sans-serif'; g.textAlign = "center";
+    const ls = K.wrap(g, t, w - 50); ls.forEach((l, k) => g.fillText(l, w / 2, 165 + (k - (ls.length - 1) / 2) * 64));
   }));
   const kortGeo = T.hold(new THREE.PlaneGeometry(kortW, kortH));
   const kort = REGLER.map((t, i) => {
-    const hjem = [-1.32 + (i % 4) * 0.88, 2.62 - Math.floor(i / 4) * 0.56, 0.02];
+    const hjem = [-1.32 + (i % 4) * 0.88, 2.62 - Math.floor(i / 4) * 0.56, 0.025];
     const m = T.hold(new THREE.MeshStandardMaterial({ map: regelTex[i], roughness: 0.8 }));
     const e = T.mesh(væg, kortGeo, m, hjem.join(" "));
     return { e, m, hjem };
@@ -241,11 +254,12 @@ export default function build(ctx) {
   T.mesh(sokkel, PB.merge(), T.lit());
   const proto = kit.grp(sokkel, "0 1.03 0", { scale: `${PS} ${PS} ${PS}` });
   const base = kit.grp(proto), udenSkærm = kit.grp(proto), bedste = kit.grp(proto);
+  let ledigM = null;
   { // basisversion: boks med skærm og to små knapper
     const b = new Batch(); b.box("#c79a68", [0, 0.12, 0], [0.32, 0.24, 0.16]); b.box("#14161e", [0, 0.15, 0.081], [0.22, 0.12, 0.004]); for (const x of [-0.06, 0.06]) b.cyl("#6b7299", [x, 0.05, 0.085], 0.015, 0.012, [90, 0, 0], 8);
     T.mesh(base, b.merge(), T.lit());
     const sk = T.canvas(220, 120, (g, w, h) => { g.fillStyle = "#14161e"; g.fillRect(0, 0, w, h); g.fillStyle = "#3aff7a"; g.font = '700 46px "JetBrains Mono", monospace'; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("LEDIG", w / 2, h / 2); });
-    T.mesh(base, T.hold(new THREE.PlaneGeometry(0.2, 0.11)), T.hold(new THREE.MeshBasicMaterial({ map: sk })), "0 0.15 0.084");
+    T.mesh(base, T.hold(new THREE.PlaneGeometry(0.2, 0.11)), ledigM = T.hold(new THREE.MeshBasicMaterial({ map: sk })), "0 0.15 0.084");
   }
   { // uden skærm: samme boks, men en lysring og en lille summer i stedet
     const b = new Batch(); b.box("#c79a68", [0, 0.12, 0], [0.32, 0.24, 0.16]); b.cyl("#22232c", [0.1, 0.06, 0.082], 0.03, 0.01, [90, 0, 0], 12);
@@ -253,19 +267,40 @@ export default function build(ctx) {
     T.mesh(udenSkærm, T.hold(new THREE.TorusGeometry(0.07, 0.014, 6, 28)), T.hold(new THREE.MeshBasicMaterial({ color: "#3aff7a" })), "-0.04 0.14 0.082");
     T.mesh(udenSkærm, T.hold(new THREE.PlaneGeometry(0.4, 0.4)), T.hold(new THREE.MeshBasicMaterial({ map: T.glow("#3aff7a"), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })), "-0.04 0.14 0.09");
   }
-  { // til en bedstemor: større og blødere, én stor knap og et stort lys
-    const b = new Batch(); b.box("#e0c9a6", [0, 0.17, 0], [0.4, 0.34, 0.2]); b.sph("#e0c9a6", [0, 0.34, 0], 0.2, [1, 0.35, 0.5]);
-    b.cyl("#d14b3c", [0, 0.1, 0.105], 0.07, 0.03, [90, 0, 0], 16); b.cyl("#f3eee2", [0, 0.1, 0.12], 0.05, 0.006, [90, 0, 0], 16);
+  { // til en bedstemor: en blød, rund "sten" i stof-farve med ét stort, roligt lys foroven og én stor knap
+    const b = new Batch(); b.sph("#c9b49a", [0, 0.12, 0], 0.19, [1.15, 0.65, 0.8], [18, 10]);
+    b.cyl("#8a7a66", [0, 0.012, 0], 0.17, 0.024, null, 18);
+    b.cyl("#4f8fd8", [0, 0.1, 0.13], 0.075, 0.04, [70, 0, 0], 18);
     T.mesh(bedste, b.merge(), T.lit());
-    T.mesh(bedste, T.hold(new THREE.CircleGeometry(0.075, 20)), T.hold(new THREE.MeshBasicMaterial({ color: "#3aff7a" })), "0 0.25 0.101");
-    T.mesh(bedste, T.hold(new THREE.PlaneGeometry(0.4, 0.4)), T.hold(new THREE.MeshBasicMaterial({ map: T.glow("#3aff7a"), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })), "0 0.25 0.11");
+    // knappens symbol: et lille hus (= "er der plads?"), stort nok til svage øjne
+    const sym = T.canvas(128, 128, c => { c.fillStyle = "#ffffff"; c.beginPath(); c.moveTo(64, 22); c.lineTo(106, 60); c.lineTo(92, 60); c.lineTo(92, 104); c.lineTo(36, 104); c.lineTo(36, 60); c.lineTo(22, 60); c.closePath(); c.fill(); c.fillStyle = "#4f8fd8"; c.fillRect(56, 76, 16, 28); });
+    T.mesh(bedste, T.hold(new THREE.CircleGeometry(0.06, 20)), T.hold(new THREE.MeshBasicMaterial({ map: sym, transparent: true })), "0 0.108 0.152", { rotation: "-20 0 0" });
+    T.mesh(bedste, T.hold(new THREE.SphereGeometry(0.06, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2)), T.hold(new THREE.MeshBasicMaterial({ color: "#9af0b8" })), "0 0.235 0");
   }
+  // "før": basisversionen står som et dæmpet spøgelse ved siden af, så man ser, hvad benspændet ændrer
+  const før = kit.grp(sokkel, "-0.78 1.03 0.0", { scale: "1.1 1.1 1.1" });
+  {
+    const b = new Batch(); b.box("#c79a68", [0, 0.12, 0], [0.32, 0.24, 0.16]); b.box("#14161e", [0, 0.15, 0.081], [0.22, 0.12, 0.004]);
+    T.mesh(før, b.merge(), T.hold(new THREE.MeshStandardMaterial({ vertexColors: true, transparent: true, opacity: 0.35, flatShading: true })));
+    kit.textPlane(før, "0 0.36 0", "før", "#a9b0d6", { width: 0.26, aspect: 0.4, size: 170, bg: true, ink: "#d6dbf5" });
+  }
+  { const PB2 = new Batch(); PB2.cyl("#2b2f40", [0, 0.5, 0], 0.2, 1.0, null, 16); PB2.cyl("#3a3f55", [0, 1.01, 0], 0.24, 0.03, null, 16); T.mesh(sokkel, PB2.merge(), T.lit(), "-0.78 0 0.0"); }
+  // målkortet: fast ved siden af prototypen. Benspændet giver det nye; målet sørger for, at det stadig giver mening
+  const målTex = T.canvas(460, 300, (g, w, h) => {
+    g.fillStyle = "#1f2a4a"; K.roundRect(g, 0, 0, w, h, 22); g.fill();
+    g.strokeStyle = "#c9d1ff"; g.lineWidth = 6; K.roundRect(g, 10, 10, w - 20, h - 20, 16); g.stroke();
+    g.fillStyle = "#a9b0d6"; g.font = '600 26px "JetBrains Mono", monospace'; g.textBaseline = "middle"; g.fillText("MÅL", 34, 46);
+    g.fillStyle = "#eef1ff"; g.font = '700 46px "Familjen Grotesk", sans-serif'; g.textAlign = "center";
+    ["vis, om værkstedet", "er ledigt"].forEach((l, k) => g.fillText(l, w / 2, 140 + k * 56));
+  });
+  const målKort = T.mesh(sokkel, kortGeo, T.hold(new THREE.MeshBasicMaterial({ map: målTex })), "0.62 1.62 0.1", { scale: "1.5 1.5 1.5", rotation: "0 -10 0" });
+  { const MB2 = new Batch(); MB2.cyl("#6b7299", [0.62, 0.7, 0.1], 0.012, 1.4, null, 6); MB2.cyl("#2b2f40", [0.62, 0.02, 0.1], 0.14, 0.04, null, 14); T.mesh(sokkel, MB2.merge(), T.lit()); }
   // et "pust" af partikler, når prototypen skifter form
   const pustM = T.hold(new THREE.MeshBasicMaterial({ map: T.glow(A), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
   const pust = T.mesh(proto, T.hold(new THREE.PlaneGeometry(0.9, 0.9)), pustM, "0 0.18 0.12");
-  lampe("a2-3", -4.6, -3.2);
+  lampe("a2-3", -4.5, -2.9);
   ctx.station("a2-3", sokkel);
-    ctx.view("a2-3", { position: [-2.55, 0, -1.25], lookAt: [-5.1, 1.55, -3.5] });
+  ctx.view("a2-3", { position: [-2.3, 0, -1.05], lookAt: [-5.0, 1.6, -3.55] });
 
   /* ---------- a2-4 · Terningen og urtepotten ---------- */
   const TR = { x: 3.8, z: -0.8, yaw: -38 };
@@ -276,16 +311,16 @@ export default function build(ctx) {
   // tre små indikatorlamper foran på terningens sokkel
   T.mesh(tst, TB.merge(), T.lit());
   const TILST = [
-    { navn: "tørstig", farve: "#e2763a", fugt: 0.08 },
-    { navn: "tilfreds", farve: "#4fc27a", fugt: 0.5 },
-    { navn: "druknet", farve: "#4a8fe0", fugt: 0.95 },
+    { navn: "tørstig", farve: "#ff7a1a", fugt: 0.08 },
+    { navn: "tilfreds", farve: "#2fd46a", fugt: 0.5 },
+    { navn: "druknet", farve: "#2f7dff", fugt: 0.95 },
   ];
   const ansigt = TILST.map((t, i) => T.canvas(256, 256, (g, w, h) => {
     g.fillStyle = "#14161e"; g.strokeStyle = "#14161e"; g.lineWidth = 12; g.lineCap = "round";
-    if (i === 0) { // tørstig: halvlukkede øjne, nedadvendt mund, tunge ud
-      for (const x of [86, 170]) { g.beginPath(); g.arc(x, 104, 20, 0, Math.PI); g.fill(); g.fillRect(x - 24, 98, 48, 6); }
-      g.beginPath(); g.arc(128, 200, 40, Math.PI * 1.15, Math.PI * 1.85); g.stroke();
-      g.fillStyle = "#e86a8a"; g.beginPath(); g.ellipse(140, 178, 14, 18, 0, 0, Math.PI * 2); g.fill();
+    if (i === 0) { // tørstig: tunge, hængende øjenlåg og en tør, åben mund
+      for (const x of [86, 170]) { g.beginPath(); g.arc(x, 108, 18, 0, Math.PI); g.fill(); g.lineWidth = 9; g.beginPath(); g.moveTo(x - 26, 100); g.lineTo(x + 22, 106); g.stroke(); }
+      g.lineWidth = 10; g.beginPath(); g.ellipse(128, 184, 26, 16, 0, 0, Math.PI * 2); g.stroke();
+      g.lineWidth = 6; g.beginPath(); g.moveTo(112, 184); g.lineTo(122, 188); g.lineTo(132, 181); g.lineTo(144, 186); g.stroke();
     } else if (i === 1) { // tilfreds: runde øjne, smil
       for (const x of [86, 170]) { g.beginPath(); g.arc(x, 100, 18, 0, 7); g.fill(); g.fillStyle = "#fff"; g.beginPath(); g.arc(x + 6, 94, 6, 0, 7); g.fill(); g.fillStyle = "#14161e"; }
       g.beginPath(); g.arc(128, 140, 46, Math.PI * 0.18, Math.PI * 0.82); g.stroke();
@@ -297,7 +332,8 @@ export default function build(ctx) {
   }));
   const terning = kit.grp(tst, "-0.25 1.17 0");
   const tInner = kit.grp(terning);
-  const tMat = T.hold(new THREE.MeshStandardMaterial({ color: TILST[1].farve, emissive: new THREE.Color(TILST[1].farve), emissiveIntensity: 0.35, roughness: 0.5, flatShading: true }));
+  // selvlysende og ubelyst, så spotlyset ikke vasker farven ud (orange skal se orange ud)
+  const tMat = T.hold(new THREE.MeshBasicMaterial({ color: TILST[1].farve }));
   const tKrop = T.mesh(tInner, T.hold(roundedBox(0.5, 0.06)), tMat);
   const ansigtM = T.hold(new THREE.MeshBasicMaterial({ map: ansigt[1], transparent: true, depthWrite: false }));
   T.mesh(tInner, T.hold(new THREE.PlaneGeometry(0.42, 0.42)), ansigtM, "0 0 0.252");
@@ -337,19 +373,30 @@ export default function build(ctx) {
   const MR = new Batch({ uv: true }); for (const [x, y, w, h] of [[-0.024, 0.15, 0.006, 0.31], [0.024, 0.15, 0.006, 0.31], [0, -0.002, 0.054, 0.006], [0, 0.302, 0.054, 0.006]]) MR.plane([x, y, 0], [w, h]);
   T.mesh(potte, MR.merge(), T.hold(new THREE.MeshBasicMaterial({ color: "#a9b0d6" })), "0.24 0 0.002");
   kit.textPlane(potte, "0.24 -0.04 0.01", "fugt", "#a9b0d6", { width: 0.16, aspect: 0.3, size: 150, bg: false, ink: "#a9b0d6" });
+  // kablet fra fugtsensoren til terningen: input fra omgivelserne styrer tilstanden. En lysende puls løber langs det.
+  const kabelKurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0.53, 0.98, 0.02), new THREE.Vector3(0.56, 1.02, 0.16), new THREE.Vector3(0.2, 0.98, 0.26), new THREE.Vector3(-0.05, 0.9, 0.27), new THREE.Vector3(-0.25, 0.92, 0.26),
+  ]);
+  T.mesh(tst, T.hold(new THREE.TubeGeometry(kabelKurve, 40, 0.008, 5, false)), T.hold(new THREE.MeshStandardMaterial({ color: "#22263a" })));
+  const kabelGeo = T.hold(new THREE.TubeGeometry(kabelKurve, 40, 0.0105, 5, false));
+  const kabelN = kabelGeo.index.count, kabelN0 = 0;
+  kabelGeo.setIndex(kabelGeo.index);   // drawRange bruges til at tegne pulsen frem
+  const kabelM = T.hold(new THREE.MeshBasicMaterial({ color: "#2a3358" }));
+  T.mesh(tst, kabelGeo, kabelM);
   let tilstand = 1, sidstKlik = -1e9, autoFra = 0, pustT = -1e9;
   ctx.onClick(tKrop, () => { tilstand = (tilstand + 1) % 3; sidstKlik = tNu; pop = 1; });
   let pop = 0;
   lampe("a2-4", TR.x - 0.1, TR.z);
   ctx.station("a2-4", tst);
-  ctx.sign(ctx.step("a2-4").title, { parent: tst, position: "0.1 2.15 -0.35", width: 1.6, size: 72 });
+  skilt("a2-4", ctx.step("a2-4").title, { parent: tst, position: "0.1 2.15 -0.35", width: 1.6, size: 72 });
   ctx.view("a2-4", { position: [TR.x + Math.sin(TR.yaw * D) * 1.8, 0, TR.z + Math.cos(TR.yaw * D) * 1.8], lookAt: [TR.x + 0.05, 1.05, TR.z] });
 
   /* ---------- Dør, skilte, lys ---------- */
   ctx.door(ctx.room.parent, { position: `3.6 0 ${Z0 + 0.15}` });
   T.mesh(ctx.root, T.hold(new THREE.PlaneGeometry(1.6, 2.5)), T.hold(new THREE.MeshBasicMaterial({ color: "#04050b" })), `3.6 1.25 ${Z0 + 0.06}`);
-  ctx.sign(ctx.room.name, { sub: ctx.room.sub, position: `-3.7 3.55 ${Z0 + 0.08}`, width: 3.0 });
-  const erk = T.erkendeformer(ctx.root, `-1.65 3.55 ${Z0 + 0.1}`);
+  // rumskiltet står frit på bagvæggen, uden for spiralens og intentionskortets sigtelinje fra indgangen
+  ctx.sign(ctx.room.name, { sub: ctx.room.sub, position: `-4.4 3.85 ${Z0 + 0.08}`, width: 3.2 });
+  const erk = T.erkendeformer(ctx.root, `-1.9 3.85 ${Z0 + 0.1}`, "0 0 0", 1.0);
   const lysA = kit.el("a-entity", { position: `${SP.x} 3.8 ${SP.z + 1.2}`, light: "type: point; color: #ffcf96; intensity: 1.2; distance: 11; decay: 1.1" });
   const lysB = kit.el("a-entity", { position: "0 2.6 0", light: "type: point; color: #ffcf96; intensity: 0; distance: 4.5; decay: 1.3" });
 
@@ -363,17 +410,24 @@ export default function build(ctx) {
   const LYSPOS = { "a2-1": [IR.x + 0.4, 2.4, IR.z + 0.6], "a2-2": [SP.x, 3.4, SP.z + 1.6], "a2-3": [-4.2, 2.6, -2.0], "a2-4": [TR.x - 0.6, 2.3, TR.z + 0.7] };
   let aktiv = null, t0 = 0, tNu = 0, sidsteVer = -1, sidsteKort = -1;
   return {
-    onStep(id) { aktiv = id; t0 = tNu; autoFra = tNu; },
+    onStep(id) { aktiv = id; t0 = null; autoFra = tNu; },
     tick(t, dt) {
-      tNu = t; const s = (t - t0) / 1000;
-      erk.tick(dt);
+      tNu = t; if (t0 === null) t0 = t;   // forløbet starter ved første frame efter trinskiftet
+      const s = (t - t0) / 1000;
+      erk.tick(dt, aktiv === "a2-0" ? 1 : 0.3);
       // a2-0: de fire stationer lyser op hver for sig (på skift). Ellers lyser kun den aktive.
       const intro = aktiv === "a2-0";
       const tur = intro ? Math.floor(s / 1.6) % 4 : -1, blødt = intro ? Math.sin(Math.PI * Math.min(1, (s % 1.6) / 1.6)) : 1;
       STATIONER.forEach((id, i) => {
-        const v = intro ? (i === tur ? blødt : 0.08) : id === aktiv ? 1 : 0.1;
-        stationLys[id].kegleM.opacity = 0.04 + 0.32 * v; stationLys[id].poolM.opacity = 0.04 + 0.6 * v;
+        const v = intro ? (i === tur ? blødt : 0.03) : id === aktiv ? 1 : 0.04;
+        // lyskeglen er kun stemning; ved terningen næsten ingen, så den ikke farver terningen
+        stationLys[id].kegleM.opacity = (0.02 + 0.12 * v) * (id === "a2-4" ? 0.25 : 1); stationLys[id].poolM.opacity = 0.02 + 0.6 * v;
+        stationSkilt[id] && stationSkilt[id].forEach(e => { const m = e.getObject3D("mesh"); if (m) m.material.opacity = 0.3 + 0.7 * Math.max(v, intro ? 0.15 : 0); });
       });
+      // ved a2-0 lyser terningen kun på sin tur; LEDIG-skærmen ligeså
+      const tændt4 = intro ? (tur === 3 ? blødt : 0) : aktiv === "a2-4" ? 1 : 0;
+      const tændt3 = intro ? (tur === 2 ? blødt : 0) : aktiv === "a2-3" ? 1 : 0;
+      ledigM.color.setScalar(0.15 + 0.85 * tændt3);
       const lp = intro ? LYSPOS[STATIONER[tur]] : LYSPOS[aktiv];
       if (lp) { lysB.object3D.position.set(...lp); T.lys(lysB, intro ? 1.6 * blødt : 1.6); } else T.lys(lysB, 0);
 
@@ -383,7 +437,7 @@ export default function build(ctx) {
       const ps = spOn ? s % CYK : 0;
       const u = spOn ? Math.min(1, ps / 10.5) : 0.0;
       const [kx, ky, kz] = helix(u);
-      kugle.object3D.position.set(kx * 0.82, ky + 0.06, kz * 0.82);
+      kugle.object3D.position.set(kx * 0.82, ky + 0.09, kz * 0.82);
       kugle.object3D.visible = spOn || intro;
       sporGeo.setDrawRange(0, Math.floor(u * sporN / 3) * 3);
       sporM.opacity = spOn ? (ps > 11 ? 1 - (ps - 11) / 1.5 : 0.9) : 0;
@@ -398,21 +452,25 @@ export default function build(ctx) {
       });
       const kortV = spOn ? Math.max(0, Math.min(2, nåetN === 0 ? 0 : nåetN - 1)) : 2;
       if (kortV !== sidsteVer) { kortM.map = kortTex[kortV]; kortM.needsUpdate = true; sidsteVer = kortV; }
-      kortM.color.setScalar(spOn ? 1 : 0.75);
+      kortM.color.setScalar(spOn ? 1 : intro && tur === 1 ? 0.5 + 0.5 * blødt : 0.38);
       // kortet "vipper" kort, når det skrives om
       const skift = spOn && nåetN >= 1 ? Math.max(0, 1 - (ps - Math.min(nåetN, 3) / OMLØB * 10.5) / 0.6) : 0;
       kortE.object3D.rotation.y = Math.sin(skift * Math.PI) * 0.5;
 
       /* indramningsarket */
       const irOn = aktiv === "a2-1";
-      const ip = irOn ? s % 12 : 99;
+      arkM.color.setScalar(irOn ? 1 : intro && tur === 0 ? 0.45 + 0.55 * blødt : 0.4);
+      // 0–9 felterne udfyldes · 9,5–11 tilbage til intentionen, den streges over og skrives om · holdes til 15
+      const ip = irOn ? s % 15 : 99;
       skrift.forEach((f, i) => { f.m.opacity = irOn ? clamp((ip - 0.6 - i * 2.2) / 1.2) : 1; });
-      const felt = irOn ? (ip < 9.4 ? Math.min(3, Math.floor((ip - 0.3) / 2.2)) : 0) : -1;
+      const retK = irOn ? clamp((ip - 9.8) / 0.6) : 1, nyK = irOn ? clamp((ip - 10.4) / 0.8) : 1;
+      stregM.opacity = retK; nyM.opacity = nyK;
+      const felt = irOn ? (ip < 9.2 ? Math.min(3, Math.floor((ip - 0.3) / 2.2)) : 1) : -1;
       if (felt >= 0) {
         const f = skrift[Math.max(0, felt)];
         mark.object3D.position.set(f.px, 0.008, f.pz - 0.06);
-        markM.opacity = ip < 9.4 ? 0.9 : 0.5 + 0.5 * Math.sin(ip * 6);   // til sidst: tilbage til kontekst
-        const skriv = ip < 9.4 ? (ip - 0.6 - felt * 2.2) / 1.2 : 0;
+        markM.opacity = ip < 9.2 ? 0.9 : 0.6 + 0.4 * Math.sin(ip * 5);   // til sidst: tilbage til intentionen
+        const skriv = ip < 9.2 ? (ip - 0.6 - felt * 2.2) / 1.2 : ip < 11.2 ? (ip - 9.8) / 1.4 : 1;
         blyant.object3D.position.set(f.px - 0.18 + 0.36 * clamp(skriv) , 0.03 + 0.01 * Math.abs(Math.sin(ip * 18)), f.pz - 0.02 + 0.03 * Math.sin(ip * 9));
         blyant.object3D.visible = true;
       } else { markM.opacity = 0; blyant.object3D.position.set(0.5, 0.03, 0.2); }
@@ -431,13 +489,13 @@ export default function build(ctx) {
         const o = k.e.object3D;
         if (i === kortIdx) {
           // kortet glider ud af væggen og hen foran beskueren, ved siden af prototypen
-          const mål = [-0.5, 1.72, 2.6];
+          const mål = [0.05, 2.15, 2.5];
           o.position.set(k.hjem[0] + (mål[0] - k.hjem[0]) * ud, k.hjem[1] + (mål[1] - k.hjem[1]) * ud + Math.sin(ud * Math.PI) * 0.25, k.hjem[2] + (mål[2] - k.hjem[2]) * ud);
-          o.rotation.set(0, -ud * 56 * D, Math.sin(ud * Math.PI) * 0.25);
-          o.scale.setScalar(1 + ud * 0.7);
+          o.rotation.set(0, -ud * 50 * D, Math.sin(ud * Math.PI) * 0.25);
+          o.scale.setScalar(1 + ud * 0.6);
           k.m.emissive && k.m.emissive.set(A); k.m.emissiveIntensity = 0.15 * ud;
         } else { o.position.set(...k.hjem); o.rotation.set(0, 0, 0); o.scale.setScalar(1); k.m.emissiveIntensity = 0; }
-        k.m.color.setScalar(bsOn && i !== kortIdx ? 0.55 : 1);
+        k.m.color.setScalar(bsOn ? (i !== kortIdx ? 0.75 : 1) : 0.5);
       });
       const form = bsOn && ud > 0.85 ? (kortIdx === 0 ? 1 : 2) : 0;
       [base, udenSkærm, bedste].forEach((e, i) => { e.object3D.visible = i === form; });
@@ -454,8 +512,12 @@ export default function build(ctx) {
       if (tOn && tNu - sidstKlik > 7000 && tNu - autoFra > 2600) { tilstand = (tilstand + 1) % 3; autoFra = tNu; pop = 1; }   // kører selv, til nogen peger
       if (!tOn) tilstand = 1;
       const st = TILST[tilstand];
-      tMat.color.lerp(new THREE.Color(st.farve), 0.15); tMat.emissive.lerp(new THREE.Color(st.farve), 0.15);
-      tHalo.color.set(st.farve); tHalo.opacity = tOn ? 0.7 : 0.25;
+      // uden for trinnet står terningen næsten slukket og grå; i a2-0 lyser den kort på sin tur
+      const tFarve = new THREE.Color(st.farve).lerp(new THREE.Color("#3a4060"), tOn ? 0 : 1 - tændt4 * 0.8);
+      tMat.color.lerp(tFarve, Math.min(1, (dt || 16) / 120));   // tidsbaseret, så skiftet er lige hurtigt ved lav fps
+      tHalo.color.set(st.farve); tHalo.opacity = tOn ? 0.75 : 0;
+      kabelM.color.set(tOn ? st.farve : "#2a3358");
+      kabelGeo.setDrawRange(0, tOn ? Math.floor(((s * 0.6) % 1) * kabelN / 3) * 3 + kabelN0 : kabelN0);
       if (ansigtM.map !== ansigt[tilstand]) { ansigtM.map = ansigt[tilstand]; ansigtM.needsUpdate = true; }
       tNavne.forEach((n, i) => { n.object3D.visible = tOn && i === tilstand; });
       lamper.forEach((m, i) => m.color.set(i === tilstand ? TILST[i].farve : "#2a3358"));
@@ -468,13 +530,14 @@ export default function build(ctx) {
       else { ti.rotation.set(Math.sin(ts * 9) * 0.03, 0, Math.sin(ts * 11) * 0.05); ti.position.y = 0; }
       ti.scale.setScalar(1 + pop * 0.15);
       // potten følger tilstanden
-      const blad = [55, -15, 70][tilstand];   // grader: hængende, opret, liggende
-      blade.forEach((b, i) => { const cur = b.object3D.rotation.x, mål = blad * D * (0.8 + 0.2 * (i % 2)); b.object3D.rotation.x = cur + (mål - cur) * 0.08; });
-      bladM.color.lerp(new THREE.Color(["#b8a84a", "#5fb85a", "#4a7a5a"][tilstand]), 0.08);
-      stængel.object3D.rotation.z += (([0.35, 0, 0.12][tilstand]) - stængel.object3D.rotation.z) * 0.08;
-      const vs = [0.0001, 0.45, 1.0][tilstand]; vand.object3D.scale.x += (vs - vand.object3D.scale.x) * 0.08; vand.object3D.scale.z = vand.object3D.scale.x; vand.object3D.position.y = 0.026 + (tilstand === 2 ? 0.008 : 0);
+      const blad = [80, -15, 60][tilstand];   // grader: slapt hængende, opret, liggende
+      const kL = Math.min(1, (dt || 16) / 200);   // tidsbaseret blødgøring (uafhængig af billedfrekvens)
+      blade.forEach((b, i) => { const cur = b.object3D.rotation.x, mål = blad * D * (0.8 + 0.2 * (i % 2)); b.object3D.rotation.x = cur + (mål - cur) * kL; });
+      bladM.color.lerp(new THREE.Color(["#a8873a", "#5fb85a", "#3f6a55"][tilstand]), kL);
+      stængel.object3D.rotation.z += (([0.75, 0, 0.18][tilstand]) - stængel.object3D.rotation.z) * kL;
+      const vs = [0.0001, 0.45, 1.0][tilstand]; vand.object3D.scale.x += (vs - vand.object3D.scale.x) * kL; vand.object3D.scale.z = vand.object3D.scale.x; vand.object3D.position.y = 0.026 + (tilstand === 2 ? 0.008 : 0);
       dråber.forEach((d, i) => { const f = ((ts * 0.8 + i / 3) % 1); d.object3D.visible = tilstand === 2; d.object3D.position.y = 0.62 - f * 0.4; });
-      const fg = måler.object3D.scale; fg.y += (st.fugt - fg.y) * 0.1; målerM.color.set(st.farve);
+      const fg = måler.object3D.scale; fg.y += (st.fugt - fg.y) * kL; målerM.color.set(st.farve);
       T.syncVis();
     },
     dispose() { T.dispose(); },
@@ -646,14 +709,17 @@ function vaerktoej(ctx) {
       g.strokeStyle = L; g.globalAlpha = 0.5; g.lineWidth = 3; g.beginPath(); g.arc(128, 128, 120, 0, 7); g.stroke(); g.globalAlpha = 1;
       g.fillStyle = L; g.font = '600 24px "JetBrains Mono", monospace'; g.textAlign = "center"; g.fillText("ERKENDEFORMER", 128, 290);
     });
-    mesh(grp, geo.plane(), hold(new THREE.MeshBasicMaterial({ map: pladeTex, transparent: true, depthWrite: false })), "0 -0.06 -0.005", { scale: "1.0 1.17 1" });
+    const pladeM = hold(new THREE.MeshBasicMaterial({ map: pladeTex, transparent: true, depthWrite: false }));
+    mesh(grp, geo.plane(), pladeM, "0 -0.06 -0.005", { scale: "1.0 1.17 1" });
+    const mats = [pladeM];
     const items = tegn.map((f, i) => {
       const tex = canvas(256, 256, g => { g.strokeStyle = L; g.fillStyle = L; g.lineWidth = 12; g.lineCap = "round"; g.lineJoin = "round"; f(g); });
-      const m = hold(new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.95, depthWrite: false }));
+      const m = hold(new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.95, depthWrite: false })); mats.push(m);
       return mesh(grp, geo.plane(), m, "0 0 0", { scale: "0.3 0.3 0.3" });
     });
     let a = 0;
-    return { tick(dt) { a += (dt || 16) * 0.00025; items.forEach((it, i) => { const v = a + i * 2.094; it.object3D.position.set(Math.cos(v) * 0.27, Math.sin(v) * 0.27, 0); }); } };
+    // alpha < 1 dæmper tegnet i trin, hvor det ikke er i fokus
+    return { tick(dt, alpha = 1) { mats.forEach((m, i) => { m.opacity = (i ? 0.95 : 1) * alpha; }); a += (dt || 16) * 0.00025; items.forEach((it, i) => { const v = a + i * 2.094; it.object3D.position.set(Math.cos(v) * 0.27, Math.sin(v) * 0.27, 0); }); } };
   }
   /* sæt et lys' styrke direkte (billigere end setAttribute hver frame) */
   function lys(el, v) { const l = el.getObject3D("light"); if (l) l.intensity = v; }

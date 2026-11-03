@@ -164,7 +164,8 @@ export default function build(ctx) {
   }
 
   /* ---------- Skilt med rummets navn og dør tilbage til Gaden ---------- */
-  ctx.sign(ctx.room.name, { position: `${DOOR.x} 2.72 ${ZB + 0.6}`, width: 2.6, sub: ctx.room.sub });
+  // rumskiltet hænger frit midt i stuen (ikke over døren, så rammens dørskilt "Tilbage: …" står for sig selv)
+  const roomSign = ctx.sign(ctx.room.name, { position: `-1.3 2.75 -0.6`, width: 2.4, sub: ctx.room.sub });
   ctx.door(ctx.room.parent, { position: `${DOOR.x} 0 ${ZB + 0.14}`, width: 1.2, height: 2.2 });
 
   /* ---------- Teknologierne ---------- */
@@ -174,16 +175,20 @@ export default function build(ctx) {
     let scr = null;
     if (kind === "phone") { B.rbox(0.08, 0.16, 0.012, 0.012, "#16161c", [0, 0, 0]); scr = quad(0.068, 0.14, scrMat("#a9c6ff")); scr.position.z = 0.0075; }
     if (kind === "tablet") { B.rbox(0.28, 0.2, 0.012, 0.016, "#202028", [0, 0, 0]); scr = quad(0.255, 0.175, scrMat("#ffd9a0")); scr.position.z = 0.0075; }
-    if (kind === "speaker") { B.cyl(0.08, 0.085, 0.22, "#ddd5d0", [0, 0.11, 0], [0, 0, 0], 14); scr = new THREE.Mesh(new THREE.TorusGeometry(0.065, 0.01, 4, 20), scrMat(ROSE)); scr.rotation.x = -90 * D; scr.position.y = 0.222; }
+    if (kind === "speaker") { B.cyl(0.12, 0.13, 0.32, "#ddd5d0", [0, 0.16, 0], [0, 0, 0], 16); scr = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.014, 4, 24), scrMat(ROSE)); scr.rotation.x = -90 * D; scr.position.y = 0.322; }
     if (kind === "pad") { B.rbox(0.18, 0.09, 0.05, 0.04, "#1f1f26", [0, 0, 0]); B.sph(0.025, "#3a3a46", [-0.05, 0.01, 0.03], 6); B.sph(0.025, "#3a3a46", [0.05, -0.01, 0.03], 6); scr = quad(0.03, 0.012, scrMat("#9fe3a0")); scr.position.set(0, 0.025, 0.026); }
     g.add(B.build(litMat)); if (scr) g.add(scr); g.userData.scr = scr; return g;
   }
   const speaker = makeDevice("speaker"); speaker.position.set(SPK.x, SPK.y, SPK.z); addObj(speaker);
 
   /* ---------- Silhuetter: fire familiemedlemmer (kan stå og sidde) ---------- */
-  const silMat = new THREE.MeshStandardMaterial({ color: "#2a1f2e", roughness: 0.9, flatShading: true, emissive: "#3a2238", emissiveIntensity: 0.3 });
+  // figurerne er stiliserede, men ikke mørke silhuetter: hver person har sin egen varme tøjfarve og lys hud
+  const skinMat = new THREE.MeshStandardMaterial({ color: "#d9a88a", roughness: 0.8, flatShading: true, emissive: "#5a3a30", emissiveIntensity: 0.25 });
+  let silMat = null;
   const SEAT = 0.47;
-  function makeFigure(h) {
+  function makeFigure(h, cloth, legsCol) {
+    silMat = new THREE.MeshStandardMaterial({ color: cloth, roughness: 0.85, flatShading: true, emissive: cloth, emissiveIntensity: 0.12 });
+    const legMat = new THREE.MeshStandardMaterial({ color: legsCol, roughness: 0.85, flatShading: true, emissive: legsCol, emissiveIntensity: 0.1 });
     const s = h / 1.75, f = new THREE.Group(), upper = new THREE.Group(); f.add(upper);
     const hip = 0.84 * s;
     upper.add(new THREE.Mesh(mergeClean([
@@ -198,14 +203,14 @@ export default function build(ctx) {
       capsule([0.2 * s, 1.4 * s, 0], [0.23 * s, 0.84 * s, 0.03 * s], 0.05 * s), capsule([-0.2 * s, 1.4 * s, 0], [-0.23 * s, 0.84 * s, 0.03 * s], 0.05 * s),
     ]), silMat);
     upper.add(armsHold, armsDown);
-    const legsStand = new THREE.Mesh(mergeClean([capsule([0.085 * s, 0.08, 0], [0.085 * s, hip, 0], 0.07 * s), capsule([-0.085 * s, 0.08, 0], [-0.085 * s, hip, 0], 0.07 * s)]), silMat);
+    const legsStand = new THREE.Mesh(mergeClean([capsule([0.085 * s, 0.08, 0], [0.085 * s, hip, 0], 0.07 * s), capsule([-0.085 * s, 0.08, 0], [-0.085 * s, hip, 0], 0.07 * s)]), legMat);
     const legsSit = new THREE.Mesh(mergeClean([
       capsule([0.09 * s, SEAT, -0.05], [0.09 * s, SEAT, 0.42 * s], 0.075 * s), capsule([-0.09 * s, SEAT, -0.05], [-0.09 * s, SEAT, 0.42 * s], 0.075 * s),
       capsule([0.09 * s, SEAT, 0.42 * s], [0.09 * s, 0.07, 0.48 * s], 0.065 * s), capsule([-0.09 * s, SEAT, 0.42 * s], [-0.09 * s, 0.07, 0.48 * s], 0.065 * s),
-    ]), silMat);
+    ]), legMat);
     f.add(legsStand, legsSit);
     const head = new THREE.Group(); head.position.set(0, 1.56 * s, 0.01); upper.add(head);
-    const hm = new THREE.Mesh(new THREE.SphereGeometry(0.11 * s, 12, 8), silMat); hm.position.set(0, 0.11 * s, 0.015); head.add(hm);
+    const hm = new THREE.Mesh(new THREE.SphereGeometry(0.11 * s, 12, 8), skinMat); hm.position.set(0, 0.11 * s, 0.015); head.add(hm);
     const hand = new THREE.Group(); hand.position.set(0, 1.22 * s, 0.32 * s); upper.add(hand);
     const glow = quad(0.55 * s, 0.55 * s, basic({ map: K.glowTex("#bcd4ff"), blending: THREE.AdditiveBlending, opacity: 0 })); glow.position.set(0, 1.42 * s, 0.24 * s); upper.add(glow);
     return { f, upper, head, hand, armsHold, armsDown, legsStand, legsSit, glow, s, hip };
@@ -213,17 +218,17 @@ export default function build(ctx) {
   /* Hver person: teknologi, hvor de kommer fra, hvor de bruger den (x, z, retning, sidder?),
      hvor tingen ligger, feltets placering, og hvad de gør i brugseksperimentet (c1-3). */
   const fam = [
-    { who: "Mor", use: "beskeder, bank og kalender", kind: "phone", h: 1.7,
-      from: [DOOR.x, ZB + 0.2, 0, false], at: [DOOR.x - 0.7, ZB + 1.6, 30, false], home: null, label: [DOOR.x - 0.7, 2.3, ZB + 1.6],
+    { who: "Mor", use: "beskeder, bank og kalender", kind: "phone", h: 1.7, cloth: "#b8586e", legs: "#3e3a52",
+      from: [DOOR.x, ZB + 0.2, 0, false], at: [DOOR.x - 0.7, ZB + 1.6, 30, false], home: null, label: [DOOR.x - 0.7, 2.05, ZB + 1.6],
       off: [SOF.x + 0.05, SOF.z - 0.6, 90, true] },
-    { who: "Far", use: "opskrifter og nyheder", kind: "tablet", h: 1.82,
-      from: [W - 1.2, ZB + 1.0, -90, false], at: [ISL.x, ISL.z - 0.75, 0, false], home: [ISL.x + 0.25, 0.98, ISL.z - 0.1, -90, 0], label: [ISL.x, 2.45, ISL.z - 0.75],
-      off: [TB.x + 0.85, TB.z + 0.1, -90, false] },
-    { who: "Storesøster", use: "klassechat og video", kind: "phone", h: 1.6,
-      from: [-2.2, 1.6, -120, false], at: [SOF.x + 0.05, SOF.z + 0.6, 90, true], home: [TB.x + 0.1, 0.44, TB.z + 0.3, -90, 0], label: [SOF.x + 0.1, 1.95, SOF.z + 0.6],
+    { who: "Far", use: "opskrifter og nyheder", kind: "tablet", h: 1.82, cloth: "#5a7a9c", legs: "#3a3440",
+      from: [W - 1.2, ZB + 1.0, -90, false], at: [ISL.x, ISL.z - 0.75, 0, false], home: [ISL.x + 0.25, 0.98, ISL.z - 0.1, -90, 0], label: [ISL.x - 0.9, 2.0, ISL.z - 0.9],
+      off: [TB.x + 0.55, TB.z - 0.95, -40, false] },
+    { who: "Storesøster", use: "klassechat og video", kind: "phone", h: 1.6, cloth: "#d89a4a", legs: "#40384e",
+      from: [-2.2, 1.6, -120, false], at: [SOF.x + 0.05, SOF.z + 0.6, 90, true], home: [TB.x + 0.1, 0.44, TB.z + 0.3, -90, 0], label: [SOF.x + 0.55, 1.6, SOF.z + 0.9],
       off: [SOF.x + 0.05, SOF.z + 0.6, 90, true] },
-    { who: "Lillebror", use: "spil med venner", kind: "pad", h: 1.25,
-      from: [-2.0, -1.4, -120, false], at: [BEAN.x, BEAN.z, 160, true], home: [SB.x - 0.25, 0.66, SB.z + 0.05, -90, 0], label: [BEAN.x, 1.6, BEAN.z + 0.1],
+    { who: "Lillebror", use: "spil med venner", kind: "pad", h: 1.25, cloth: "#6a9a6e", legs: "#3a3a4a",
+      from: [-2.0, -1.4, -120, false], at: [BEAN.x, BEAN.z, 160, true], home: [SB.x - 0.25, 0.66, SB.z + 0.05, -90, 0], label: [BEAN.x + 0.3, 1.38, BEAN.z + 0.4],
       off: [BEAN.x, BEAN.z, 5, true] },
   ];
   const fieldTex = (who, use) => K.canvasTexture(640, 170, (g, w, h) => {
@@ -232,24 +237,61 @@ export default function build(ctx) {
     g.fillStyle = "#ecd9e1"; g.font = BODY(500, 42); g.fillText(use, 32, 122);
   });
   const fields = [];
-  const FIELD_EYE = [0.9, 1.6, 3.2];   // felterne drejes mod overbliksviewet
+  const FIELD_EYE = [0.9, 1.6, 3.2];   // (overbliksviewet)   // felterne drejes mod overbliksviewet
   function addField(who, use, pos) {
-    const q = quad(1.1, 0.29, basic({ map: fieldTex(who, use), side: THREE.DoubleSide }));
+    const q = quad(1.45, 0.385, basic({ map: fieldTex(who, use), side: THREE.DoubleSide }));
     q.position.set(...pos); q.lookAt(FIELD_EYE[0], pos[1], FIELD_EYE[2]); addObj(q); fields.push(q); return q;
   }
-  addField("Hele familien", "musik, timer og indkøb", [SPK.x + 0.55, 2.35, SPK.z + 0.1]);
-  for (const m of fam) { m.fig = makeFigure(m.h); addObj(m.fig.f); m.dev = makeDevice(m.kind); addObj(m.dev); m.field = addField(m.who, m.use, m.label); }
+  addField("Hele familien", "musik, timer og indkøb", [SPK.x - 0.1, 1.3, SPK.z + 0.5]);
+  for (const m of fam) { m.fig = makeFigure(m.h, m.cloth, m.legs); addObj(m.fig.f); m.dev = makeDevice(m.kind); addObj(m.dev); m.field = addField(m.who, m.use, m.label); }
 
+  /* ---------- Vejen tilbage: et lille klikbart skilt i hvert view med en pil mod døren til forælderen ---------- */
+  const VIEWS = {};
+  const view = (id, o) => { VIEWS[id] = o; ctx.view(id, o); };
+  function makeBackHint(doorPos) {
+    const g = new THREE.Group();
+    const name = ctx.rooms[ctx.room.parent].name;
+    const tex = K.canvasTexture(640, 150, (c, w, h) => {
+      c.fillStyle = "rgba(14,12,26,0.9)"; K.roundRect(c, 4, 4, w - 8, h - 8, 60); c.fill(); c.strokeStyle = ctx.rooms[ctx.room.parent].color; c.lineWidth = 6; c.stroke();
+      c.fillStyle = "#ffffff"; c.font = `600 54px "Source Sans 3", "Segoe UI", sans-serif`; c.textBaseline = "middle"; c.fillText(`Tilbage: ${name}`, 150, h / 2 + 2);
+    });
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(0.64, 0.15), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.85 }));
+    g.add(panel);
+    const ar = new THREE.Shape(); ar.moveTo(-0.012, -0.04); ar.lineTo(0.012, -0.04); ar.lineTo(0.012, 0.005); ar.lineTo(0.03, 0.005); ar.lineTo(0, 0.045); ar.lineTo(-0.03, 0.005); ar.lineTo(-0.012, 0.005); ar.closePath();
+    const arrowM = new THREE.Mesh(new THREE.ShapeGeometry(ar), new THREE.MeshBasicMaterial({ color: ctx.rooms[ctx.room.parent].color, transparent: true, depthWrite: false }));
+    arrowM.position.set(-0.24, 0, 0.002); g.add(arrowM);
+    g.renderOrder = 30; panel.renderOrder = 30; arrowM.renderOrder = 31;
+    const e = addObj(g);
+    ctx.onClick(e, () => ctx.goRoom(ctx.room.parent));
+    return {
+      place(id) {
+        const v = VIEWS[id]; if (!v) { g.visible = false; return; }
+        g.visible = true;
+        const p = v.position, la = v.lookAt || [p[0], 1.6, p[2] - 1];
+        const fx = la[0] - p[0], fz = la[2] - p[2], fl = Math.hypot(fx, fz) || 1, ux = fx / fl, uz = fz / fl;
+        // nede til venstre i synsfeltet, vippet op mod øjet
+        const pitch = typeof v.pitch === "number" ? v.pitch : 0;
+        const px = p[0] + ux * 1.3 + uz * 0.95, pz = p[2] + uz * 1.3 - ux * 0.95;
+        g.position.set(px, 1.6 + Math.tan(pitch * D) * 1.3 - 0.8, pz);
+        g.rotation.set(0, Math.atan2(-ux, -uz), 0, "YXZ"); g.rotateX((pitch - 22) * D);
+        // pilens retning: vinkel fra blikretningen til døren (positiv = til venstre)
+        const dx = doorPos[0] - p[0], dz = doorPos[2] - p[2];
+        arrowM.rotation.z = Math.atan2(ux * dz - uz * dx, ux * dx + uz * dz) * -1;
+      },
+    };
+  }
+
+  const back = makeBackHint([DOOR.x, 0, ZB + 0.14]);
   /* ---------- c1-0: intro, overblik over stuen ---------- */
-  const st0 = kit.grp(root, `${-1.2} 0 ${-1.2}`);
+  const st0 = kit.grp(root, `${-4.3} 0 ${-1.6}`);       // ringen ligger under familien/sofagruppen
   kit.box(st0, "0 0.5 0", 1.2, 1.0, 1.2, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c1-0", st0);
-  ctx.view("c1-0", { position: [0.9, 0, 3.2], lookAt: [-1.4, 1.2, -3.0] });
+  view("c1-0", { position: [0.9, 0, 3.2], lookAt: [-1.4, 1.2, -3.0], pitch: -10 });
 
   /* ---------- c1-1: døgnurskiven ---------- */
   const DIAL = { x: -3.6, z: 4.3, r: 1.35 };
   const dialG = new THREE.Group(); dialG.position.set(DIAL.x, 0, DIAL.z);
-  const dialTilt = new THREE.Group(); dialTilt.position.y = 0.2; dialTilt.rotation.x = 18 * D; dialG.add(dialTilt);
+  const dialTilt = new THREE.Group(); dialTilt.position.y = 0.62; dialTilt.rotation.x = 22 * D; dialG.add(dialTilt);   // som et skråt bord: bagkanten løftet, forkanten fri af gulvet
   const dialTex = K.canvasTexture(1024, 1024, (g, w) => {
     const c = w / 2; g.clearRect(0, 0, w, w);
     g.fillStyle = "#24182a"; g.beginPath(); g.arc(c, c, c - 4, 0, 7); g.fill();
@@ -272,15 +314,18 @@ export default function build(ctx) {
   dialDisc.rotation.x = -90 * D; dialDisc.position.y = 0.042; dialTilt.add(dialDisc);
   {
     const B = batch(); B.cyl(DIAL.r + 0.07, DIAL.r + 0.1, 0.07, "#3a2a35", [0, 0, 0], [0, 0, 0], 48); dialTilt.add(B.build(litMat));
-    const B2 = batch(); B2.box(DIAL.r * 1.6, 0.18, DIAL.r * 1.2, "#2f2229", [0, -0.08, -0.15]); dialG.add(B2.build(litMat));
+    const B2 = batch(); B2.cyl(0.18, 0.28, 0.6, "#2f2229", [0, 0.3, 0], [0, 0, 0], 12); B2.cyl(0.6, 0.65, 0.05, "#2f2229", [0, 0.025, 0], [0, 0, 0], 20); dialG.add(B2.build(litMat));
   }
   const handM = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.02, DIAL.r - 0.12).translate(0, 0.06, -(DIAL.r - 0.12) / 2), new THREE.MeshBasicMaterial({ color: "#ffffff" }));
   dialTilt.add(handM);
   const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 12), new THREE.MeshBasicMaterial({ color: ROSE })); hub.position.y = 0.06; dialTilt.add(hub);
   // prikker: én InstancedMesh. Hver post: [klokkeslæt, kategori]
   const CAT = [{ name: "daglige gøremål", c: "#ffc56b" }, { name: "fællesskaber", c: "#ff6f9e" }, { name: "information om verden", c: "#8fb2ff" }];
-  const LOG = [[6.6, 0], [7.0, 2], [7.3, 1], [7.7, 0], [8.1, 0], [8.4, 1], [10.1, 2], [12.0, 1], [12.3, 1], [12.6, 2], [14.4, 0], [15.0, 1], [15.4, 1], [15.8, 2], [16.3, 0],
-    [16.8, 1], [17.4, 0], [17.7, 2], [18.2, 0], [18.8, 1], [19.3, 2], [19.7, 1], [20.1, 1], [20.4, 2], [20.9, 1], [21.3, 2], [21.7, 1], [22.2, 1], [22.6, 2], [23.2, 1]];
+  // et døgn: intet om natten (00–06), en tæt morgen (07–08), stille i skoletiden, og en tæt eftermiddag og aften
+  const LOG = [[6.6, 0], [6.8, 2], [7.0, 1], [7.2, 0], [7.4, 2], [7.6, 1], [7.9, 0], [8.2, 1],
+    [12.1, 1], [12.4, 2],
+    [15.2, 1], [15.5, 0], [15.8, 1], [16.2, 2], [16.6, 0], [17.0, 1], [17.4, 0], [17.8, 2], [18.2, 0], [18.6, 1],
+    [19.0, 2], [19.3, 1], [19.6, 1], [19.9, 2], [20.2, 1], [20.5, 2], [20.8, 1], [21.1, 1], [21.4, 2], [21.8, 1], [22.2, 1], [22.6, 2], [23.1, 1]];
   const dotGeo = new THREE.CylinderGeometry(0.085, 0.085, 0.05, 14);
   const dots = new THREE.InstancedMesh(dotGeo, new THREE.MeshBasicMaterial({ color: "#ffffff" }), LOG.length);
   LOG.forEach(([hh, cat], i) => {
@@ -291,8 +336,10 @@ export default function build(ctx) {
   });
   dialTilt.add(dots);
   // sorteringsbakker: tre søjler til højre for skiven
+  const binLabTex = (c) => K.canvasTexture(512, 110, (g, w, h) => { g.fillStyle = "rgba(24,14,22,0.92)"; K.roundRect(g, 3, 3, w - 6, h - 6, 30); g.fill(); g.strokeStyle = c.c; g.lineWidth = 6; g.stroke(); g.fillStyle = "#fff"; g.font = BODY(700, 46); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(c.name, w / 2, h / 2 + 2); });
   const bins = CAT.map((c, i) => {
-    const g = new THREE.Group(); g.position.set(DIAL.r + 0.65, 0, -0.75 + i * 0.6);
+    const g = new THREE.Group(); g.position.set(DIAL.r + 0.8, 0, -0.85 + i * 0.75);
+    const lab = quad(0.78, 0.168, basic({ map: binLabTex(c) })); lab.position.set(0, 0.22, 0.26); lab.rotation.x = -30 * D; g.add(lab);
     const B = batch(); B.box(0.46, 0.06, 0.46, "#3a2a35", [0, 0.03, 0]); B.box(0.46, 0.18, 0.04, "#4a3843", [0, 0.09, -0.21]); B.box(0.46, 0.18, 0.04, "#4a3843", [0, 0.09, 0.21]); g.add(B.build(litMat));
     const bar = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1, 0.32).translate(0, 0.5, 0), new THREE.MeshBasicMaterial({ color: c.c })); bar.position.y = 0.06; bar.scale.y = 0.001; g.add(bar);
     dialG.add(g); return { bar, n: LOG.filter(l => l[1] === i).length };
@@ -303,12 +350,12 @@ export default function build(ctx) {
     g.textBaseline = "middle"; g.font = BODY(600, 50);
     CAT.forEach((c, i) => { g.fillStyle = c.c; g.beginPath(); g.arc(60, 60 + i * 90, 24, 0, 7); g.fill(); g.fillStyle = "#f5e9ee"; g.fillText(c.name, 108, 62 + i * 90); });
   });
-  const legend = quad(1.2, 0.45, basic({ map: legendTex, side: THREE.DoubleSide })); legend.position.set(DIAL.x + DIAL.r + 0.7, 1.15, DIAL.z - 0.75); legend.rotation.y = -12 * D; addObj(legend);
+  const legend = quad(1.2, 0.45, basic({ map: legendTex, side: THREE.DoubleSide })); legend.visible = false; addObj(legend);   // erstattet af navne på bakkerne
   const st1 = kit.grp(root, `${DIAL.x} 0 ${DIAL.z}`);
   kit.cyl(st1, "0 0.12 0", DIAL.r, 0.24, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c1-1", st1);
-  const s11 = ctx.sign(ctx.step("c1-1").title, { position: `${DIAL.x + 0.55} 1.95 ${DIAL.z - 1.55}`, width: 1.9 });
-  ctx.view("c1-1", { position: [DIAL.x + 0.55, 0, DIAL.z + 3.05], lookAt: [DIAL.x + 0.55, 0.7, DIAL.z - 0.4] });
+  const s11 = ctx.sign(ctx.step("c1-1").title, { position: `${DIAL.x + 0.55} 2.05 ${DIAL.z - 1.55}`, width: 1.9 });
+  view("c1-1", { position: [DIAL.x + 0.55, 0, DIAL.z + 2.9], lookAt: [DIAL.x + 0.55, 0.7, DIAL.z], pitch: -17 });
 
   /* ---------- c1-2: tre lag over telefonen (mod højre væg) ---------- */
   const LY = { x: 4.4, z: 2.9 };
@@ -344,8 +391,9 @@ export default function build(ctx) {
   const layers = layerSpec.map((L) => {
     const tex = K.canvasTexture(360, 660, (g, w, h) => {
       g.fillStyle = L.tint + "38"; K.roundRect(g, 6, 6, w - 12, h - 12, 34); g.fill(); g.strokeStyle = L.tint; g.lineWidth = 9; g.stroke();
-      g.textAlign = "left"; g.fillStyle = L.tint; g.font = FONT(700, 50); g.fillText(L.name, 30, 76);
-      g.fillStyle = "rgba(255,255,255,0.8)"; g.font = BODY(500, 34); g.fillText(L.sub, 30, 124);
+      g.fillStyle = "rgba(20,14,22,0.85)"; K.roundRect(g, 14, 16, w - 28, 124, 22); g.fill();
+      g.textAlign = "left"; g.fillStyle = L.tint; g.font = FONT(700, 52); g.fillText(L.name, 32, 72);
+      g.fillStyle = "rgba(255,255,255,0.85)"; g.font = BODY(600, 36); g.fillText(L.sub, 32, 120);
       L.draw(g);
     });
     const m = quad(0.52, 0.95, basic({ map: tex, side: THREE.DoubleSide })); layG.add(m); return m;
@@ -354,8 +402,16 @@ export default function build(ctx) {
   const st2 = kit.grp(root, `${LY.x} 0 ${LY.z}`);
   kit.box(st2, "0 0.9 0", 0.9, 1.8, 0.9, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c1-2", st2);
-  const s12 = ctx.sign(ctx.step("c1-2").title, { position: `${LY.x + 0.3} 2.55 ${LY.z}`, width: 1.7, rotation: "0 -90 0" });
-  ctx.view("c1-2", { position: [LY.x - 2.5, 0, LY.z], lookAt: [LY.x, 1.5, LY.z] });
+  const s12 = ctx.sign(ctx.step("c1-2").title, { position: `${LY.x + 0.35} 2.75 ${LY.z}`, width: 1.7, rotation: "0 -90 0" });
+  view("c1-2", { position: [LY.x - 2.4, 0, LY.z], lookAt: [LY.x, 1.6, LY.z] });
+  // en bruger i baggrunden: storesøster ved vinduet med telefonen, så det er brug og ikke en app-demo
+  const userFig = makeFigure(1.6, "#d89a4a", "#40384e"); addObj(userFig.f);
+  userFig.f.position.set(W - 0.9, 0, LY.z + 1.75); userFig.f.rotation.y = -120 * D;
+  userFig.legsSit.visible = false; userFig.armsDown.visible = false; userFig.head.rotation.x = 26 * D; userFig.glow.material.opacity = 0.55;
+  const userPhone = makeDevice("phone"); userFig.f.updateMatrixWorld(true); userFig.hand.getWorldPosition(userPhone.position); userPhone.rotation.set(-50 * D, -120 * D, 0, "YXZ"); addObj(userPhone);
+  // "afstanden": stiplede forbindelser mellem lagenes hjørner, der bliver længere, når lagene glider fra hinanden
+  const gapMat = new THREE.LineDashedMaterial({ color: "#ffffff", dashSize: 0.03, gapSize: 0.025, transparent: true, opacity: 0 });
+  const gapLines = [0, 1].map(() => { const l = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([0, 0, 0, 0].map(() => new THREE.Vector3())), gapMat); layG.add(l); return l; });
 
   /* ---------- c1-3: skuffen ---------- */
   const drawer = new THREE.Group(); drawer.position.set(SB_DRAWER.x, SB_DRAWER.y, SB_DRAWER.z);
@@ -387,8 +443,14 @@ export default function build(ctx) {
   const st3 = kit.grp(root, `${SB.x} 0 ${SB.z + 0.7}`);
   kit.box(st3, "0 0.35 -0.7", 2.0, 0.7, 0.6, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c1-3", st3);
-  const s13 = ctx.sign(ctx.step("c1-3").title, { position: `${SB.x} 2.6 ${ZB + 0.2}`, width: 1.9 });
-  ctx.view("c1-3", { position: [-0.4, 0, 0.9], lookAt: [-3.3, 0.9, -4.2] });
+  const s13 = ctx.sign(ctx.step("c1-3").title, { position: `${SB.x} 2.55 ${ZB + 0.2}`, width: 1.9 });
+  view("c1-3", { position: [-1.7, 0, 0.6], lookAt: [-3.6, 0.9, -3.6], pitch: -8 });
+  // glød om skuffen i det øjeblik, telefonen lægges i
+  const drawerGlow = quad(1.6, 1.0, basic({ map: K.glowTex(ROSE), blending: THREE.AdditiveBlending, opacity: 0 })); drawerGlow.position.set(SB_DRAWER.x, 0.55, SB.z + 0.5); addObj(drawerGlow);
+  // "før" og "efter": to små felter over familien, der skifter
+  const phaseTex = (t, c) => K.canvasTexture(420, 110, (g, w, h) => { g.fillStyle = "rgba(24,14,22,0.92)"; K.roundRect(g, 3, 3, w - 6, h - 6, 40); g.fill(); g.strokeStyle = c; g.lineWidth = 6; g.stroke(); g.fillStyle = "#fff"; g.font = FONT(700, 54); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(t, w / 2, h / 2 + 3); });
+  const phaseBefore = quad(0.7, 0.183, basic({ map: phaseTex("før", "#a9b0d6"), opacity: 0 })), phaseAfter = quad(0.7, 0.183, basic({ map: phaseTex("efter", ROSE), opacity: 0 }));
+  for (const q of [phaseBefore, phaseAfter]) { q.position.set(-4.4, 2.15, -1.6); q.lookAt(-1.7, 2.15, 0.6); addObj(q); }
 
   /* ---------- Tilstand og animation ---------- */
   let cur = null, t0 = null;
@@ -429,7 +491,7 @@ export default function build(ctx) {
   }
   let drawerOpen = 0;
   return {
-    onStep(id) { cur = id; t0 = null; },
+    onStep(id) { cur = id; t0 = null; back.place(id); },
     tick(t) {
       if (t0 === null) t0 = t;
       const e = (t - t0) / 1000, s = t / 1000;
@@ -437,6 +499,20 @@ export default function build(ctx) {
       fam.forEach((m, i) => {
         const [ax, az, ay, asit] = m.at;
         devOn(m, true);
+        if (cur === "c1-0" && (m.who === "Mor" || m.who === "Far") && e > 4.8) {
+          // efter ankomsten går Mor og Far videre mellem tingene: Mor hen til højttaleren, Far hen til sofabordet; så tilbage
+          const tgt = m.who === "Mor" ? [SPK.x + 0.35, SB.z + 0.95] : [TB.x + 0.95, TB.z - 0.2];
+          const L = Math.hypot(tgt[0] - ax, tgt[1] - az), walkT = L / 0.9, T = (e - 4.8 - (m.who === "Far" ? 1.5 : 0) + 20) % (2 * walkT + 3.0);
+          let k, yaw, moving = false, atThing = false;
+          if (T < walkT) { k = T / walkT; yaw = Math.atan2(tgt[0] - ax, tgt[1] - az) / D; moving = true; }
+          else if (T < walkT + 1.6) { k = 1; yaw = Math.atan2(tgt[0] - ax, tgt[1] - az) / D; atThing = true; }
+          else if (T < 2 * walkT + 1.6) { k = 1 - (T - walkT - 1.6) / walkT; yaw = Math.atan2(ax - tgt[0], az - tgt[1]) / D; moving = true; }
+          else { k = 0; yaw = ay; }
+          pose(m, lerp(ax, tgt[0], k), lerp(az, tgt[1], k), yaw, false, atThing ? 20 : 10, true, atThing ? 1 : 0.7, moving ? Math.abs(Math.sin(e * 7)) * 0.025 : 0);
+          devTo(m, 1);
+          if (m.who === "Mor") speaker.userData.scr.scale.setScalar(atThing ? 1.3 : 1);
+          return;
+        }
         if (cur === "c1-0") {
           // de kommer ind (forskudt), går hen til deres sted og tager teknologien op
           const t1 = e - 0.3 - i * 0.6;
@@ -493,7 +569,7 @@ export default function build(ctx) {
       });
       speaker.userData.scr.material.color.set(ROSE).multiplyScalar(0.55 + 0.45 * Math.sin(s * 3));
       tvScreen.material.opacity = cur === "c1-3" ? 1 - 0.7 * ease((e - 5) / 2) : 1;
-      fields.forEach(q => { q.material.opacity = cur === "c1-0" ? 1 : cur === "c1-3" ? 0 : 0.4; q.visible = cur !== "c1-3"; });
+      fields.forEach(q => { q.material.opacity = cur === "c1-0" ? 1 : 0; q.visible = cur === "c1-0"; });
 
       /* døgnurskiven */
       const D1 = cur === "c1-1";
@@ -508,31 +584,45 @@ export default function build(ctx) {
         dots.setMatrixAt(i, M); if (hours >= hh) cnt[cat]++;
       });
       dots.instanceMatrix.needsUpdate = true;
-      bins.forEach((b, i) => { const target = (D1 ? cnt[i] : b.n) * 0.075; b.bar.scale.y = Math.max(0.001, lerp(b.bar.scale.y, target, 0.15)); });
+      bins.forEach((b, i) => { const target = (D1 ? cnt[i] : b.n) * 0.06; b.bar.scale.y = Math.max(0.001, lerp(b.bar.scale.y, target, 0.15)); });
       dialDisc.material.color.setScalar(D1 ? 1 : 0.75);
       legend.material.opacity = D1 ? 1 : 0.55;
 
       /* lagene */
-      const L2 = cur === "c1-2" ? ease((e - 0.6) / 1.8) : 0;
-      const sway = cur === "c1-2" ? Math.sin(s * 0.9) * 0.035 * ease((e - 2.4) / 1) : 0;
-      const offs = [[-0.66, 0.1, 0.3], [0.0, -0.06, 0.55], [0.66, 0.16, 0.8]];
+      // de tre lag ligger først præcis oven på telefonen og glider så skråt fra hinanden: afstanden mellem dem er pointen
+      const L2 = cur === "c1-2" ? ease((e - 1.0) / 2.6) : 0;
+      const sway = cur === "c1-2" ? Math.sin(s * 0.8) * 0.02 * ease((e - 3.6) / 1) : 0;
+      const offs = [[-0.42, 0.26, 0.22], [0.0, 0.0, 0.42], [0.42, -0.26, 0.62]];      // tænkt, faktisk, ønsket
       layers.forEach((m, i) => {
         const [ox, oy, oz] = offs[i];
-        m.position.set(ox * L2 + (i - 1) * sway, 1.5 + oy * L2, 0.06 + i * 0.015 + (oz - 0.06) * L2);
-        m.rotation.set(-4 * D, (i - 1) * -12 * D * L2, (i - 1) * -3 * D * L2);
-        m.material.opacity = cur === "c1-2" ? 0.95 : 0.3;
+        m.position.set(ox * L2 + (i - 1) * sway, 1.5 + oy * L2, 0.06 + i * 0.012 + (oz - 0.06) * L2);
+        m.rotation.set(-4 * D, 0, 0);
+        m.material.opacity = cur === "c1-2" ? 0.9 : 0.3;
       });
+      if (cur === "c1-2") {
+        // stiplede linjer mellem lagenes øverste venstre hjørner (tænkt→faktisk→ønsket)
+        const corner = m => new THREE.Vector3(m.position.x - 0.26, m.position.y + 0.475, m.position.z);
+        gapLines[0].geometry.setFromPoints([corner(layers[0]), corner(layers[1])]); gapLines[1].geometry.setFromPoints([corner(layers[1]), corner(layers[2])]);
+        gapLines.forEach(l => l.computeLineDistances());
+      }
+      gapMat.opacity = cur === "c1-2" ? 0.85 * ease((e - 3.0) / 0.6) : 0;
+      userFig.f.visible = cur === "c1-2"; userPhone.visible = cur === "c1-2";
 
       /* skuffen og ringene */
       const C3 = cur === "c1-3";
       drawer.position.z = SB_DRAWER.z + (C3 ? drawerOpen : 0) * 0.34;
+      drawerGlow.material.opacity = C3 ? 0.9 * drawerOpen : 0;
+      phaseBefore.material.opacity = C3 ? 1 - ease((e - 4.6) / 0.5) : 0; phaseAfter.material.opacity = C3 ? ease((e - 6.8) / 0.6) : 0;
       board.material.opacity = C3 ? ease((e - 7.0) / 1.2) : 0;
       pieces.visible = C3 && e > 7.5;
       ripples.forEach((r, i) => {
-        const ph = C3 ? (e - 4.0 - i * 1.1) / 3.3 : -1, pr = ph < 0 ? 0 : ph % 1;
-        r.scale.setScalar(0.2 + pr * 5.0); r.material.opacity = ph < 0 ? 0 : 0.55 * (1 - pr);
+        const ph = C3 ? (e - 3.6 - i * 1.1) / 1.8 : -1, pr = ph < 0 ? 0 : Math.min(1, ph);
+        r.scale.setScalar(0.2 + pr * 2.4); r.material.opacity = ph < 0 || i > 0 ? 0 : 0.3 * (1 - pr);   // én svag ring, kort
       });
-      setSignOpacity(s11, D1 ? 1 : 0.6); setSignOpacity(s12, cur === "c1-2" ? 1 : 0.6); setSignOpacity(s13, C3 ? 1 : 0.6);
+      // dæmpningsregime: kun det aktive trins skilt er fuldt; i intro er stationsskiltene næsten skjult
+      const DIM = cur === "c1-0" ? 0.15 : 0.3;
+      setSignOpacity(s11, D1 ? 1 : DIM); setSignOpacity(s12, cur === "c1-2" ? 1 : DIM); setSignOpacity(s13, C3 ? 1 : DIM);
+      setSignOpacity(roomSign, cur === "c1-0" ? 1 : 0.4);
     },
   };
 }

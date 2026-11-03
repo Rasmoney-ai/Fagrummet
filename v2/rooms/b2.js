@@ -85,14 +85,18 @@ export default function build(ctx) {
   /* ---------- skilte og dør ---------- */
   // rummets skilt står lavt i midtergangen, så det ses fra indgangen uden at dække stationerne
   ctx.sign(ctx.room.name, { position: `0 0.95 2.3`, rotation: "-12 0 0", width: 2.1, sub: ctx.room.sub });
-  ctx.door(ctx.room.parent, { position: `${X0 + 0.15} 0 3.6`, rotation: "0 90 0" });
+  ctx.door(ctx.room.parent, { position: `${X0 + 0.15} 0 3.2`, rotation: "0 90 0" });
+  // lysende pile i gulvet fra startpladsen hen mod døren tilbage
+  { const gs = []; for (let k = 0; k < 6; k++) { const c = new T.ShapeGeometry(new T.Shape([new T.Vector2(0, 0.16), new T.Vector2(0.16, 0), new T.Vector2(0, -0.16), new T.Vector2(-0.06, -0.16), new T.Vector2(0.1, 0), new T.Vector2(-0.06, 0.16)]));
+      c.rotateX(-Math.PI / 2); c.rotateY(Math.PI); c.translate(-1.2 - k * 0.95, 0.01, 3.9 - k * 0.12); gs.push(c); }
+    mesh(merge(gs), basic(B, { transparent: true, opacity: 0.45, depthWrite: false })); }
 
   /* ---------- fem stationer: placering, lampe og gulvplade ---------- */
   const EYE = [0, 5.4];
   const ST = {
     "b2-1": { p: [-5.0, -0.2], view: [-2.5, 1.5] },
-    "b2-2": { p: [-5.6, -6.2], view: [-3.6, -2.4], look: [-5.6, -6.4] },
-    "b2-3": { p: [0, -8.75], view: [0, -4.9] },
+    "b2-2": { p: [-5.6, -6.2], view: [-3.2, -2.2], look: [-5.6, -6.6] },
+    "b2-3": { p: [0, -8.6], view: [0, -4.9] },
     "b2-4": { p: [4.8, -6.0], view: [3.2, -3.6] },
     "b2-5": { p: [5.3, -0.6], view: [2.3, 1.7] },
   };
@@ -118,9 +122,9 @@ export default function build(ctx) {
     { id: "start", t: "Start", x: 170, y: 440, k: "pill" },
     { id: "las", t: "Læs måling", x: 560, y: 440, k: "box" },
     { id: "hvis", t: "Regner det?", x: 1010, y: 440, k: "dia" },
-    { id: "ja", t: "point + 1", x: 1470, y: 220, k: "box" },
+    { id: "ja", t: "dage + 1", x: 1470, y: 220, k: "box" },
     { id: "nej", t: "Vent", x: 1470, y: 660, k: "box" },
-    { id: "vis", t: "Vis point", x: 1860, y: 440, k: "box" },
+    { id: "vis", t: "Vis dage", x: 1860, y: 440, k: "box" },
   ];
   const N = Object.fromEntries(NODES.map(n => [n.id, n]));
   // tokenets rute (polylinje i lærredskoordinater) og hvilke knuder den passerer
@@ -189,7 +193,7 @@ export default function build(ctx) {
   }
   const crateBody = merge([bx(0.42, 0.36, 0.36, 0, 0.18, 0), bx(0.46, 0.04, 0.4, 0, 0.36, 0)]);
   const crateMat = std("#2c6f8f");
-  const crates = [["point", "3", "tal"], ["navn", "\"Ida\"", "tekst"], ["regner", "sand", "sand/falsk"]].map(([n, v, ty], i) => {
+  const crates = [["dage", "3", "tal"], ["navn", "\"Ida\"", "tekst"], ["regner", "sand", "sand/falsk"]].map(([n, v, ty], i) => {
     const c = group([0, 0, 0], S1);
     mesh(crateBody, crateMat, [0, 0, 0], c);
     mesh(new T.PlaneGeometry(0.36, 0.34), texMat(crateTex(n, v, ty)), [0, 0.18, 0.185], c);
@@ -212,15 +216,23 @@ export default function build(ctx) {
   const brMat = std("#3b6fb0");
   mesh(brG, brMat, [0, 0, 0], branch);
   mesh(new T.PlaneGeometry(0.56, 0.56), texMat(ifTex), [0, 0, 0.045], branch);
-  const brLbl = [label("ja", [0.48, 0.06, 0.02], branch, 0.1), label("nej", [-0.48, 0.06, 0.02], branch, 0.1)];
+  const brLbl = [label("ja", [0.4, 0.2, 0.02], branch, 0.1), label("nej", [0.0, -0.4, 0.02], branch, 0.1)];
+  // ja-grenen fører til en handling, der bruger kassen "dage"
+  const actTex = K.canvasTexture(400, 120, (g, w, h) => { g.fillStyle = "#3b6fb0"; K.roundRect(g, 4, 4, w - 8, h - 8, 16); g.fill(); g.fillStyle = "#fff"; g.font = '700 62px "JetBrains Mono", monospace'; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("dage + 1", w / 2, h / 2 + 3); });
+  const act = mesh(new T.PlaneGeometry(0.5, 0.15), texMat(actTex), [0.62, 0.0, 0.04], branch);
+  mesh(bx(0.1, 0.02, 0.02, 0.33, 0, 0.04), basic("#eef1ff"), [0, 0, 0], branch);
   // brikkernes to positioner: spredt på bordet og samlet på tavlen
   const parts1 = [
     { e: crates[0], a: [-0.95, 0.87, 0.35, 0, 22, 0], b: [-0.65, 2.42, -0.15, 0, 0, 0] },
     { e: crates[1], a: [-0.35, 0.87, 0.5, 0, -14, 0], b: [0, 2.42, -0.15, 0, 0, 0] },
     { e: crates[2], a: [0.2, 0.87, 0.3, 0, 9, 0], b: [0.65, 2.42, -0.15, 0, 0, 0] },
     { e: loop, a: [0.85, 0.98, 0.42, -80, -10, 0], b: [0.05, 1.66, -0.22, 0, 0, 0] },
-    { e: branch, a: [0.95, 0.92, 0.2, -82, 25, 0], b: [0.2, 1.6, -0.17, 0, 0, 0] },
+    { e: branch, a: [0.95, 0.92, 0.2, -82, 25, 0], b: [-0.05, 1.62, -0.17, 0, 0, 0] },
   ];
+  // forbindelser fra kasserne ind i programmet: "regner" læses i forgreningen, "dage" ændres af ja-grenen
+  const wire1Mat = basic(B, { transparent: true, opacity: 0, depthWrite: false });
+  // stiplet linje fra kassen "regner" ned til forgreningens top
+  const wire1 = mesh(merge(Array.from({ length: 7 }, (_, k) => { const f = (k + 0.5) / 7, g = new T.BoxGeometry(0.035, 0.035, 0.01); g.translate(0.62 + (-0.05 - 0.62) * f, 2.4 + (1.95 - 2.4) * f, -0.12); return g; })), wire1Mat, [0, 0, 0], S1);
   // en lille kørselsprik, der går rundt i løkken, når programmet er samlet
   const run1 = mesh(new T.SphereGeometry(0.05, 10, 6), basic("#eafffb"), [0, 0, 0], S1);
   signAt("b2-1", "0 3.3 -0.35", 2.0);
@@ -257,8 +269,8 @@ export default function build(ctx) {
     g.font = '600 52px "Familjen Grotesk", sans-serif'; g.fillText("Præcis?", 820, 270);
     g.fillRect(40, 440, 160, 10);
   });
-  mesh(new T.PlaneGeometry(2.6, 1.3), std("#ffffff", { map: chalk }), [gx(1.5), 1.75, -2.56], S2);
-  mesh(merge([bx(2.75, 0.08, 0.1, gx(1.5), 2.43, -2.58), bx(2.75, 0.08, 0.16, gx(1.5), 1.07, -2.55), bx(0.08, 1.4, 0.1, gx(1.5) - 1.34, 1.75, -2.58), bx(0.08, 1.4, 0.1, gx(1.5) + 1.34, 1.75, -2.58)]), std("#6b5440"), [0, 0, 0], S2);
+  mesh(new T.PlaneGeometry(2.6, 1.3), std("#ffffff", { map: chalk }), [gx(1.5) + 0.9, 1.75, -2.56], S2);
+  mesh(merge([bx(2.75, 0.08, 0.1, 0, 2.43, -2.58), bx(2.75, 0.08, 0.16, 0, 1.07, -2.55), bx(0.08, 1.4, 0.1, -1.34, 1.75, -2.58), bx(0.08, 1.4, 0.1, 1.34, 1.75, -2.58)]), std("#6b5440"), [gx(1.5) + 0.9, 0, 0], S2);
   const desks = [];
   for (const [x, z] of [[2.3, -1.6], [2.3, -0.2]]) {
     desks.push(bx(0.9, 0.04, 0.55, x, 0.72, z), bx(0.04, 0.72, 0.04, x - 0.4, 0.36, z - 0.22), bx(0.04, 0.72, 0.04, x + 0.4, 0.36, z - 0.22), bx(0.04, 0.72, 0.04, x - 0.4, 0.36, z + 0.22), bx(0.04, 0.72, 0.04, x + 0.4, 0.36, z + 0.22));
@@ -288,8 +300,8 @@ export default function build(ctx) {
   // figuren, der udfører kortene
   const fig2 = group([gx(0), 0, gz(4)], S2);
   const fig2Mat = std("#e8ecf6", { emissive: new T.Color("#9fb6d8"), emissiveIntensity: 0.15 });
-  mesh(figureGeo(1.5), fig2Mat, [0, 0, 0], fig2);
-  const qMark = label("?", [0, 1.3, 0], fig2, 0.3, { edge: RED, ink: "#ffffff" });
+  mesh(figureGeo(1.15), fig2Mat, [0, 0, 0], fig2);
+  const qMark = label("?", [0, 1.05, 0], fig2, 0.3, { edge: RED, ink: "#ffffff" });
   // den tiltænkte rute (vises, når figuren er gået forkert)
   const ghostPts = [[gx(1), gz(2)], [gx(1), gz(0)]];
   const ghostG = []; for (let i = 0; i < 7; i++) ghostG.push(bx(0.09, 0.012, 0.13, gx(1), 0.016, gz(2) - 0.1 - i * 0.22));
@@ -298,6 +310,7 @@ export default function build(ctx) {
   const endG = new T.PlaneGeometry(TS * 0.9, TS * 0.9); endG.rotateX(-Math.PI / 2);
   const endMat = basic(RED, { transparent: true, opacity: 0, depthWrite: false });
   mesh(endG, endMat, [gx(1), 0.014, gz(4)], S2);
+  const endRing = mesh(new T.TorusGeometry(0.4, 0.05, 4, 24), endMat, [gx(1), 0.05, gz(4)], S2, [-90, 0, 0]);
   // programmet: hvert kort giver en handling (pos i, j og retning d: 0 = −z, 1 = +x, 2 = +z, 3 = −x)
   const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]];
   const plan = [];   // tilstande efter hvert kort
@@ -309,20 +322,21 @@ export default function build(ctx) {
       else d = (d + 1) % 4;   // den uklare "drej": figuren gætter på højre, men der var ment venstre
       plan.push({ i, j, d });
     } }
-  signAt("b2-2", `${gx(1.5)} 2.85 -2.45`, 2.0);
+  signAt("b2-2", `${gx(1.5) + 0.9} 2.85 -2.45`, 2.0);
   // stationens ring lægges foran kortrækken, så den ikke dækker kortene
-  const st2 = group([0, 0, 1.05], cardRow);
+  const st2 = group([2.3, 0, 0.5], cardRow);
   ctx.station("b2-2", st2);
 
   /* ================= B2.3 · Blokke og tekst side om side ================= */
   const S3 = ST["b2-3"].g;
   const PROG = [
-    { blk: "når programmet starter", txt: "# når programmet starter", ind: 0, col: "#2a8f88", hat: true },
-    { blk: "sæt point til 0", txt: "point = 0", ind: 0, col: "#3b6fb0" },
+    // samme lille program som i flowdiagrammet og på station 1: tæl dage med regn (dage er et tal, regner er sand/falsk)
+    { blk: "sæt dage til 0", txt: "dage = 0", ind: 0, col: "#3b6fb0" },
     { blk: "gentag 10 gange", txt: "for i in range(10):", ind: 0, col: "#3d5a80", c: true },
-    { blk: "hvis regner", txt: "    if regner():", ind: 1, col: "#3d5a80", c: true },
-    { blk: "skift point med 1", txt: "        point = point + 1", ind: 2, col: "#3b6fb0" },
-    { blk: "sig point", txt: "print(point)", ind: 0, col: "#5b7fd6" },
+    { blk: "sæt regner til mål regn", txt: "    regner = mål_regn()", ind: 1, col: "#3b6fb0" },
+    { blk: "hvis regner", txt: "    if regner:", ind: 1, col: "#3d5a80", c: true },
+    { blk: "skift dage med 1", txt: "        dage = dage + 1", ind: 2, col: "#3b6fb0" },
+    { blk: "sig dage", txt: "print(dage)", ind: 0, col: "#5b7fd6" },
   ];
   // venstre: blokke som flade 3D-klodser (samlet pr. farve) med al tekst på ét lærred foran
   const BW = 2.3, BH = 1.9, bTop = 2.75, rowH = 0.27;
@@ -330,14 +344,14 @@ export default function build(ctx) {
   mesh(new T.BoxGeometry(BW + 0.2, BH + 0.2, 0.04), std("#111a2e"), [bx3, bTop - BH / 2 + 0.05, 0.02], S3);
   const byCol = {};
   const blkRect = PROG.map((p, r) => {
-    const x = bx3 - BW / 2 + 0.15 + p.ind * 0.22, y = bTop - 0.12 - r * rowH, w = p.c ? 1.55 - p.ind * 0.22 : 1.45 - p.ind * 0.22 + (p.hat ? 0.25 : 0);
+    const x = bx3 - BW / 2 + 0.15 + p.ind * 0.22, y = bTop - 0.12 - r * rowH - (r === 5 ? 0.1 : 0), w = p.c ? 1.6 - p.ind * 0.22 : 1.75 - p.ind * 0.22;
     (byCol[p.col] = byCol[p.col] || []).push(bx(w, rowH - 0.04, 0.07, x + w / 2, y, 0.08));
     if (p.hat) byCol[p.col].push(bx(0.5, 0.06, 0.07, x + 0.3, y + rowH / 2 - 0.0, 0.08));
     return { x, y, w };
   });
   // C-blokkenes "arme" (venstre side og bund) omkring de indre blokke
-  byCol["#3d5a80"].push(bx(0.12, rowH * 3, 0.07, blkRect[2].x + 0.06, blkRect[3].y - rowH / 2 + 0.02, 0.08), bx(0.9, 0.1, 0.07, blkRect[2].x + 0.45, blkRect[4].y - rowH / 2 - 0.04, 0.08));
-  byCol["#3d5a80"].push(bx(0.12, rowH * 1.4, 0.07, blkRect[3].x + 0.06, blkRect[4].y + 0.03, 0.08), bx(0.7, 0.08, 0.07, blkRect[3].x + 0.35, blkRect[4].y - rowH / 2 + 0.0, 0.08));
+  byCol["#3d5a80"].push(bx(0.12, rowH * 3, 0.07, blkRect[1].x + 0.06, blkRect[3].y, 0.08), bx(0.9, 0.08, 0.07, blkRect[1].x + 0.45, blkRect[4].y - rowH / 2 - 0.02, 0.08));
+  byCol["#3d5a80"].push(bx(0.12, rowH * 1.0, 0.07, blkRect[3].x + 0.06, blkRect[4].y + 0.02, 0.08), bx(0.6, 0.06, 0.07, blkRect[3].x + 0.3, blkRect[4].y - rowH / 2 + 0.02, 0.08));
   Object.entries(byCol).forEach(([c, gs]) => mesh(merge(gs), std(c, { emissive: new T.Color(c), emissiveIntensity: 0.25 }), [0, 0, 0], S3));
   // forskyd "sig point" ned under løkkens bund
   const blkTex = K.canvasTexture(1024, 860, (g, w, h) => {
@@ -347,8 +361,8 @@ export default function build(ctx) {
   mesh(new T.PlaneGeometry(BW, BH), texMat(blkTex), [bx3, bTop + 0.05 - BH / 2, 0.122], S3);
   // højre: samme program som tekst
   const cc3 = liveCanvas(1024, 860);
-  function drawCode3(hi) {
-    if (cc3.key === hi) return; cc3.key = hi;
+  function drawCode3(hi, typo) {
+    const key = `${hi}:${typo}`; if (cc3.key === key) return; cc3.key = key;
     const g = cc3.g, w = cc3.w, h = cc3.h;
     g.fillStyle = "#0a1120"; g.fillRect(0, 0, w, h);
     g.textBaseline = "middle";
@@ -358,17 +372,20 @@ export default function build(ctx) {
       g.fillStyle = "#4a5578"; g.font = '500 40px "JetBrains Mono", monospace'; g.fillText(String(r + 1), 30, y);
       g.font = '600 42px "JetBrains Mono", monospace';
       // enkel farvelægning: nøgleord turkis, kommentar grå, resten lys
-      const t = p.txt; let x = 100;
+      let t = p.txt; let x = 100;
+      if (typo && r === 5) { t = "prnt(dage)"; g.fillStyle = "rgba(255,90,79,0.22)"; g.fillRect(0, y - 46, w, 92); g.fillStyle = RED; g.fillRect(0, y - 46, 10, 92);
+        g.strokeStyle = RED; g.lineWidth = 5; g.beginPath(); for (let xx = 0; xx <= 190; xx += 10) g.lineTo(100 + xx, y + 30 + ((xx / 10) % 2 ? 6 : -2)); g.stroke(); }
       if (t.trim().startsWith("#")) { g.fillStyle = "#6b7a9c"; g.fillText(t, x, y); return; }
-      t.split(/(\bfor\b|\bin\b|\bif\b|\brange\b|\bprint\b|[=+():])/).forEach(tok => {
+      t.split(/(\bfor\b|\bin\b|\bif\b|\brange\b|\bprint\b|\bmål_regn\b|[=+():])/).forEach(tok => {
         if (!tok) return;
-        g.fillStyle = /^(for|in|if)$/.test(tok) ? "#4fd1c5" : /^(range|print)$/.test(tok) ? "#9cc3ff" : /^[=+():]$/.test(tok) ? "#a9b0d6" : /^\d+$/.test(tok.trim()) ? "#ffd27a" : "#eef1ff";
+        g.fillStyle = /^(for|in|if)$/.test(tok) ? "#4fd1c5" : /^(range|print|mål_regn)$/.test(tok) ? "#9cc3ff" : /^[=+():]$/.test(tok) ? "#a9b0d6" : /^\d+$/.test(tok.trim()) ? "#ffd27a" : "#eef1ff";
         g.fillText(tok, x, y); x += g.measureText(tok).width;
       });
     });
+    if (typo) { g.fillStyle = RED; g.font = '700 40px "Source Sans 3", sans-serif'; g.fillText("Fejl i linje 6: ukendt navn »prnt«", 30, h - 40); }
     cc3.tex.needsUpdate = true;
   }
-  drawCode3(-1);
+  drawCode3(-1, false);
   const tx3 = 1.45;
   mesh(new T.BoxGeometry(BW + 0.2, BH + 0.2, 0.04), std("#111a2e"), [tx3, bTop - BH / 2 + 0.05, 0.02], S3);
   mesh(new T.PlaneGeometry(BW, BH), basic("#ffffff", { map: cc3.tex }), [tx3, bTop + 0.05 - BH / 2, 0.045], S3);
@@ -378,15 +395,15 @@ export default function build(ctx) {
   // en bro af lys mellem de to markeringer
   const bridgeMat = basic(B, { transparent: true, opacity: 0, depthWrite: false });
   const bridge3 = mesh(bx(1, 0.012, 0.012, 0.5, 0, 0), bridgeMat, [0, 0, 0.13], S3);
-  label("Blokke", [bx3, 0.62, 0.06], S3, 0.16);
-  label("Tekst", [tx3, 0.62, 0.06], S3, 0.16);
+  label("Blokke: kan ikke staves forkert", [bx3, 0.62, 0.06], S3, 0.14);
+  label("Tekst: fleksibel, men mindre tilgivende", [tx3, 0.62, 0.06], S3, 0.14);
   mesh(merge([bx(0.18, 0.035, 0.03, 0, 0.04, 0), bx(0.18, 0.035, 0.03, 0, -0.04, 0)]), basic("#a9b0d6"), [0, 1.85, 0.06], S3);   // lighedstegn
   signAt("b2-3", "0 3.45 0.1", 2.3);
-  ctx.station("b2-3", S3);
+  ctx.station("b2-3", group([0, 0, 1.4], S3));
 
   /* ================= B2.4 · Fejlfinding ================= */
   const S4 = ST["b2-4"].g;
-  mesh(merge([bx(3.1, 0.06, 1.0, 0, 0.84, 0), bx(0.06, 0.84, 0.06, -1.45, 0.42, 0.42), bx(0.06, 0.84, 0.06, 1.45, 0.42, 0.42), bx(0.06, 0.84, 0.06, -1.45, 0.42, -0.42), bx(0.06, 0.84, 0.06, 1.45, 0.42, -0.42)]), std("#252d48"), [0, 0, 0], S4);
+  mesh(merge([bx(3.0, 0.06, 1.0, 0, 0.84, 0), bx(0.06, 0.84, 0.06, -1.4, 0.42, 0.42), bx(0.06, 0.84, 0.06, 1.4, 0.42, 0.42), bx(0.06, 0.84, 0.06, -1.4, 0.42, -0.42), bx(0.06, 0.84, 0.06, 1.4, 0.42, -0.42)]), std("#252d48"), [0, 0, 0], S4);
   const PROGS = [
     { lines: ["start()", "frem(2)", "drje(højre)", "frem(1)"], kind: "syntaks", turn: 1 },
     { lines: ["start()", "frem(2)", "drej(venstre)", "frem(1)"], kind: "logisk", turn: -1 },
@@ -395,7 +412,7 @@ export default function build(ctx) {
     g.fillStyle = "#e9edf5"; g.fillRect(0, 0, w, h);
     g.strokeStyle = "#8d97b0"; g.lineWidth = 4; for (let i = 0; i <= 5; i++) { g.beginPath(); g.moveTo(i * 100, 0); g.lineTo(i * 100, h); g.stroke(); } for (let j = 0; j <= 3; j++) { g.beginPath(); g.moveTo(0, j * 100); g.lineTo(w, j * 100); g.stroke(); }
   });
-  const CS = 0.22;     // cellestørrelse på de små brætter
+  const CS = 0.27;     // cellestørrelse på brætterne
   const P4 = PROGS.map((pr, k) => {
     const x0 = k ? 0.78 : -0.78;
     // skærm på fod
@@ -403,15 +420,15 @@ export default function build(ctx) {
     const cv = liveCanvas(640, 440);
     mesh(new T.PlaneGeometry(1.24, 0.852), basic("#ffffff", { map: cv.tex }), [x0, 1.72, -0.318], S4);
     // brættet foran skærmen med figur og mål
-    const bg = group([x0, 0.875, 0.12], S4);
+    const bg = group([x0, 0.875, 0.08], S4);
     const bp = new T.PlaneGeometry(5 * CS, 3 * CS); bp.rotateX(-Math.PI / 2);
     mesh(bp, std("#ffffff", { map: boardTex4 }), [0, 0, 0], bg);
-    const sg = starG.clone(); sg.scale(0.4, 1, 0.4);
+    const sg = starG.clone(); sg.scale(0.5, 1, 0.5);
     const cell = (i, j) => [(i - 2) * CS, (j - 1) * CS];
     mesh(sg, basic(B), [cell(2, 2)[0], 0.004, cell(2, 2)[1]], bg);
     const f = group([0, 0, 0], bg);
     const fm = std("#3d5a80", { emissive: new T.Color("#9fb6d8"), emissiveIntensity: 0.15 });
-    mesh(figureGeo(0.42), fm, [0, 0, 0], f);
+    mesh(figureGeo(0.55), fm, [0, 0, 0], f);
     // forkert slutfelt markeres rødt (logisk fejl)
     const wrongMat = basic(RED, { transparent: true, opacity: 0 });
     const wp = new T.PlaneGeometry(CS * 0.9, CS * 0.9); wp.rotateX(-Math.PI / 2);
@@ -461,17 +478,22 @@ export default function build(ctx) {
   });
   mesh(new T.PlaneGeometry(1.9, 0.78), texMat(bubTex), [0, 0, 0.035], bubble);
   // eleven, der spørger
-  const student = mesh(figureGeo(1.45), std("#c9d6ea"), [-1.85, 0, -0.1], S5, [0, 30, 0]);
+  const student = mesh(figureGeo(1.45), std("#c9d6ea"), [-2.05, 0, -0.25], S5, [0, 30, 0]);
   // "modellen": en neutral, lysende form (ingen logoer) mellem boblen og koden
   const hub = group([-0.05, 1.75, 0.1], S5);
+  // strømmen fra bobblen gennem modellen ind i koden
+  const flow5Tex = K.canvasTexture(128, 8, (g, w, h) => { g.fillStyle = "rgba(79,209,197,0.2)"; g.fillRect(0, 0, w, h); g.fillStyle = "#bff7f1"; g.fillRect(w * 0.7, 0, w * 0.15, h); });
+  flow5Tex.wrapS = T.RepeatWrapping; flow5Tex.repeat.set(4, 1);
+  const flow5Mat = basic("#ffffff", { map: flow5Tex, transparent: true, opacity: 0.25, depthWrite: false });
+  mesh(new T.TubeGeometry(new T.CatmullRomCurve3([[-0.55, 1.95, 0.0], [-0.25, 1.8, 0.1], [-0.05, 1.75, 0.1], [0.3, 1.75, 0.05], [0.52, 1.75, 0.03]].map(p => new T.Vector3(...p))), 24, 0.02, 4), flow5Mat, [0, 0, 0], S5);
   const hubMat = std("#bff7f1", { emissive: new T.Color(B), emissiveIntensity: 0.5, transparent: true, opacity: 0.9 });
   mesh(new T.IcosahedronGeometry(0.17, 0), hubMat, [0, 0, 0], hub);
   // kodepanelet med linjer, der kan klikkes på
   const AI = [
     { t: "dage = 0", q: "Hvorfor starte på 0?" },
-    { t: "for dag in målinger:", q: "Hvor kommer målingerne fra?" },
-    { t: "    if dag.regn > 0.2:", q: "Hvorfor netop 0,2 mm?" },
-    { t: "        dage += 1", q: "Hvorfor dage og ikke timer?" },
+    { t: "for mm in regn_pr_dag:", q: "Hvor kommer tallene fra?" },
+    { t: "    regner = mm > 0.2", q: "Hvorfor tæller 0,2 mm som regn?" },
+    { t: "    if regner: dage += 1", q: "Hvorfor dage og ikke timer?" },
     { t: "print(dage)", q: "Hvem skal bruge tallet?" },
   ];
   const PX = 1.45, PY = 1.75, LH = 0.24, PW = 1.75;
@@ -498,12 +520,12 @@ export default function build(ctx) {
     const g = why.g, w = why.w, h = why.h; g.clearRect(0, 0, w, h);
     g.fillStyle = "#eef3ff"; K.roundRect(g, 6, 6, w - 12, h - 12, 26); g.fill(); g.strokeStyle = B; g.lineWidth = 6; g.stroke();
     g.fillStyle = "#3a8f88"; g.font = '700 46px "Familjen Grotesk", sans-serif'; g.textBaseline = "middle"; g.fillText("Hvorfor sådan?", 34, 62);
-    g.fillStyle = "#13203a"; g.font = '600 50px "Source Sans 3", sans-serif'; g.fillText(i >= 0 ? AI[i].q : "", 34, 146);
+    g.fillStyle = "#13203a"; g.font = '600 44px "Source Sans 3", sans-serif'; g.fillText(i >= 0 ? AI[i].q : "", 34, 146);
     why.tex.needsUpdate = true;
   }
   const whyE = mesh(new T.PlaneGeometry(1.5, 0.384), texMat(why.tex), [PX + 0.3, 0, 0.12], S5);
   // en tynd streg fra spørgsmålstegnet til forklaringsboblen
-  const whyLink = mesh(bx(0.16, 0.012, 0.01, 0.08, 0, 0), basic(B), [0, 0, 0.1], S5);
+  const whyLink = mesh(bx(0.012, 0.012, 0.01, 0, 0, 0), basic(B), [0, 0, 0.1], S5);
   const lineHl = mesh(new T.PlaneGeometry(PW + 0.06, LH - 0.02), basic(B, { transparent: true, opacity: 0.25, depthWrite: false }), [PX, 0, 0.025], S5);
   let picked = -1, pickedAt = 0, now = 0;
   signAt("b2-5", `0.4 3.05 0`, 2.3);
@@ -517,10 +539,16 @@ export default function build(ctx) {
 
   /* ---------- tilstand og animation ---------- */
   let mode = null, t0 = 0, fresh = true;
+  function dim(el, a) {
+    el.object3D.traverse(o => { if (!o.material) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+      ms.forEach(m => { if (m.userData.baseOp === undefined) { m.userData.baseOp = m.opacity; m.userData.baseTr = m.transparent; }
+        m.transparent = a < 1 ? true : m.userData.baseTr; m.opacity = m.userData.baseOp * a; m.needsUpdate = true; }); });
+  }
   const lerp3 = (a, b, f) => a.map((v, i) => v + (b[i] - v) * f);
 
   return {
-    onStep(id) { mode = id; fresh = true; picked = -1; },
+    onStep(id) { mode = id; fresh = true; picked = -1;
+      stationIds.forEach(k => dim(ST[k].g, id === "b2-0" || k === id ? 1 : 0.3)); },
     tick(t) {
       now = t;
       if (fresh) { t0 = t; fresh = false; }
@@ -528,13 +556,17 @@ export default function build(ctx) {
       const s = typeof window.__roomS === "number" ? window.__roomS : (t - t0) / 1000;
 
       /* flowdiagrammet kører altid; i b2-0 er det tydeligst */
-      const fOn = mode === "b2-0" ? 1 : 0.55;
-      flowMat.opacity = 0.55 + 0.45 * fOn;
+      const fOn = mode === "b2-0" ? 1 : 0;
+      flowMat.opacity = 0.3 + 0.7 * fOn;
+      token.object3D.visible = mode === "b2-0";
       const fc = (t / 1000) % 12, yes = Math.floor(t / 12000) % 2 === 0;
       const route = fc < 6 ? (yes ? routeYes : routeYes.slice(0, 3).concat([[1010, 660], [1470, 660], [1860, 660], [1860, 440]])) : routeNo;
       const pt = polyAt(route, fc < 6 ? fc / 6 : (fc - 6) / 6);
       const [lx, ly] = cv2loc(pt);
-      token.object3D.position.set(lx, ly, 0.06);
+      // tokenet løber på kanterne; ved en knude glider det ud til knudens kant i stedet for at dække teksten
+      const nn = nearNode(pt), nd = nn ? NODES.find(n => n.id === nn) : null;
+      const [ox, oy] = nd ? cv2loc([nd.x, nd.y - (nd.k === "dia" ? 150 : 85)]) : [lx, ly];
+      token.object3D.position.set(nd ? ox : lx, nd ? oy : ly, 0.06);
       drawFlow(nearNode(pt));
 
       /* stationernes lamper: i b2-0 tænder de én efter én; ellers kun den aktive */
@@ -554,15 +586,17 @@ export default function build(ctx) {
       const r1 = a1 && s > 3.2; run1.object3D.visible = r1;
       if (r1) {   // rundt i løkkens klamme: ned langs venstre side, hen over bunden og tilbage
         const u = ((s - 3.2) / 1.6) % 1, L = parts1[3].b;
-        const pts = [[-0.72, 0.42], [-0.72, -0.42], [0.25, -0.42], [0.25, 0.0], [-0.1, 0.0], [-0.72, 0.42]];
+        const pts = [[-0.72, 0.42], [-0.72, -0.42], [0.3, -0.42], [-0.72, -0.42], [-0.72, 0.42]];
         const q = polyAt(pts, u); run1.object3D.position.set(L[0] + q[0], L[1] + q[1], L[2] + 0.1);
-        brMat.emissive = brMat.emissive || new T.Color(); brMat.emissive.set(B); brMat.emissiveIntensity = Math.abs(u - 0.62) < 0.08 ? 0.9 : 0.1;
+        brMat.emissive = brMat.emissive || new T.Color(); brMat.emissive.set(B); brMat.emissiveIntensity = Math.abs(u - 0.45) < 0.1 ? 0.9 : 0.1;
       } else { brMat.emissiveIntensity = 0; }
-      brLbl.forEach(l => l.object3D.visible = a1 && s > 2.7);
+      brLbl.forEach(l => l.object3D.visible = !a1 || s > 2.7);
+      act.object3D.visible = !a1 || s > 2.7;
+      wire1Mat.opacity = a1 ? 0.85 * ease((s - 3.0) / 0.5) : 0.5;
 
       /* B2.2: figuren følger kortene og går forkert ved den uklare instruks */
       const a2 = mode === "b2-2";
-      const c2 = a2 ? s % 13 : 0;
+      const c2 = a2 ? s % 17 : 0;
       const k2 = a2 ? Math.min(6, Math.floor((c2 - 0.6) / 1.3) + 1) : 0;     // antal kort, der er udført eller i gang
       const cur = a2 && c2 > 0.6 ? Math.min(5, Math.floor((c2 - 0.6) / 1.3)) : -1;
       const fr = a2 && c2 > 0.6 ? clamp01(((c2 - 0.6) % 1.3) / 1.0) : 0;
@@ -579,18 +613,20 @@ export default function build(ctx) {
       qMark.object3D.rotation.y = -fig2.object3D.rotation.y;
       fig2Mat.emissive.set(a2 && c2 >= 8.4 ? RED : "#9fb6d8"); fig2Mat.emissiveIntensity = a2 && c2 >= 8.4 ? 0.4 : 0.15;
       ghostMat.opacity = a2 && c2 >= 8.6 ? 0.85 * ((Math.floor(t / 350) % 2) ? 1 : 0.4) : 0;
-      endMat.opacity = a2 && c2 >= 8.4 ? 0.55 : 0;
+      endMat.opacity = a2 && c2 >= 8.4 ? 0.85 : 0;
       goalMat.color.set(a2 && c2 >= 8.6 ? "#eafffb" : B);
 
       /* B2.3: samme linje markeres i blokkene og i teksten */
       const a3 = mode === "b2-3";
-      const r3 = a3 ? Math.floor(s / 1.1) % (PROG.length + 1) : -1;
-      const hi = r3 < PROG.length ? r3 : -1;
-      drawCode3(hi);
+      // linjerne markeres én ad gangen; derefter vises en stavefejl i tekstversionen (blokkene kan ikke staves forkert)
+      const c3 = a3 ? s % 13 : 99;
+      const r3 = a3 && c3 < 6.6 ? Math.floor(c3 / 1.1) : -1;
+      const hi = r3 >= 0 && r3 < PROG.length ? r3 : -1;
+      drawCode3(hi, a3 && c3 >= 7.0);
       hlMat.opacity = hi >= 0 ? 0.9 : 0; bridgeMat.opacity = hi >= 0 ? 0.6 : 0;
       if (hi >= 0) {
         const R = blkRect[hi];
-        const w = PROG[hi].c ? 1.55 - PROG[hi].ind * 0.22 : 1.45 - PROG[hi].ind * 0.22 + (PROG[hi].hat ? 0.25 : 0);
+        const w = blkRect[hi].w;
         hl3.object3D.position.set(R.x + w / 2, R.y, 0.13); hl3.object3D.scale.set(w + 0.06, rowH + 0.02, 1);
         const x1 = R.x + w + 0.03, x2 = tx3 - BW / 2;
         bridge3.object3D.position.set(x1, R.y, 0.13); bridge3.object3D.scale.set(Math.max(0.01, x2 - x1), 1, 1);
@@ -598,7 +634,7 @@ export default function build(ctx) {
 
       /* B2.4: to programmer kører samtidig */
       const a4 = mode === "b2-4";
-      const c4 = a4 ? s % 9 : 0;
+      const c4 = a4 ? Math.min(s % 14, 13) : 0;   // sluttilstanden står i lang tid, så pointen ses i et stillbillede
       P4.forEach(p => {
         // linje og tilstand ud fra tiden
         let line = -1, state = "idle";
@@ -621,9 +657,10 @@ export default function build(ctx) {
         p.f.object3D.position.set(x, 0, z);
         p.f.object3D.rotation.y = (-90 + p.turn * -90 * tn) * D2R;
         const err = a4 && state === "error";
-        p.fm.emissive.set(err ? RED : "#9fb6d8"); p.fm.emissiveIntensity = err ? 0.6 + 0.4 * Math.sin(t * 0.012) : 0.15;
+        // figur A står stille i grå, når programmet er stoppet; det røde hører kun til kodelinjen
+        p.fm.emissive.set("#9fb6d8"); p.fm.emissiveIntensity = err ? 0.02 : 0.15; p.fm.color.set(err ? "#5a6278" : "#3d5a80");
         p.wrongMat.opacity = a4 && p.kind === "logisk" && state === "done" ? 0.75 : 0;
-        p.tag.object3D.visible = !a4 || state === "error" || state === "done";
+        p.tag.object3D.visible = true;
       });
 
       /* B2.5: talebobblen bliver til kode, og hver linje får et spørgsmålstegn */
@@ -631,7 +668,11 @@ export default function build(ctx) {
       const sb = a5 ? ease((s - 2.2) / 0.9) : 0;    // boblen suges ind i modellen
       bubble.object3D.position.set(-1.15 + 1.1 * sb, 2.2 - 0.45 * sb, 0.0);
       bubble.object3D.scale.setScalar(Math.max(0.001, 1 - 0.95 * sb));
-      bubble.object3D.visible = !a5 || s < 3.1;
+      // boblen står tilbage som et dæmpet aftryk, så sammenhængen bobble → model → kode kan ses i stillbilledet
+      if (a5 && s >= 3.1) { bubble.object3D.position.set(-1.15, 2.2, 0.0); bubble.object3D.scale.setScalar(0.85); }
+      bubble.object3D.visible = true;
+      flow5Mat.opacity = a5 && s > 2.2 ? 0.8 : 0.25;
+      flow5Tex.offset.x -= 0.02;
       hub.object3D.rotation.set(t * 0.0007, t * 0.001, 0);
       const busy = a5 && s > 2.6 && s < 5.2;
       hubMat.emissiveIntensity = busy ? 1.2 + 0.6 * Math.sin(t * 0.02) : 0.45;
@@ -649,7 +690,7 @@ export default function build(ctx) {
       drawWhy(sel);
       whyE.object3D.visible = sel >= 0; lineHl.object3D.visible = sel >= 0;
       whyLink.object3D.visible = sel >= 0;
-      if (sel >= 0) { whyE.object3D.position.set(PX + PW / 2 + 1.05, lines5[sel].y, 0.12); whyLink.object3D.position.set(PX + PW / 2 + 0.22, lines5[sel].y, 0.1); lineHl.object3D.position.set(PX, lines5[sel].y, 0.025); }
+      if (sel >= 0) { whyE.object3D.position.set(PX + 0.1, PY - 0.95, 0.12); whyLink.object3D.position.set(PX + PW / 2 + 0.14, lines5[sel].y, 0.1); lineHl.object3D.position.set(PX, lines5[sel].y, 0.025); }
     },
   };
 }

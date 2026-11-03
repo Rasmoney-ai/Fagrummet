@@ -82,8 +82,8 @@ export default function build(ctx) {
   const og = new T.PlaneGeometry(40, 20); og.rotateX(-Math.PI / 2);
   mesh(og, std("#0b1220"), [-1, OUT_Y, -16]);
   // datacentret: en lav hal med rækker af lysende rack-striber, køleenheder på taget og en mast
-  const DC = [-0.6, OUT_Y - 0.5, -16.0];
-  const dc = group(DC); dc.setAttribute("scale", "1.45 1.45 1.45");
+  const DC = [-1.8, OUT_Y - 0.6, -22.0];   // langt ude i landskabet: tydeligt et andet sted end bygningen
+  const dc = group(DC); dc.setAttribute("scale", "1.0 1.0 1.0");
   mesh(merge([bx(6, 2.2, 3.2, 0, 1.1, 0), bx(1.6, 1.4, 1.2, -3.9, 0.7, 0.6), bx(2.6, 1.6, 2.4, -2.0, 0.8, -3.0)]), std("#1c2642"), [0, 0, 0], dc);
   const rackTex = K.canvasTexture(512, 128, (g, w, h) => {
     g.fillStyle = "#0c1222"; g.fillRect(0, 0, w, h);
@@ -102,7 +102,7 @@ export default function build(ctx) {
   const beaconMat = basic("#ff5a5a");
   mesh(new T.SphereGeometry(0.1, 8, 6), beaconMat, [4.2, 5.55, -0.6], dc);
   // et skilt på bygningen (ikke et logo)
-  label("Datacenter", [0, 1.98, 1.63], dc, 0.3);
+  const dcLabel = label("Datacenter", [-1.5, 3.2, 1.0], dc, 0.8);
 
   /* ---------- kabler: fra stationerne op i loftsbakken og ud gennem vinduet ---------- */
   // bakken i loftet
@@ -118,7 +118,7 @@ export default function build(ctx) {
   });
   flowTex.wrapS = flowTex.wrapT = T.RepeatWrapping;
   // fælles stykke fra bakkens ende ud gennem vinduets øverste hjørne og ned til datacentret
-  const outPath = (dx) => [[TRAY_X + dx, TRAY_Y, -5.6], [TRAY_X + dx, 3.4, -6.3], [TRAY_X + dx + 0.1, 3.0, -7.0], [-0.6 + dx * 2, 1.6, -10.0], [-0.9 + dx * 3, 0.5, -13.5], [-0.6 + dx * 4, OUT_Y + 1.85, -13.7]];
+  const outPath = (dx) => [[TRAY_X + dx, TRAY_Y, -5.6], [TRAY_X + dx, 3.15, -6.35], [TRAY_X + dx, 3.12, -6.7], [-0.8 + dx, 2.6, -9.5], [-1.5 + dx * 2, 2.2, -13.0], [-1.9 + dx * 2, 1.6, -17.5], [-1.8 + dx * 3, OUT_Y + 1.4, -20.3]];
   const cables = [];
   function cable(id, pts, color, r = 0.032) {
     const curve = new T.CatmullRomCurve3(pts.map(p => new T.Vector3(...p)), false, "centripetal");
@@ -130,11 +130,41 @@ export default function build(ctx) {
   }
   // fra mikrocontrolleren, sensorvæggen, målebordet og arbejdsbænken
   cable("b1-1", [[-3.75, 0.6, -0.35], [-3.8, 3.2, -0.4], [-2.8, TRAY_Y, -0.3], [TRAY_X - 0.12, TRAY_Y, 0.2], [TRAY_X - 0.12, TRAY_Y, -2], ...outPath(-0.12)], "#ffffff");
-  cable("b1-2", [[6.3, 2.85, 1.25], [6.0, TRAY_Y, 1.25], [2, TRAY_Y, 0.3], [TRAY_X + 0.12, TRAY_Y, -0.9], [TRAY_X + 0.12, TRAY_Y, -2.5], ...outPath(0.12)], "#ffffff");
+  cable("b1-2", [[6.3, 2.85, 3.85], [6.0, TRAY_Y, 3.85], [2, TRAY_Y, 1.0], [TRAY_X + 0.12, TRAY_Y, -0.9], [TRAY_X + 0.12, TRAY_Y, -2.5], ...outPath(0.12)], "#ffffff");
   cable("b1-3", [[4.15, 1.75, -5.0], [4.2, 3.5, -5.6], [2.5, TRAY_Y, -5.4], [TRAY_X + 0.04, TRAY_Y, -4.9], ...outPath(0.04)], "#ffffff");
   cable("bench", [[-3.6, 1.0, -6.2], [-3.6, 3.5, -6.25], [-2.4, TRAY_Y, -5.8], [TRAY_X - 0.04, TRAY_Y, -5.3], ...outPath(-0.04)], "#ffffff");
   // strømkabel (ravgult i mørket ville tilhøre et andet område, så det er hvidt-blåt) fra datacentret til masten
   
+  // gennemføring i vinduets øverste rude: en lille boks, kablerne går ud igennem
+  mesh(merge([bx(0.55, 0.3, 0.4, TRAY_X, 3.12, -W), bx(0.6, 0.04, 0.45, TRAY_X, 2.96, -W)]), std("#3a4766", { metalness: 0.5 }));
+  // pæle udenfor, som kablerne hænger i på vej til datacentret
+  mesh(merge([[-0.8, -9.5], [-1.5, -13.0], [-1.9, -17.5]].map(([x, z]) => bx(0.12, 2.7 - OUT_Y + (z === -9.5 ? 0.0 : 0), 0.12, x, (OUT_Y + 2.6) / 2, z))), std("#2a3557"));
+  /* systemkæden ude i landskabet: råstoffer (malmlag i en skrænt) → strøm (kraftværk + højspændingsmaster) → datacentret.
+     Leddene lyser op i rækkefølge i b1-0. */
+  const sys = group([0, 0, 0]);
+  // skrænt med malmlag (råstoffer) til venstre
+  const ore = group([-5.4, OUT_Y, -21.0], sys);
+  mesh(merge([bx(4.0, 2.2, 2.0, 0, 1.1, 0), bx(2.6, 3.2, 1.6, -0.8, 1.6, -0.8)]), std("#1a2033"), [0, 0, 0], ore);
+  const oreMat = basic("#d9b45a", { transparent: true, opacity: 0.35 });
+  mesh(merge([bx(4.02, 0.16, 0.02, 0, 0.6, 1.01), bx(3.2, 0.12, 0.02, 0.3, 1.2, 1.01), bx(2.6, 0.1, 0.02, -0.2, 1.7, 1.01)]), oreMat, [0, 0, 0], ore);
+  const oreLbl = label("Råstoffer", [0, 3.7, 1.0], ore, 0.8);
+  // kraftværk til højre med skorsten og køletårn
+  const pw = group([6.0, OUT_Y, -25.0], sys);
+  mesh(merge([bx(3.0, 1.8, 2.0, 0, 0.9, 0), new T.CylinderGeometry(0.25, 0.3, 4.2, 8).translate(1.0, 2.1, -0.4), new T.CylinderGeometry(0.9, 1.2, 2.8, 12, 1, true).translate(-1.6, 1.4, -0.2)]), std("#1c2642"), [0, 0, 0], pw);
+  const pwMat = basic("#f2f4ff", { transparent: true, opacity: 0.25 });
+  mesh(merge([0, 1, 2, 3].map(i => bx(0.3, 0.3, 0.02, -0.9 + i * 0.6, 1.0, 1.01))), pwMat, [0, 0, 0], pw);
+  const pwLbl = label("Strøm", [0, 4.9, 0.6], pw, 0.8);
+  // højspændingsmaster med en strømlinje fra kraftværket til datacentret, og lyspulser på den
+  const towers = [[3.8, -24.2], [1.6, -23.3]];
+  towers.forEach(([x, z]) => mesh(merge([bx(0.1, 4.4, 0.1, -0.3, 2.2, 0), bx(0.1, 4.4, 0.1, 0.3, 2.2, 0), bx(1.4, 0.08, 0.08, 0, 4.0, 0), bx(1.0, 0.08, 0.08, 0, 3.3, 0)]), std("#2a3557"), [x, OUT_Y, z], sys));
+  const lineCurve = new T.CatmullRomCurve3([[6.0, OUT_Y + 3.5, -24.8], [3.8, OUT_Y + 3.95, -24.2], [1.6, OUT_Y + 3.95, -23.3], [0.6, OUT_Y + 1.6, -22.4]].map(p => new T.Vector3(...p)));
+  const pTex = flowTex.clone(); pTex.needsUpdate = true; pTex.repeat.set(5, 1);
+  const powerMat = basic("#ffffff", { map: pTex });
+  mesh(new T.TubeGeometry(lineCurve, 40, 0.035, 4), powerMat, [0, 0, 0], sys);
+  // net: en lille antennemast på datacentret med signalringe
+  const netRings = [0, 1, 2].map(() => { const m = basic(B, { transparent: true, opacity: 0, depthWrite: false }); return { m, e: mesh(new T.TorusGeometry(0.4, 0.03, 4, 20), m, [DC[0] + 4.2, DC[1] + 5.55, DC[2] - 0.6], sys, [90, 0, 0]) }; });
+  const netLbl = label("Net", [DC[0] + 4.2, DC[1] + 6.6, DC[2] - 0.6], sys, 0.8);
+
   /* ---------- arbejdsbænk under vinduet (ramme, ikke station) ---------- */
   {
     const p = [bx(3.4, 0.08, 0.9, -4.0 + 1.7 - 1.7, 0.92, -5.9)];
@@ -146,17 +176,32 @@ export default function build(ctx) {
     mesh(merge([bx(0.58, 0.022, 0.38, -3.6, 0.99, -5.75), bx(0.38, 0.022, 0.28, -3.0, 0.99, -6.0)]), std("#13544d"));
   }
 
+  /* ---------- værkstedet: komponentreol med skuffer og spoler, værktøjstavle, varm arbejdslampe ---------- */
+  {
+    const shelf = [bx(1.8, 2.4, 0.4, 0, 1.2, 0)], drawers = [], spools = [];
+    for (let r = 0; r < 6; r++) for (let c = 0; c < 5; c++) drawers.push(bx(0.3, 0.18, 0.02, -0.66 + c * 0.33, 0.55 + r * 0.3, 0.21));
+    for (let i = 0; i < 4; i++) { const sp = new T.CylinderGeometry(0.1, 0.1, 0.08, 10); sp.rotateX(Math.PI / 2); sp.translate(-0.55 + i * 0.36, 2.55, 0.05); spools.push(sp); }
+    const SH = group([-W + 0.35, 0, -3.3], root, [0, 90, 0]);
+    mesh(merge(shelf), std("#202840"), [0, 0, 0], SH);
+    mesh(merge(drawers), std("#3d5a80"), [0, 0, 0], SH);
+    mesh(merge(spools), std("#c97a4f"), [0, 0, 0], SH);
+    // værktøjstavle over arbejdsbænken med tang, loddekolbe og skruetrækkere som silhuetter
+    const tb = group([-W + 0.12, 1.9, -1.0], root, [0, 90, 0]);
+    mesh(bx(2.6, 1.0, 0.03, 0, 0, 0), std("#1d2640"), [0, 0, 0], tb);
+    mesh(merge([bx(0.04, 0.5, 0.02, -1.0, 0, 0.03), bx(0.08, 0.18, 0.02, -1.0, 0.3, 0.03), bx(0.04, 0.45, 0.02, -0.6, 0, 0.03), bx(0.06, 0.16, 0.02, -0.6, 0.28, 0.03), bx(0.3, 0.04, 0.02, 0.1, 0.2, 0.03), bx(0.03, 0.5, 0.02, 0.3, -0.05, 0.03), bx(0.12, 0.35, 0.02, 0.8, 0.05, 0.03)]), std("#8a96b8"), [0, 0, 0], tb);
+  }
+
   /* ---------- lys ---------- */
   kit.el("a-entity", { light: `type: point; color: #bfe9ff; intensity: 0.75; distance: 12; decay: 1.2`, position: "0 3.4 0" });
-  kit.el("a-entity", { light: `type: point; color: ${B}; intensity: 0.6; distance: 9; decay: 1.4`, position: "-1 2.5 -5" });
+  kit.el("a-entity", { light: `type: point; color: #ffd9a0; intensity: 0.7; distance: 7; decay: 1.5`, position: "-4 2.4 -5.2" });   // varm arbejdslampe over bænken som kontrast
 
   /* ---------- skilte ---------- */
   ctx.sign(ctx.room.name, { position: `-5.05 2.75 ${-W + 0.13}`, width: 2.4, sub: ctx.room.sub });
-  ctx.sign(ctx.step("b1-0").title, { position: `-2.45 3.73 ${-W + 0.13}`, width: 1.7 });
-  ctx.door(ctx.room.parent, { position: `${W - 0.15} 0 3.7`, rotation: "0 -90 0" });
+  const sg0 = ctx.sign(ctx.step("b1-0").title, { position: `-2.55 3.73 ${-W + 0.13}`, width: 1.7 });
+  ctx.door(ctx.room.parent, { position: `${W - 0.15} 0 -3.7`, rotation: "0 -90 0" });
   // vinduet er b1-0's station (et usynligt klikfelt dækker hele ruden)
   const winHit = mesh(new T.PlaneGeometry(WIN.x1 - WIN.x0, WIN.y1 - WIN.y0), basic("#000", { transparent: true, opacity: 0, depthWrite: false }), [(WIN.x0 + WIN.x1) / 2, (WIN.y0 + WIN.y1) / 2, -W + 0.4]);
-  ctx.station("b1-0", winHit);
+  ctx.station("b1-0", group([-1.0, 0, -5.2]));
 
   /* ================= B1.1 · den gennemskårne mikrocontroller ================= */
   const MC = group([-3.0, 0, 0.35], root, [0, face([-3.0, 0.35], [-0.6, 3.2]), 0]);
@@ -209,7 +254,9 @@ export default function build(ctx) {
   // husets låg: dækker printet og løftes/vippes bagover, når mikrocontrolleren åbner sig
   const lidPivot = group([0, 0.03, -0.62], board);
   const lid = mesh(merge([bx(1.86, 0.03, 1.26, 0, 0.11, 0.63), bx(1.86, 0.1, 0.03, 0, 0.06, 1.245), bx(0.03, 0.1, 1.26, -0.915, 0.06, 0.63), bx(0.03, 0.1, 1.26, 0.915, 0.06, 0.63)]),
-    std("#2c3a5c", { transparent: true, opacity: 0.55, metalness: 0.3, depthWrite: false }), [0, 0, 0], lidPivot);
+    std("#9fc9e8", { transparent: true, opacity: 0.22, metalness: 0.3, depthWrite: false }), [0, 0, 0], lidPivot);
+  // tydelige hængsler langs bagkanten
+  mesh(merge([-0.6, 0, 0.6].map(x => new T.CylinderGeometry(0.035, 0.035, 0.22, 8).rotateZ(Math.PI / 2).translate(x, 0.03, 0))), std("#c7cbd6", { metalness: 0.7 }), [0, 0, 0], lidPivot);
   // tre udgange: lampe, motor og lydgiver, forbundet til de store ben
   const outs = group([0, 0.91, 0.95], MC);
   
@@ -236,14 +283,22 @@ export default function build(ctx) {
   const mcLabels = [
     { e: label("Processor", [-0.45, 1.9, -0.15], MC, 0.15) },
     { e: label("Hukommelse", [0.6, 1.85, -0.2], MC, 0.15) },
-    { e: label("Ben", [1.12, 1.06, 0.42], MC, 0.15) },
+    { e: label("Ben (forbindelser)", [0.0, 1.28, 0.58], MC, 0.12) },
   ];
+  // målestok: den samme slags mikrocontroller i ægte størrelse ved siden af et frimærke
+  const real = group([-0.25, 0.915, 1.12], MC);
+  mesh(bx(0.05, 0.004, 0.04), std("#0e3d3a"), [0, 0, 0], real);
+  mesh(bx(0.012, 0.006, 0.012), std("#14171f"), [-0.008, 0.004, 0], real);
+  const stampTex = K.canvasTexture(128, 160, (g, w, h) => { g.fillStyle = "#f3efe3"; g.fillRect(0, 0, w, h); g.fillStyle = "#e9e3d2"; for (let x = 0; x < w; x += 16) { g.beginPath(); g.arc(x + 8, 0, 6, 0, 7); g.arc(x + 8, h, 6, 0, 7); g.fill(); } g.fillStyle = "#3d7bff"; g.fillRect(18, 22, w - 36, h - 60); g.fillStyle = "#1d2b45"; g.font = '700 22px "Familjen Grotesk"'; g.textAlign = "center"; g.fillText("frimærke", w / 2, h - 16); });
+  const stG = new T.PlaneGeometry(0.03, 0.0375); stG.rotateX(-Math.PI / 2);
+  mesh(stG, basic("#ffffff", { map: stampTex }), [0.05, 0.003, 0], real);
+  label("Ægte størrelse", [0.0, 0.08, 0.0], real, 0.085);
   ctx.sign(ctx.step("b1-1").title, { parent: MC, position: "0 2.45 -0.35", width: 1.8 });
   ctx.station("b1-1", MC);
 
   /* ================= B1.2 · sensorvæggen ================= */
   // gruppens lokale x løber langs væggen (verdens +z), lokale +z peger ind i rummet (verdens −x)
-  const SW = group([W - 0.12, 0, -0.6], root, [0, -90, 0]);
+  const SW = group([W - 0.12, 0, 2.0], root, [0, -90, 0]);
   const pegTex = K.canvasTexture(512, 340, (g, w, h) => {
     g.fillStyle = "#141c31"; g.fillRect(0, 0, w, h);
     g.fillStyle = "rgba(0,0,0,0.45)"; for (let x = 12; x < w; x += 22) for (let y = 12; y < h; y += 22) { g.beginPath(); g.arc(x, y, 3, 0, 7); g.fill(); }
@@ -260,12 +315,13 @@ export default function build(ctx) {
   const fovMat = basic(B, { transparent: true, opacity: 0.03, depthWrite: false, side: T.DoubleSide });
   mesh(fovG, fovMat, [-1.3, 1.55, 0.12], SW);
   // en stiliseret hånd, der vifter foran sensoren
-  const hand = group([-1.3, 1.35, 0.72], SW);
+  const hand = group([-1.3, 0.98, 0.72], SW);
   const handG = [bx(0.2, 0.24, 0.06, 0, 0.12, 0)];
   [[-0.075, 0.14], [-0.025, 0.17], [0.025, 0.165], [0.075, 0.13]].forEach(([x, l]) => handG.push(bx(0.042, l, 0.05, x, 0.24 + l / 2, 0)));
   const th = bx(0.045, 0.13, 0.05, 0, 0.065, 0); th.rotateZ(0.8); th.translate(-0.13, 0.08, 0); handG.push(th);
   handG.push(bx(0.13, 0.22, 0.07, 0, -0.1, 0));
-  mesh(merge(handG), std("#e3c2a8", { roughness: 0.9 }), [0, 0, 0], hand);
+  mesh(merge(handG), std("#e3c2a8", { roughness: 0.9, transparent: true, opacity: 0.55, depthWrite: false }), [0, 0, 0], hand);
+  label("Bevægelsessensor", [-1.3, 1.84, 0.1], SW, 0.1);
   // pile mellem delene
   const chev = [];
   for (const x of [-0.72, 0.62]) for (let k = 0; k < 3; k++) { const s = new T.ConeGeometry(0.06, 0.1, 3); s.rotateZ(-Math.PI / 2); s.translate(x + k * 0.1, 1.55, 0.1); chev.push(s); }
@@ -303,36 +359,45 @@ export default function build(ctx) {
   label("Tal", [0, 2.55, 0.1], SW, 0.17);
   label("Output", [1.3, 2.55, 0.1], SW, 0.17);
   ctx.sign(ctx.step("b1-2").title, { parent: SW, position: "-0.3 3.4 0.12", width: 2.1 });
-  ctx.station("b1-2", SW);
+  ctx.station("b1-2", group([0, 0, 1.1], SW));
 
   /* ================= B1.3 · måling → tal → bits → lager ================= */
   const ST = group([2.6, 0, -4.7], root, [0, 0, 0]);
   mesh(merge([bx(3.4, 0.06, 0.9, 0, 0.86, 0), bx(0.07, 0.86, 0.07, -1.6, 0.43, 0.38), bx(0.07, 0.86, 0.07, 1.6, 0.43, 0.38), bx(0.07, 0.86, 0.07, -1.6, 0.43, -0.38), bx(0.07, 0.86, 0.07, 1.6, 0.43, -0.38)]), std("#252c45"), [0, 0, 0], ST);
   // måleren: en lille plade med en føler, der stikker op
-  mesh(merge([bx(0.34, 0.03, 0.26, -1.35, 0.905, 0), bx(0.025, 0.42, 0.025, -1.35, 1.12, 0), bx(0.06, 0.05, 0.06, -1.35, 0.94, 0)]), std("#0e3d3a"), [0, 0, 0], ST);
+  mesh(merge([bx(0.34, 0.03, 0.26, -1.35, 0.905, 0), new T.CylinderGeometry(0.022, 0.022, 0.46, 10).translate(-1.35, 1.15, 0), bx(0.06, 0.05, 0.06, -1.35, 0.94, 0)]), std("#e8ecf6", { transparent: true, opacity: 0.6 }), [0, 0, 0], ST);
+  // skala på termometeret
+  mesh(merge(Array.from({ length: 7 }, (_, i) => bx(0.03, 0.006, 0.006, -1.32, 1.0 + i * 0.05, 0.023))), basic("#a9b0d6"), [0, 0, 0], ST);
+  const mercMat = basic("#ff5a4f");
+  const merc = mesh(new T.CylinderGeometry(0.011, 0.011, 1, 8).translate(0, 0.5, 0), mercMat, [-1.35, 0.97, 0], ST);
   const probeMat = std("#e8fbff", { emissive: new T.Color(B), emissiveIntensity: 0.2 });
-  mesh(new T.SphereGeometry(0.04, 10, 6), probeMat, [-1.35, 1.35, 0], ST);
+  mesh(new T.SphereGeometry(0.04, 10, 6), probeMat, [-1.35, 0.95, 0], ST);
   // en pulserende ring om føleren (målingen)
   const pulseMat = basic(B, { transparent: true, opacity: 0, depthWrite: false });
-  const pulse = mesh(new T.TorusGeometry(0.08, 0.008, 4, 20), pulseMat, [-1.35, 1.35, 0], ST);
+  const pulse = mesh(new T.TorusGeometry(0.08, 0.008, 4, 20), pulseMat, [-1.35, 0.96, 0], ST, [90, 0, 0]);
   // talpanel: viser målingen som tal
   const valCanvas = document.createElement("canvas"); valCanvas.width = 512; valCanvas.height = 256;
   const valTex = new T.CanvasTexture(valCanvas); valTex.colorSpace = T.SRGBColorSpace;
   const valMat = basic("#ffffff", { map: valTex, transparent: true });
   mesh(new T.BoxGeometry(0.86, 0.46, 0.04), std("#0b1222"), [-0.55, 1.42, -0.05], ST);
   mesh(new T.PlaneGeometry(0.8, 0.4), valMat, [-0.55, 1.42, -0.028], ST);
+  // logbogen: en strimmel med de målinger, der er gemt indtil nu (et døgn i klassen)
+  const logCv = (() => { const c = document.createElement("canvas"); c.width = 256; c.height = 512; const tex = new T.CanvasTexture(c); tex.colorSpace = T.SRGBColorSpace; return { g: c.getContext("2d"), tex, key: null }; })();
+  mesh(new T.PlaneGeometry(0.5, 1.0), basic("#ffffff", { map: logCv.tex }), [1.55, 2.25, -0.06], ST);
   function drawVal(v, bits, a) {
     const g = valCanvas.getContext("2d"), w = 512, h = 256;
     g.fillStyle = "#07101e"; g.fillRect(0, 0, w, h);
     g.textAlign = "center"; g.textBaseline = "middle";
-    g.globalAlpha = a; g.fillStyle = "#eafffb"; g.font = '700 120px "JetBrains Mono", monospace'; g.fillText(v, w / 2, 100);
-    g.fillStyle = "rgba(79,209,197,0.9)"; g.font = '500 46px "JetBrains Mono", monospace'; g.fillText(bits, w / 2, 205);
+    // tre rækker: målingen, det hele tal, der gemmes, og tallet skrevet i binær form
+    g.globalAlpha = a; g.fillStyle = "#eafffb"; g.font = '700 84px "JetBrains Mono", monospace'; g.fillText(v, w / 2, 58);
+    g.fillStyle = "#cfe9ff"; g.font = '600 52px "JetBrains Mono", monospace'; g.fillText(bits.n, w / 2, 138);
+    g.fillStyle = "rgba(79,209,197,0.95)"; g.font = '600 46px "JetBrains Mono", monospace'; g.fillText(bits.b, w / 2, 210);
     g.globalAlpha = 1; valTex.needsUpdate = true;
   }
   // bit-brikker: to instanced meshes (nul og et), der glider fra talpanelet ind i lagerenheden
   const bitTex = d => K.canvasTexture(128, 128, (g, w, h) => { g.fillStyle = d ? "#4fd1c5" : "#163c44"; K.roundRect(g, 4, 4, w - 8, h - 8, 16); g.fill(); g.fillStyle = d ? "#06201f" : "#9ff3ea"; g.font = '700 92px "JetBrains Mono", monospace'; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(String(d), w / 2, h / 2 + 4); });
   const NB = 8;
-  const bitMesh = [0, 1].map(d => { const m = new T.InstancedMesh(new T.BoxGeometry(0.13, 0.13, 0.02), basic("#ffffff", { map: bitTex(d) }), NB * 2); m.frustumCulled = false; group([0, 0, 0], ST).setObject3D("mesh", m); return m; });
+  const bitMesh = [0, 1].map(d => { const m = new T.InstancedMesh(new T.BoxGeometry(0.16, 0.16, 0.02), basic("#ffffff", { map: bitTex(d) }), NB * 2); m.frustumCulled = false; group([0, 0, 0], ST).setObject3D("mesh", m); return m; });
   // skinnen, bitsene glider på
   mesh(merge([bx(1.6, 0.012, 0.05, 0.55, 1.3, -0.02)]), basic(B, { transparent: true, opacity: 0.35 }), [0, 0, 0], ST);
   // lagerenheden: et stort, generisk hukommelseskort med skrå hjørne og kontakter
@@ -349,27 +414,43 @@ export default function build(ctx) {
   mesh(new T.SphereGeometry(0.025, 8, 6), cardLedMat, [0.2, 0.3, 0.07], card);
   // slids på kortets venstre kant, hvor bitsene forsvinder ind
   mesh(bx(0.02, 0.16, 0.13, -0.3, 0, 0), basic("#02040a"), [0, 0, 0], card);
-  label("Måling", [-1.35, 1.62, 0], ST, 0.13);
+  label("Måling", [-1.35, 1.55, 0], ST, 0.13);
   label("Tal", [-0.55, 1.78, 0], ST, 0.13);
-  label("Bits", [0.55, 1.6, 0], ST, 0.13);
-  label("Lager", [1.55, 1.88, 0], ST, 0.13);
-  ctx.sign(ctx.step("b1-3").title, { parent: ST, position: "0 2.5 -0.1", width: 2.1 });
-  ctx.station("b1-3", ST);
+  label("Bits", [0.55, 1.52, 0], ST, 0.14);
+  label("Lager", [1.55, 1.83, 0.02], ST, 0.13);
+  ctx.sign(ctx.step("b1-3").title, { parent: ST, position: "-0.4 2.55 -0.1", width: 2.1 });
+  ctx.station("b1-3", group([0, 0, 0.75], ST));
 
   /* ---------- views ---------- */
-  ctx.view("b1-0", { position: [-1.0, 0, -2.6], lookAt: [-1.0, 0, -6.5] });
-  ctx.view("b1-1", { position: [-1.35, 0, 2.55], lookAt: [-3.0, 0, 0.3] });
-  ctx.view("b1-2", { position: [3.0, 0, -0.6], lookAt: [6.4, 0, -0.6] });
-  ctx.view("b1-3", { position: [2.6, 0, -2.2], lookAt: [2.6, 0, -4.7] });
+  ctx.view("b1-0", { position: [-1.0, 0, -1.9], lookAt: [-1.0, 0, -6.5] });
+  ctx.view("b1-1", { position: [-1.9, 0, 2.6], lookAt: [-3.0, 0, 0.4] });
+  ctx.view("b1-2", { position: [2.6, 0, 2.0], lookAt: [6.4, 0, 2.0] });
+  ctx.view("b1-3", { position: [2.6, 0, -1.7], lookAt: [2.6, 0, -4.7] });
 
   /* ---------- tilstand og animation ---------- */
   let mode = null, t0 = 0, fresh = true, lastNum = 0, lastBlink = -1;
+  // dæmpning af inaktive stationer: skilte, etiketter og plader trækkes ned i opacitet
+  function dim(el, a) {
+    el.object3D.traverse(o => { if (!o.material) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+      ms.forEach(m => { if (m.userData.baseOp === undefined) { m.userData.baseOp = m.opacity; m.userData.baseTr = m.transparent; }
+        m.transparent = a < 1 ? true : m.userData.baseTr; m.opacity = m.userData.baseOp * a; m.needsUpdate = true; }); });
+  }
+  const stationEls = { "b1-0": [winHit, sg0], "b1-1": [MC], "b1-2": [SW], "b1-3": [ST] };
+  function drawLog(n) {
+    if (logCv.key === n) return; logCv.key = n;
+    const g = logCv.g, w = 256, h = 512; g.fillStyle = "#f3f1ea"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#1d2b45"; g.font = '700 30px "Familjen Grotesk", sans-serif'; g.textAlign = "left"; g.textBaseline = "middle"; g.fillText("log.csv", 18, 28);
+    g.font = '600 30px "JetBrains Mono", monospace';
+    for (let i = 0; i < Math.min(n, 13); i++) { const hh = String(8 + i).padStart(2, "0"); g.fillStyle = i === n - 1 ? "#2a8f88" : "#3a4766"; g.fillText(`${hh}:00  ${(measures[i % 4] / 10).toFixed(1).replace(".", ",")}`, 18, 70 + i * 33); }
+    logCv.tex.needsUpdate = true;
+  }
   const dummy = new T.Object3D();
   const toBits = n => n.toString(2).padStart(8, "0");
   const measures = [214, 216, 215, 218];
 
   return {
-    onStep(id) { mode = id; fresh = true; },
+    onStep(id) { mode = id; fresh = true;
+      Object.entries(stationEls).forEach(([k, els]) => els.forEach(e => dim(e, k === id ? 1 : 0.3))); },
     tick(t, dt) {
       if (fresh) { t0 = t; fresh = false; lastNum = 0; }
       // testkrog: window.__roomS låser animationstiden (bruges kun af skærmbilledværktøjet)
@@ -383,11 +464,19 @@ export default function build(ctx) {
         c.m.color.setRGB(0.22 + 0.78 * on, 0.25 + 0.75 * on, 0.3 + 0.7 * on);
       });
       // datacentret blinker roligt, mere når der er trafik
-      const dcOn = mode === "b1-0" ? 1 : 0.35;
-      rackMat.color.setScalar(0.45 + 0.55 * dcOn);
-      rackTex.offset.x = Math.floor(t / 300) * 0.0625 * dcOn;
+      rackTex.offset.x = Math.floor(t / 300) * 0.0625 * (mode === "b1-0" ? 1 : 0.3);
       beaconMat.color.setScalar((Math.sin(t * 0.004) > 0.6) ? 1 : 0.25);
       fanBlades.forEach((f, i) => f.object3D.rotation.y = t * 0.004 + i);
+      // systemkæden: råstoffer → strøm → datacenter → net lyser op i rækkefølge i b1-0
+      const a0 = mode === "b1-0", c0 = a0 ? s % 10 : 0;
+      const L = i => a0 ? ease((c0 - 0.8 - i * 1.1) / 0.5) : 0;
+      oreMat.opacity = 0.25 + 0.75 * L(0);
+      pwMat.opacity = 0.2 + 0.8 * L(1);
+      pTex.offset.x -= k * (0.2 + 1.2 * L(1));
+      powerMat.color.setScalar(0.3 + 0.7 * L(1));
+      rackMat.color.setScalar(0.4 + 0.6 * Math.max(L(2), a0 ? 0 : 0.2));
+      netRings.forEach((r, i) => { const p = ((t / 1100) + i / 3) % 1; r.e.object3D.scale.setScalar(0.5 + p * 2.2); r.m.opacity = 0.8 * L(3) * (1 - p); });
+      [oreLbl, pwLbl, dcLabel, netLbl].forEach((lb, i) => lb.getObject3D("mesh").material.opacity = a0 ? 0.25 + 0.75 * L(i) : 0.25);
 
       /* mikrocontrolleren åbner sig i b1-1 */
       const open = mode === "b1-1" ? ease((s - 0.3) / 1.2) : 0;
@@ -410,20 +499,21 @@ export default function build(ctx) {
 
       /* sensorvæggen i b1-2: hånden vifter, tallene ruller, lampe og lyd svarer */
       const sw = mode === "b1-2";
-      const wave = sw ? Math.sin(s * 5.2) : 0;
-      hand.object3D.rotation.z = wave * 0.45;
-      hand.object3D.position.x = -1.3 + wave * 0.18;
-      hand.object3D.position.z = sw ? 0.62 : 0.85;
-      const motion = sw ? Math.abs(Math.cos(s * 5.2)) : 0;     // hvor hurtigt hånden bevæger sig
+      // hånden kommer langsomt nærmere sensoren og trækker sig væk igen (7 s); tallet følger afstanden jævnt
+      const near = sw ? 0.5 - 0.5 * Math.cos(s / 7 * Math.PI * 2) : 0;   // 0 = langt væk, 1 = helt tæt
+      hand.object3D.rotation.z = sw ? Math.sin(s * 4) * 0.12 : 0;
+      hand.object3D.position.x = -1.3;
+      hand.object3D.position.z = 1.05 - 0.75 * near;
+      const motion = near;
       fovMat.opacity = sw ? 0.03 + 0.07 * motion : 0.02;
       domeMat.emissiveIntensity = sw ? 0.2 + 0.8 * motion : 0.05;
       chevMat.opacity = sw ? 0.3 + 0.6 * ((Math.floor(t / 180) % 3) / 2) : 0.18;
       if (sw && t - lastNum > 130) {
         lastNum = t;
-        nums.unshift(Math.round(motion * 900 + 40 + Math.random() * 40));
+        nums.unshift(Math.round(40 + motion * 900 + Math.sin(t * 0.03) * 6));
         nums.length = 12; drawNums(true);
       } else if (!sw && lastNum !== -1 && mode) { lastNum = -1; drawNums(false); }
-      const v = sw ? clamp01((nums[0] - 40) / 900) : 0;
+      const v = sw ? clamp01(motion) : 0;
       // lampen går fra blå (rolig) til rød (meget bevægelse) via hvid, så den aldrig bliver lilla
       lampCol.copy(v < 0.5 ? LBLUE : LWHITE).lerp(v < 0.5 ? LWHITE : LRED, v < 0.5 ? v * 2 : v * 2 - 1);
       outLampMat.emissive.copy(lampCol); outLampMat.color.copy(lampCol);
@@ -440,14 +530,14 @@ export default function build(ctx) {
       const numA = ms ? 0.3 + 0.7 * ease((c - 0.8) / 0.4) : 1;
       const bitShown = ms ? Math.max(0, Math.min(8, Math.floor((c - 1.6) / 0.15))) : 0;
       const valKey = ms ? `${cyc}:${bitShown}:${numA.toFixed(2)}` : "idle";
-      if (valKey !== drawVal.key) { drawVal.key = valKey; drawVal(ms ? (val / 10).toFixed(1).replace(".", ",") + "°" : "21,4°", ms ? bits.slice(0, bitShown).padEnd(8, "·") : "········", ms ? numA : 0.35); }
+      if (valKey !== drawVal.key) { drawVal.key = valKey; drawVal(ms ? (val / 10).toFixed(1).replace(".", ",") + " °C" : "21,4 °C", { n: ms && c > 1.2 ? `→ ${val} →` : "", b: ms ? bits.slice(0, bitShown).padEnd(8, "·") : "········" }, ms ? numA : 0.35); }
       // bitsene forlader talpanelet én ad gangen og glider ind i kortets slids
       const counts = [0, 0];
       // hele strimlen skubbes ud af talpanelet, holder en pause og glider så ind i kortets slids
       const RX = c < 3.4 ? -0.05 + 1.2 * ease((c - 2.6) / 0.8) : c < 4.2 ? 1.15 : 1.15 + 1.3 * ease((c - 4.2) / 1.8);
       for (let i = 0; i < NB; i++) {
         const d = +bits[i];
-        const x = RX - (NB - 1 - i) * 0.145;
+        const x = RX - (NB - 1 - i) * 0.175;
         const vis = ms && c > 2.6 && x > -0.04 && x < 1.22;
         dummy.position.set(x, 1.3 + 0.07, -0.02);
         dummy.scale.setScalar(vis ? 1 : 0.0001);
@@ -460,6 +550,9 @@ export default function build(ctx) {
       cardLedMat.color.set(writing && (Math.floor(t / 120) % 2) ? "#9ff3ea" : "#2a5a57");
       const filled = ms ? Math.min(1, 0.15 + 0.2 * cyc + 0.2 * clamp01((c - 3) / 2.8)) : 0.35;
       fill.object3D.scale.set(1, Math.max(0.01, filled), 1);
+      // logbogen får en ny række, når en strimmel er gemt; kviksølvet følger målingen
+      drawLog(ms ? Math.min(13, 5 + cyc + (c > 6.0 ? 1 : 0)) : 6);
+      merc.object3D.scale.set(1, 0.16 + (val - 200) / 100 * 0.6 * (ms ? 1 : 0.6), 1);
       fillMat.color.set(ms ? B : "#2a6f6a");
     },
   };

@@ -1,7 +1,8 @@
 /* Delrum A1 · Værkstedet — Kreative processer.
    Et værksted om natten: betongulv, hulplader med værktøj, lysstofrør. Fire arbejdsborde står i en halvcirkel
-   langs en skala på gulvet med to poler: til venstre design (udfylde et behov, løse et problem), til højre de
-   åbne tilgange (udforske, eksperimentere, provokere). Døren tilbage til Atelieret sidder mellem de to grupper.
+   langs en skala på gulvet med to poler: design (udfylde et behov, løse et problem) og de åbne tilgange
+   (udforske, eksperimentere, provokere). Midt i rummet står en almindelig fjernbetjening, hvor designvalgene
+   bliver markeret (man får øje for valg, andre har truffet). Døren tilbage til Atelieret sidder bag skalaen.
    Trin: a1-0 (skalaen og de to grupper), a1-1 designprocesser, a1-2 innovation og entreprenørskab,
    a1-3 materielle betingelser (klikbar komponentkasse), a1-4 æstetisk/kritisk produkt (lampe og telefon). */
 
@@ -29,7 +30,7 @@ export default function build(ctx) {
   T.mesh(ctx.root, gulvGeo, T.hold(new THREE.MeshStandardMaterial({ map: gulvTex, roughness: 0.95 })), `0 0 ${(Z0 + Z1) / 2}`);
 
   // vægge: hulplade øverst med værktøjssilhuetter, mørke skabe nederst (tegnet i samme tekstur)
-  const vaegTex = T.canvas(1024, 512, (g, w, h) => {
+  const vaegTex = T.canvas(2048, 512, (g, w, h) => {
     const r = T.rng(8);
     g.fillStyle = "#4a3f36"; g.fillRect(0, 0, w, h);
     g.fillStyle = "rgba(15,10,8,0.85)";
@@ -43,7 +44,13 @@ export default function build(ctx) {
       (x, y) => { g.strokeStyle = "#e8b23c"; g.lineWidth = 9; g.beginPath(); g.arc(x, y + 50, 26, 0, 7); g.stroke(); g.strokeStyle = "#2a2a33"; g.lineWidth = 6; for (let k = 0; k < 3; k++) { g.beginPath(); g.arc(x, y + 50, 16 - k * 5, 0, 7); g.stroke(); } },
       (x, y) => { g.fillStyle = "#c9b98a"; g.fillRect(x - 7, y, 14, 160); g.fillStyle = "#3a3a44"; for (let k = 0; k < 16; k++) g.fillRect(x - 7, y + k * 10, k % 2 ? 5 : 9, 1.5); },
     ];
-    for (let x = 60; x < w; x += 70 + r() * 40) tools[Math.floor(r() * tools.length)](x, 40 + r() * 70);
+    // værktøjet hænger i grupper med tomme felter imellem, så væggen ikke ligner tapet
+    let x = 50 + r() * 120;
+    while (x < w - 80) {
+      const n = 2 + Math.floor(r() * 4), y0 = 40 + r() * 60;
+      for (let k = 0; k < n && x < w - 60; k++) { tools[Math.floor(r() * tools.length)](x, y0 + r() * 20); x += 52 + r() * 22; }
+      x += 160 + r() * 260;
+    }
     // skabe nederst
     g.fillStyle = "#23202a"; g.fillRect(0, h * 0.66, w, h * 0.34);
     for (let x = 0; x < w; x += 128) { g.fillStyle = "#2c2833"; g.fillRect(x + 4, h * 0.66 + 6, 120, h * 0.34 - 12); g.fillStyle = "#6b7299"; g.fillRect(x + 54, h * 0.66 + 26, 20, 5); }
@@ -51,7 +58,7 @@ export default function build(ctx) {
   });
   vaegTex.wrapS = THREE.RepeatWrapping;
   const vaegge = [[-X, Z0, X, Z0], [X, Z0, X, Z1], [X, Z1, -X, Z1], [-X, Z1, -X, Z0]];
-  T.mesh(ctx.root, T.vaegGeo(vaegge, H, 4, H), T.hold(new THREE.MeshStandardMaterial({ map: vaegTex, color: "#b9b2c4", roughness: 0.9 })));
+  T.mesh(ctx.root, T.vaegGeo(vaegge, H, 8.6, H), T.hold(new THREE.MeshStandardMaterial({ map: vaegTex, color: "#b9b2c4", roughness: 0.9 })));
 
   const S = new Batch();     // belyst statisk geometri
   const L = new Batch();     // selvlysende (rør, pærer)
@@ -99,22 +106,28 @@ export default function build(ctx) {
   // en svag mørk underlægning, så buerne står tydeligt på betonen
   T.mesh(ctx.root, bue(200, -20, RB - 0.32, RB + 0.32, 64), T.hold(new THREE.MeshBasicMaterial({ color: "#000000", transparent: true, opacity: 0.5, depthWrite: false })));
 
-  // to bannere hænger over hver sin gruppe: design til venstre, de åbne tilgange til højre
+  // polerne: et lavt, skråt gulvskilt ved hver ende af skalaen (som en markering på gulvet, ikke et skilt i luften)
   const polTekst = [["Design", "udfylde et behov · løse et problem"], ["Åbne tilgange", "udforske · eksperimentere · provokere"]];
-  const polSkilte = [145, 35].map((ang, i) => {
-    const a = ang * D, x = CEN[0] + Math.cos(a) * (RS + 0.35), z = CEN[1] - Math.sin(a) * (RS + 0.35);
-    const yaw = Math.atan2(CEN[0] - x, CEN[1] - z) / D;
-    const g = kit.grp(ctx.root, `${x} 0 ${z}`, { rotation: `0 ${yaw} 0` });
-    for (const sx of [-0.95, 0.95]) S.box("#11131c", [x + Math.cos(yaw * D) * sx, (H + 3.8) / 2, z - Math.sin(yaw * D) * sx], [0.012, H - 3.8, 0.012]);
-    return ctx.sign(polTekst[i][0], { parent: g, sub: polTekst[i][1], position: "0 3.45 0", width: 2.3, size: 82 });
+  const polSkilte = [198, -18].map((ang, i) => {
+    const a = ang * D, x = CEN[0] + Math.cos(a) * (RB - 0.55), z = CEN[1] - Math.sin(a) * (RB - 0.55) + 0.2;
+    const g = kit.grp(ctx.root, `${x} 0 ${z}`, { rotation: `0 ${i ? -14 : 14} 0` });
+    S.push([x, 0, z], [0, i ? -14 : 14, 0]);
+    S.box("#2b2f40", [0, 0.13, -0.06], [1.4, 0.26, 0.24], [-0, 0, 0]);
+    S.pop();
+    return ctx.sign(polTekst[i][0], { parent: g, sub: polTekst[i][1], position: "0 0.3 0.0", rotation: "-62 0 0", width: 1.3, size: 84 });
   });
   /* ---------- Stationerne ---------- */
   const STATION = [
-    { id: "a1-1", ang: 166 }, { id: "a1-2", ang: 123 }, { id: "a1-3", ang: 57 }, { id: "a1-4", ang: 14 },
+    { id: "a1-1", ang: 168 }, { id: "a1-2", ang: 136 }, { id: "a1-3", ang: 44 }, { id: "a1-4", ang: 12 },
   ];
   const stationer = {};
   // små lysende markeringer på skalaen ud for hver station
-  STATION.forEach(st => { const a = st.ang * D; L.cyl(A, [CEN[0] + Math.cos(a) * RB, 0.02, CEN[1] - Math.sin(a) * RB], 0.11, 0.02, null, 16); });
+  STATION.forEach(st => {
+    const a = st.ang * D, c = Math.cos(a), sn = Math.sin(a);
+    L.cyl(A, [CEN[0] + c * RB, 0.02, CEN[1] - sn * RB], 0.11, 0.02, null, 16);
+    const r0 = RB + 0.15, r1 = RS - 0.5;
+    L.box("#7a5a2a", [CEN[0] + c * (r0 + r1) / 2, 0.016, CEN[1] - sn * (r0 + r1) / 2], [0.035, 0.004, r1 - r0], [0, Math.atan2(c, -sn) / D, 0]);
+  });
   const poolTex = T.glow(A);
   STATION.forEach(st => {
     const a = st.ang * D;
@@ -133,22 +146,22 @@ export default function build(ctx) {
     B.box("#6b7299", [0.45, 0.78, 0.452], [0.12, 0.02, 0.01]);
     B.box("#e8e4da", [-0.7, 0.95, -0.36], [0.22, 0.05, 0.07]);
     // lampen over bordet
-    B.box("#11131c", [0, 3.55, 0], [0.012, 1.7, 0.012]);
-    B.add(T.geo.cyl(14, 0.25), "#2b2420", [0, 2.72, 0], null, [0.5, 0.24, 0.5]);
+    B.box("#11131c", [0, 4.0, 0], [0.012, 0.8, 0.012]);
+    B.add(T.geo.cyl(14, 0.25), "#2b2420", [0, 3.62, 0], null, [0.4, 0.2, 0.4]);
     T.mesh(g, B.merge(), T.lit());
-    const pære = T.mesh(g, T.hold(new THREE.CircleGeometry(0.22, 14).rotateX(Math.PI / 2)), T.hold(new THREE.MeshBasicMaterial({ color: "#ffd9a0" })), "0 2.595 0");
-    const LK = new Batch(); LK.cone([0, 2.59, 0], 0.22, 1.0, 1.66, "#2e1d07");
+    const pære = T.mesh(g, T.hold(new THREE.CircleGeometry(0.18, 14).rotateX(Math.PI / 2)), T.hold(new THREE.MeshBasicMaterial({ color: "#ffd9a0" })), "0 3.515 0");
+    const LK = new Batch(); LK.cone([0, 3.51, 0], 0.18, 1.0, 2.58, "#2e1d07");
     const kegleMat = T.additive({ opacity: 0.25 });
     T.mesh(g, LK.merge(), kegleMat);
     const pg = T.hold(new THREE.PlaneGeometry(2.4, 1.8)); pg.rotateX(-Math.PI / 2);
     const poolMat = T.hold(new THREE.MeshBasicMaterial({ map: poolTex, transparent: true, opacity: 0.2, depthWrite: false, blending: THREE.AdditiveBlending }));
     T.mesh(g, pg, poolMat, "0 0.935 0");
     ctx.station(st.id, g);
-    ctx.sign(ctx.step(st.id).title, { parent: g, position: "0 2.08 -0.5", width: 1.6, size: 72 });
-    // view: halvanden meter foran bordet, mod centrum
-    const vx = x + dx / len * 1.55, vz = z + dz / len * 1.55;
-    ctx.view(st.id, { position: [vx, 0, vz], lookAt: [x, 1.15, z] });
-    stationer[st.id] = { g, pære, kegleMat, poolMat, x, z };
+    const skilt = ctx.sign(ctx.step(st.id).title, { parent: g, position: "0 2.12 -0.5", width: 1.85, size: 74 });
+    // view: knap to meter foran bordet, mod centrum
+    const vx = x + dx / len * 1.85, vz = z + dz / len * 1.85;
+    ctx.view(st.id, { position: [vx, 0, vz], lookAt: [x, 1.2, z] });
+    stationer[st.id] = { g, pære, kegleMat, poolMat, x, z, skilt };
   });
 
   /* a1-1 · brugerkort → skitse → prototype */
@@ -176,7 +189,7 @@ export default function build(ctx) {
     }
   }
   // søjleboremaskine i bageste venstre hjørne og en materialevogn i højre
-  S.push([-6.3, 0, -6.6], [0, 30, 0]);
+  S.push([4.9, 0, -6.7], [0, -10, 0]);
   S.box("#2b2f40", [0, 0.03, 0], [0.6, 0.06, 0.45]); S.cyl("#4d5b7a", [0, 0.8, -0.12], 0.05, 1.6, null, 8);
   S.box("#3a76c4", [0, 1.45, 0], [0.3, 0.32, 0.5]); S.box("#4d5b7a", [0, 0.75, 0.05], [0.4, 0.04, 0.35]); S.cyl("#b9bfcc", [0, 1.22, 0.12], 0.02, 0.16, null, 6);
   S.pop();
@@ -197,27 +210,33 @@ export default function build(ctx) {
   ctx.sign(ctx.room.name, { sub: ctx.room.sub, position: `0 3.75 ${Z0 + 0.08}`, width: 3.2 });
   const erk = T.erkendeformer(ctx.root, `2.6 3.75 ${Z0 + 0.1}`);
 
-  ctx.view("a1-0", { position: [0, 0, 2.6], lookAt: [0, 0.55, -3.6] });
+  ctx.view("a1-0", { position: [0, 0, 3.1], lookAt: [0, 0.75, -3.4] });
+
+  /* ---------- Midt i rummet: en almindelig fjernbetjening, hvor designvalgene bliver synlige ---------- */
+  const dv = designvalg(kit.grp(ctx.root, `${CEN[0]} 0 ${CEN[1] + 0.5}`));
 
   /* ---------- Trin og animation ---------- */
   let aktiv = null, t0 = 0, tNu = 0;
   const lerp = (a, b, k) => a + (b - a) * k;
   return {
-    onStep(id) { aktiv = id; t0 = tNu; d3.nulstil(); },
+    onStep(id) { aktiv = id; t0 = null; d3.nulstil(); },
     tick(t, dt) {
-      tNu = t; const s = (t - t0) / 1000;
-      erk.tick(dt);
+      tNu = t; if (t0 === null) t0 = t;   // forløbet starter ved første frame efter trinskiftet
+      const s = (t - t0) / 1000;
+      erk.tick(dt, aktiv === "a1-0" ? 1 : 0.3);
       // a1-0: de to grupper lyser skiftevis; ellers lyser kun den aktive stations lampe
       const intro = aktiv === "a1-0";
-      const fase = intro ? Math.floor(s / 2.6) % 2 : -1;
+      const fase = intro ? Math.floor(s / 2.6) % 3 : -1;   // 0 design, 1 åbne tilgange, 2 designvalg i en hverdagsting
       const blødt = intro ? Math.min(1, (s % 2.6) / 0.5) : 1;
-      buer.forEach((m, i) => { m.opacity = intro ? (i === fase ? lerp(0.5, 1, blødt) : 0.4) : 0.55; });
-      polSkilte.forEach((p, i) => { const mm = p.getObject3D("mesh"); if (mm) mm.material.opacity = intro ? (i === fase ? 1 : 0.7) : 0.9; });
+      buer.forEach((m, i) => { m.opacity = intro ? (i === fase ? lerp(0.45, 1, blødt) : 0.35) : 0.4; });
+      polSkilte.forEach((p, i) => { const mm = p.getObject3D("mesh"); if (mm) mm.material.opacity = intro ? (i === fase ? 1 : 0.55) : 0.45; });
+      dv.tick(intro && fase === 2 ? s % 2.6 : -1, intro);
       STATION.forEach((st, i) => {
         const o = stationer[st.id];
         const gruppe = i < 2 ? 0 : 1;
-        const tændt = intro ? (gruppe === fase ? blødt : 0.15) : st.id === aktiv ? (aktiv === "a1-4" ? 0.3 : 1) : 0.12;
-        o.kegleMat.opacity = 0.05 + 0.3 * tændt; o.poolMat.opacity = 0.05 + 0.5 * tændt;
+        const tændt = intro ? (fase < 2 && gruppe === fase ? blødt : 0.12) : st.id === aktiv ? (aktiv === "a1-4" ? 0 : 1) : 0.08;
+        o.kegleMat.opacity = 0.03 + 0.17 * tændt; o.poolMat.opacity = 0.03 + 0.5 * tændt;
+        const sm = o.skilt.getObject3D("mesh"); if (sm) sm.material.opacity = intro ? (fase < 2 && gruppe === fase ? 1 : 0.55) : st.id === aktiv ? 1 : 0.14;
         o.pære.getObject3D("mesh").material.color.setScalar(0.35 + 0.65 * tændt).multiply(new THREE.Color("#ffd9a0"));
       });
       d1.tick(aktiv === "a1-1" ? s : -1, dt);
@@ -260,13 +279,13 @@ export default function build(ctx) {
     });
     const B = new Batch();
     const STF = [[-0.52, 0.31, 0.43], [0.0, 0.43, 0.31]];
-    for (const [x, w] of [[-0.52, 0.34], [0.0, 0.46]]) { // staffelier
+    for (const [x, w] of [[-0.6, 0.34], [-0.08, 0.46]]) { // staffelier
       B.box("#5a4330", [x, Y + 0.02, 0.05], [w, 0.03, 0.12]);
       B.box("#5a4330", [x, Y + 0.2, -0.04], [0.03, 0.4, 0.03], [-12, 0, 0]);
     }
     T.mesh(g, B.merge(), T.lit());
-    const kortE = T.mesh(g, T.hold(new THREE.PlaneGeometry(0.3, 0.42)), T.hold(new THREE.MeshStandardMaterial({ map: kort, roughness: 0.8 })), `-0.52 ${Y + 0.25} 0.04`, { rotation: "-12 0 0" });
-    const skitseE = T.mesh(g, T.hold(new THREE.PlaneGeometry(0.44, 0.31)), T.hold(new THREE.MeshStandardMaterial({ map: skitse, roughness: 0.8 })), `0 ${Y + 0.2} 0.04`, { rotation: "-12 0 0" });
+    const kortE = T.mesh(g, T.hold(new THREE.PlaneGeometry(0.3, 0.42)), T.hold(new THREE.MeshStandardMaterial({ map: kort, roughness: 0.8 })), `-0.6 ${Y + 0.25} 0.04`, { rotation: "-12 0 0" });
+    const skitseE = T.mesh(g, T.hold(new THREE.PlaneGeometry(0.44, 0.31)), T.hold(new THREE.MeshStandardMaterial({ map: skitse, roughness: 0.8 })), `-0.08 ${Y + 0.2} 0.04`, { rotation: "-12 0 0" });
     // prototypen: papkasse med to "lys" (grøn/rød) og en lille dør-sensor
     const P = new Batch();
     P.box("#b8875a", [0, 0.13, 0], [0.2, 0.26, 0.14]);
@@ -274,7 +293,7 @@ export default function build(ctx) {
     for (const y of [0.18, 0.09]) P.cyl("#2b2b33", [0, y, 0.071], 0.04, 0.01, [90, 0, 0], 14);
     P.box("#2f6fd1", [0.12, 0.05, 0.04], [0.04, 0.06, 0.04]);
     P.cyl("#555a6e", [-0.07, 0.33, 0], 0.005, 0.1, [0, 0, 10], 5);
-    const protoE = kit.grp(g, `0.55 ${Y} 0.05`);
+    const protoE = kit.grp(g, `0.45 ${Y} 0.05`, { scale: "1.9 1.9 1.9" });
     T.mesh(protoE, P.merge(), T.lit());
     const grøn = T.hold(new THREE.MeshBasicMaterial({ color: "#3aff7a" })), rød = T.hold(new THREE.MeshBasicMaterial({ color: "#ff4a3a" }));
     const cg = T.hold(new THREE.CircleGeometry(0.03, 14));
@@ -283,25 +302,32 @@ export default function build(ctx) {
     const haloR = T.mesh(protoE, T.hold(new THREE.PlaneGeometry(0.22, 0.22)), T.hold(new THREE.MeshBasicMaterial({ map: T.glow("#ff4a3a"), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })), "0 0.09 0.08");
     // pile imellem (flade chevroner på bordet)
     const pilGeo = T.hold(pil());
-    const pile = [-0.26, 0.29].map(x => {
+    const pile = [-0.36, 0.2].map(x => {
       const m = T.hold(new THREE.MeshBasicMaterial({ color: A, transparent: true, opacity: 0.3 }));
-      T.mesh(g, pilGeo, m, `${x} ${Y + 0.004} 0.2`, { rotation: "-90 0 0" }); return m;
+      T.mesh(g, pilGeo, m, `${x} ${Y + 0.2} 0.06`, { scale: "1.6 1.6 1.6" }); return m;
     });
-    // en lille bruger (de yngste elever) ved prototypen
+    // en af de yngste elever står ved bordet i barnehøjde og rækker ud mod prototypen
     const F = new Batch();
-    F.cyl("#3a76c4", [0, 0.07, 0], 0.035, 0.14, null, 10, 0.75); F.sph("#c9a27e", [0, 0.17, 0], 0.035); F.sph("#3b2a1c", [0, 0.185, -0.006], 0.036, [1, 0.7, 1]);
-    const figur = kit.grp(g, `0.78 ${Y} 0.22`, { rotation: "0 -40 0" });
+    F.cyl("#3a76c4", [0, 0.62, 0], 0.13, 0.5, null, 12, 0.8);               // trøje
+    for (const x of [-0.06, 0.06]) F.cyl("#2b2f40", [x, 0.2, 0], 0.045, 0.4, null, 8);   // ben
+    F.sph("#c9a27e", [0, 1.0, 0], 0.12); F.sph("#3b2a1c", [0, 1.05, -0.02], 0.125, [1, 0.75, 1]);
+    F.cyl("#3a76c4", [0.13, 0.7, 0], 0.035, 0.3, [0, 0, -8], 6);
+    const figur = kit.grp(g, `0.98 0 -0.5`, { rotation: "0 -35 0", scale: "1.2 1.2 1.2" });
     T.mesh(figur, F.merge(), T.lit());
+    const arm = kit.grp(figur, "-0.12 0.82 0");
+    T.mesh(arm, T.hold(new THREE.CylinderGeometry(0.035, 0.035, 0.34, 6).translate(0, -0.17, 0)), T.hold(new THREE.MeshStandardMaterial({ color: "#3a76c4", flatShading: true })));
     const elementer = [kortE, skitseE, protoE];
     return {
       tick(s) {
-        // rækkefølgen bygges op: kort → pil → skitse → pil → prototype → brugeren prøver den
-        const p = s < 0 ? 99 : s % 8;
-        elementer.forEach((e, i) => { const k = s < 0 ? 1 : clamp((p - i * 0.9) / 0.35); const sk = 0.15 + 0.85 * ease(k); e.object3D.scale.setScalar(sk); });
-        pile.forEach((m, i) => { m.opacity = s < 0 ? 0.35 : clamp((p - 0.45 - i * 0.9) / 0.3) * 0.95 + 0.05; });
-        const fk = s < 0 ? 1 : clamp((p - 2.3) / 0.4); figur.object3D.scale.setScalar(Math.max(0.001, ease(fk)));
-        // prototypen viser "ledig" (grøn) og "optaget" (rød) skiftevis
-        const ledig = s < 0 ? true : Math.floor(p / 1.2) % 2 === 0 || p < 2.3;
+        // rækken bygges op én gang og bliver stående: kort → pil → skitse → pil → prototype → brugeren prøver den
+        const p = s < 0 ? 99 : s;
+        const basis = [1, 1, 1.9];
+        elementer.forEach((e, i) => { const k = clamp((p - i * 0.8) / 0.35); e.object3D.scale.setScalar(basis[i] * (0.15 + 0.85 * ease(k))); });
+        pile.forEach((m, i) => { m.opacity = s < 0 ? 0.5 : 0.1 + 0.9 * clamp((p - 0.45 - i * 0.8) / 0.3); });
+        // brugeren rækker ud og trykker; prototypen svarer ved at skifte mellem ledig og optaget
+        const tryk = p < 2.8 ? 0 : Math.max(0, Math.sin((p - 2.8) * 1.6));
+        arm.object3D.rotation.z = -(1.15 + 0.4 * tryk);
+        const ledig = s < 0 ? true : p < 3.4 || Math.floor((p - 3.4) / 1.96) % 2 === 1;
         grøn.color.set(ledig ? "#3aff7a" : "#1b3a26"); rød.color.set(ledig ? "#3a1b1b" : "#ff4a3a");
         haloG.visible = ledig; haloR.visible = !ledig;
       },
@@ -310,80 +336,97 @@ export default function build(ctx) {
 
   function innovationStation(g) {
     const Y = 0.93;
-    // Forrest står skolen som en lille bygning med en stor dør i gavlen. Døren svinger op, og en lysende sti
-    // løber ud til en lille by bag den: en forening, en butik og en institution.
+    // Skolen står til venstre på bordet som en lille bygning. Dens gavl foldes ned som en rampe ud mod byen
+    // (processen rækker ud af skolen), og en idé – en lille lysende kasse – kører ud til en forening, en butik og
+    // en institution. Bagefter vurderes idéen: to steder dækker den et behov (flueben), ét overser den (spørgsmålstegn).
     const B = new Batch();
-    // byens grundplade, græs og veje
-    B.box("#26342f", [0, Y + 0.012, -0.08], [1.56, 0.024, 0.74]);
-    B.box("#4b4f5e", [0, Y + 0.026, 0.02], [1.44, 0.004, 0.08]);
-    B.box("#4b4f5e", [0, Y + 0.026, 0.17], [0.09, 0.004, 0.22]);
-    // en fritstående dørkarm forrest i midten: skolens dør ud mod byen
-    const SX = 0, SZ = 0.3, DW = 0.24, DH = 0.4;
-    B.box("#2b2f40", [SX, Y + 0.008, SZ], [DW + 0.14, 0.016, 0.1]);
-    for (const sx of [-1, 1]) B.box("#e8e4da", [SX + sx * (DW / 2 + 0.02), Y + DH / 2 + 0.01, SZ], [0.04, DH, 0.05]);
-    B.box("#e8e4da", [SX, Y + DH + 0.03, SZ], [DW + 0.08, 0.04, 0.05]);
-    // forening: klubhus med græsbane og vimpel
-    B.box("#c9b38a", [-0.5, Y + 0.085, -0.26], [0.26, 0.13, 0.18]);
-    B.add(T.geo.cyl(3), "#3a7a4a", [-0.5, Y + 0.185, -0.26], [0, 0, 90], [0.1, 0.27, 0.22]);
-    B.box("#4f8f4a", [-0.56, Y + 0.027, -0.04], [0.32, 0.004, 0.0]);
-    B.cyl("#b9bfcc", [-0.32, Y + 0.17, -0.3], 0.004, 0.3, null, 5);
-    B.add(T.geo.cyl(3), A, [-0.29, Y + 0.29, -0.3], [0, 0, -90], [0.04, 0.06, 0.004]);
+    // grundplade, græs og vej
+    B.box("#26342f", [0.12, Y + 0.012, -0.05], [1.4, 0.024, 0.7]);
+    B.box("#4b4f5e", [0.12, Y + 0.026, 0.12], [1.36, 0.004, 0.09]);
+    // skolen: rød murstensbygning med saddeltag og vinduesrækker; gavlen mod byen (+x) er åben
+    const SX = -0.58, SZ = 0.0;
+    B.box("#8a4a3a", [SX, Y + 0.12, SZ - 0.13], [0.3, 0.2, 0.02]);
+    B.box("#8a4a3a", [SX, Y + 0.12, SZ + 0.13], [0.3, 0.2, 0.02]);
+    B.box("#8a4a3a", [SX - 0.14, Y + 0.12, SZ], [0.02, 0.2, 0.28]);
+    B.add(T.geo.cyl(3), "#4a3a3a", [SX, Y + 0.27, SZ], [90, 0, 90], [0.22, 0.34, 0.3]);
+    for (const x of [-0.08, 0, 0.08]) for (const y of [0.08, 0.16]) B.box("#ffd98a", [SX + x, Y + y, SZ + 0.141], [0.04, 0.04, 0.003]);
+    B.box("#e8e4da", [SX, Y + 0.38, SZ + 0.0], [0.012, 0.1, 0.012]);
+    B.box(A, [SX + 0.03, Y + 0.41, SZ], [0.05, 0.03, 0.004]);
+    // forening: klubhus med græsbane
+    B.box("#c9b38a", [0.0, Y + 0.085, -0.22], [0.26, 0.13, 0.18]);
+    B.add(T.geo.cyl(3), "#3a7a4a", [0.0, Y + 0.185, -0.22], [0, 0, 90], [0.1, 0.27, 0.22]);
+    B.box("#4f8f4a", [0.0, Y + 0.027, -0.0], [0.3, 0.004, 0.0]);
     // butik: facade med stribet markise
-    B.box("#d6d0c4", [0.0, Y + 0.1, -0.33], [0.3, 0.17, 0.16]);
-    for (let i = 0; i < 6; i++) B.box(i % 2 ? "#e8e4da" : "#d14b3c", [-0.125 + i * 0.05, Y + 0.165, -0.23], [0.05, 0.008, 0.07], [25, 0, 0]);
-    B.box("#3a3f55", [0, Y + 0.195, -0.33], [0.32, 0.02, 0.18]);
+    B.box("#d6d0c4", [0.38, Y + 0.1, -0.24], [0.28, 0.17, 0.16]);
+    for (let i = 0; i < 6; i++) B.box(i % 2 ? "#e8e4da" : "#d14b3c", [0.265 + i * 0.046, Y + 0.165, -0.145], [0.046, 0.008, 0.07], [25, 0, 0]);
+    B.box("#3a3f55", [0.38, Y + 0.195, -0.24], [0.3, 0.02, 0.18]);
     // institution: bygning med søjler og gavl
-    B.box("#b9b2c4", [0.5, Y + 0.13, -0.3], [0.36, 0.21, 0.2]);
-    B.add(T.geo.cyl(3), "#8a8296", [0.5, Y + 0.27, -0.2], [0, 0, 90], [0.08, 0.38, 0.04]);
-    for (let i = 0; i < 5; i++) B.cyl("#e8e4da", [0.36 + i * 0.07, Y + 0.125, -0.18], 0.011, 0.2, null, 6);
-    B.box("#8a8296", [0.5, Y + 0.025, -0.17], [0.4, 0.03, 0.06]);
+    B.box("#b9b2c4", [0.68, Y + 0.13, 0.0], [0.24, 0.21, 0.34]);
+    B.add(T.geo.cyl(3), "#8a8296", [0.68, Y + 0.27, 0.0], [90, 0, 90], [0.08, 0.26, 0.38]);
+    for (let i = 0; i < 4; i++) B.cyl("#e8e4da", [0.55, Y + 0.12, -0.12 + i * 0.08], 0.011, 0.2, null, 6);
     // træer
-    for (const [x, z] of [[-0.24, -0.4], [0.25, -0.42], [-0.7, -0.4], [0.72, -0.1], [-0.72, 0.1], [0.62, 0.12]]) { B.cyl("#5a3e2a", [x, Y + 0.05, z], 0.008, 0.06, null, 5); B.add(T.geo.sph(7, 5), "#3e7a4a", [x, Y + 0.1, z], null, [0.07, 0.08, 0.07]); }
+    for (const [x, z] of [[-0.25, -0.3], [0.16, -0.36], [0.75, -0.32], [-0.3, 0.26], [0.5, 0.28]]) { B.cyl("#5a3e2a", [x, Y + 0.05, z], 0.008, 0.06, null, 5); B.add(T.geo.sph(7, 5), "#3e7a4a", [x, Y + 0.1, z], null, [0.07, 0.08, 0.07]); }
     T.mesh(g, B.merge(), T.lit());
-    // vinduer der tændes i bygningerne, ét sæt pr. bygning
+    // gavlen: hængslet forneden, foldes ned som en rampe mod byen
+    const gavl = kit.grp(g, `${SX + 0.15} ${Y + 0.024} ${SZ}`);
+    const GB = new Batch();
+    GB.box("#9a5a46", [0, 0.1, 0], [0.02, 0.2, 0.28]);
+    GB.box("#ffd98a", [0.011, 0.11, 0], [0.003, 0.1, 0.09]);
+    T.mesh(gavl, GB.merge(), T.lit());
+    const indeLys = T.hold(new THREE.MeshBasicMaterial({ map: T.glow("#ffd9a0"), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+    const ig = T.hold(new THREE.PlaneGeometry(0.6, 0.45)); ig.rotateX(-Math.PI / 2);
+    T.mesh(g, ig, indeLys, `${SX + 0.28} ${Y + 0.03} ${SZ}`);
+    // idéen: en lysende kasse, der kører ud af skolen og besøger de tre steder
+    const ideM = T.hold(new THREE.MeshBasicMaterial({ color: "#ffe0a8" }));
+    const ide = T.mesh(g, T.hold(new THREE.BoxGeometry(0.06, 0.06, 0.06)), ideM, `${SX} ${Y + 0.06} ${SZ}`);
+    const ideGlødM = T.hold(new THREE.MeshBasicMaterial({ map: T.glow(A), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+    const ideGlød = T.mesh(g, T.hold(new THREE.PlaneGeometry(0.3, 0.3)), ideGlødM);
+    const STEDER = [[0.0, -0.06], [0.38, -0.1], [0.55, 0.12]];
+    const rute = [[SX, SZ], [SX + 0.3, SZ + 0.12], [0.0, 0.12], STEDER[0], [0.2, 0.12], [0.38, 0.12], STEDER[1], [0.42, 0.12], STEDER[2]];
+    // vinduer der tændes, når idéen når frem
     const vinduer = [
-      [[-0.56, 0.09, -0.169], [-0.44, 0.09, -0.169]],
-      [[-0.07, 0.09, -0.249], [0.07, 0.09, -0.249]],
-    ].map(list => {
+      [[-0.05, 0.09, -0.129], [0.05, 0.09, -0.129]],
+      [[0.32, 0.09, -0.159], [0.44, 0.09, -0.159]],
+      [[0.559, 0.13, -0.06], [0.559, 0.13, 0.06]],
+    ].map((list, i) => {
       const m = T.hold(new THREE.MeshBasicMaterial({ color: "#3a3226" }));
-      const VB = new Batch({ uv: true }); list.forEach(([x, y, z]) => VB.plane([x, Y + y, z], [0.06, 0.05]));
+      const VB = new Batch({ uv: true }); list.forEach(([x, y, z]) => VB.plane([x, Y + y, z], [0.06, 0.05], i === 2 ? [0, -90, 0] : [0, 0, 0]));
       T.mesh(g, VB.merge(), m); return m;
     });
-    const instM = T.hold(new THREE.MeshBasicMaterial({ color: "#3a3226" }));
-    T.mesh(g, T.hold(new THREE.PlaneGeometry(0.3, 0.14)), instM, `0.5 ${Y + 0.13} -0.199`);
-    vinduer.push(instM);
-    // små navneskilte, der dukker op over bygningerne
-    const tags = ["forening", "butik", "institution"].map((n, i) =>
-      kit.textPlane(g, `${[-0.5, 0, 0.5][i]} ${Y + 0.45} -0.28`, n, A, { width: 0.44, aspect: 0.25, size: 120, bg: true, ink: "#eef1ff" }));
-    // døren i skolens gavl, hængslet i venstre side, svinger ud mod byen
-    const hængsel = kit.grp(g, `${SX - DW / 2} ${Y + 0.016} ${SZ}`);
-    const DB = new Batch();
-    DB.box("#3a76c4", [DW / 2, DH / 2, 0], [DW - 0.006, DH - 0.006, 0.02]);
-    DB.box("#2f5f9e", [DW / 2, DH * 0.7, 0.012], [DW * 0.66, DH * 0.32, 0.004]);
-    DB.box("#2f5f9e", [DW / 2, DH * 0.28, 0.012], [DW * 0.66, DH * 0.32, 0.004]);
-    for (const zz of [0.016, -0.016]) DB.sph("#e8b23c", [DW * 0.84, DH * 0.48, zz], 0.012);
-    T.mesh(hængsel, DB.merge(), T.lit());
-    // lys der vælder ud af døren
-    const udsyn = T.hold(new THREE.MeshBasicMaterial({ map: T.glow("#ffd9a0"), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
-    const ug = T.hold(new THREE.PlaneGeometry(0.5, 0.5)); ug.rotateX(-Math.PI / 2);
-    T.mesh(g, ug, udsyn, `0 ${Y + 0.03} ${SZ - 0.18}`);
-    // stier af lysende prikker fra døren ud til de tre bygninger
-    const stiM = T.hold(new THREE.MeshBasicMaterial({ color: A, transparent: true, opacity: 0 }));
-    const SB = new Batch({ uv: true });
-    const fra = [SX, SZ - 0.04], mål = [[-0.5, -0.15], [0, -0.23], [0.5, -0.17]];
-    mål.forEach(([mx, mz]) => { for (let k = 1; k <= 7; k++) { const t = k / 8; SB.add(T.geo.sph(6, 4), null, [fra[0] + (mx - fra[0]) * t, Y + 0.035, fra[1] + (mz - fra[1]) * t], null, [0.02, 0.012, 0.02]); } });
-    const stiGeo = SB.merge(); T.mesh(g, stiGeo, stiM);
-    const stiN = stiGeo.attributes.position.count;
+    // navneskilte og vurderingen (flueben eller spørgsmålstegn) over hver bygning
+    const navne = ["forening", "butik", "institution"], DÆKKER = [true, true, false];
+    const MX = [[0.0, -0.22], [0.38, -0.24], [0.68, 0.0]];
+    const tags = navne.map((n, i) => kit.textPlane(g, `${MX[i][0]} ${Y + 0.42} ${MX[i][1]}`, n, A, { width: 0.4, aspect: 0.25, size: 120, bg: true, ink: "#eef1ff" }));
+    const vurd = DÆKKER.map((ok, i) => {
+      const tex = T.canvas(128, 128, c => {
+        c.fillStyle = ok ? "#3aa35a" : "#3a3f55"; c.beginPath(); c.arc(64, 64, 58, 0, 7); c.fill();
+        c.strokeStyle = "#ffffff"; c.fillStyle = "#ffffff"; c.lineWidth = 14; c.lineCap = "round"; c.lineJoin = "round";
+        if (ok) { c.beginPath(); c.moveTo(34, 66); c.lineTo(56, 88); c.lineTo(96, 42); c.stroke(); }
+        else { c.font = '800 84px "Familjen Grotesk", sans-serif'; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("?", 64, 70); }
+      });
+      const m = T.hold(new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false }));
+      return { m, e: T.mesh(g, T.hold(new THREE.PlaneGeometry(0.13, 0.13)), m, `${MX[i][0]} ${Y + 0.58} ${MX[i][1]}`) };
+    });
+    const pos = new THREE.Vector3();
     return {
       tick(s) {
-        const p = s < 0 ? -1 : s % 10;
-        const åben = s < 0 ? 0 : p < 0.5 ? 0 : p < 1.5 ? ease((p - 0.5) / 1.0) : p < 8.8 ? 1 : 1 - ease((p - 8.8) / 1.0);
-        hængsel.object3D.rotation.y = -åben * 72 * D;
-        udsyn.opacity = 0.95 * åben;
-        stiM.opacity = åben > 0.02 ? 0.65 + 0.35 * Math.sin(s * 5) : 0;
-        stiGeo.setDrawRange(0, Math.floor(clamp((p - 1.2) / 1.2) * stiN / 3) * 3);
-        vinduer.forEach((m, i) => { const k = s < 0 ? 0 : clamp((p - 2.0 - i * 0.6) / 0.3) * åben; m.color.setRGB(0.23 + 0.77 * k, 0.2 + 0.65 * k, 0.15 + 0.4 * k); });
-        tags.forEach((tg, i) => { const k = s < 0 ? 0 : clamp((p - 2.0 - i * 0.6) / 0.3) * åben; tg.object3D.visible = k > 0.05; tg.object3D.scale.setScalar(0.6 + 0.4 * k); });
+        // 0–1 gavlen foldes ned · 1–5 idéen kører rundt · 5,5– vurderingen · 10 forfra
+        // forløbet kører én gang og bliver stående med vurderingen, så slutbilledet viser pointen
+        const p = s < 0 ? -1 : Math.min(s, 30);
+        const åben = s < 0 ? 0 : p < 1 ? ease(p) : 1;
+        gavl.object3D.rotation.z = -åben * 88 * D;
+        indeLys.opacity = 0.9 * åben;
+        // idéens rute
+        const u = s < 0 ? 0 : clamp((p - 1.1) / 4.2) * (rute.length - 1);
+        const k = Math.min(rute.length - 2, Math.floor(u)), f = u - k;
+        const [ax, az] = rute[k], [bx, bz] = rute[k + 1];
+        pos.set(ax + (bx - ax) * f, Y + 0.06 + Math.abs(Math.sin(u * Math.PI)) * 0.03, az + (bz - az) * f);
+        ide.object3D.position.copy(pos); ide.object3D.visible = s >= 0 && p > 0.6;
+        ideGlød.object3D.position.copy(pos); ideGlødM.opacity = ide.object3D.visible ? 0.8 : 0;
+        const nået = [3, 6, 8].map(n => u >= n - 0.05);
+        vinduer.forEach((m, i) => { const v = s < 0 ? 0 : nået[i] ? (DÆKKER[i] ? 1 : 0.25) : 0; m.color.setRGB(0.23 + 0.77 * v, 0.2 + 0.65 * v, 0.15 + 0.4 * v); });
+        tags.forEach((tg, i) => { tg.object3D.visible = s >= 0 && nået[i]; });
+        vurd.forEach((v, i) => { const kk = s < 0 ? 0 : clamp((p - 5.6 - i * 0.6) / 0.35); v.m.opacity = kk; v.e.object3D.scale.setScalar(0.5 + 0.5 * ease(kk)); });
       },
     };
   }
@@ -405,18 +448,17 @@ export default function build(ctx) {
       c.strokeStyle = "#5a3e2a"; c.lineWidth = 4; c.lineCap = "round";
       c.beginPath(); c.moveTo(40, 150); c.lineTo(40, 50); c.lineTo(200, 50); c.moveTo(260, 50); c.lineTo(470, 50); c.lineTo(470, 150); c.lineTo(300, 150); c.moveTo(220, 150); c.lineTo(40, 150); c.stroke();
       c.strokeRect(200, 36, 60, 28); c.beginPath(); c.arc(260, 150, 26, 0, 7); c.stroke(); c.beginPath(); c.moveTo(243, 133); c.lineTo(277, 167); c.moveTo(277, 133); c.lineTo(243, 167); c.stroke();
-      c.font = '600 28px "JetBrains Mono", monospace'; c.fillStyle = "#5a3e2a"; c.fillText("hvad kan den?", 120, 112);
     });
     T.mesh(g, T.hold(new THREE.PlaneGeometry(BW - 0.08, 0.4)), T.hold(new THREE.MeshStandardMaterial({ map: lågTex, roughness: 0.9 })), `0 ${Y + 0.25} ${-BD / 2 - 0.045}`, { rotation: "-18 0 0" });
 
-    const DEMO = [0, Y + 0.34, 0.1];   // hvor den valgte komponent løftes hen
+    const DEMO = [0, Y + 0.3, 0.14];   // hvor den valgte komponent løftes hen
     const lb = T.lit();
     const add = (m) => T.hold(m);
     const glowM = c => add(new THREE.MeshBasicMaterial({ map: T.glow(c), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
     const fladM = (c, o = 0) => add(new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o, side: THREE.DoubleSide, depthWrite: false }));
     // hver komponent: model + egen lille animation (som børn af komponenten, så de følger med, når den løftes)
     const fakt = [
-      { navn: "LED", pos: [-0.4, 0.11], tilt: 10, sk: 2.4,
+      { navn: "LED", pos: [-0.4, 0.11], tilt: 10, sk: 2.6,
         byg(b) { b.cyl("#ff5a3a", [0, 0.06, 0], 0.035, 0.05, null, 12); b.sph("#ff5a3a", [0, 0.085, 0], 0.035, [1, 1, 1], [12, 6]); b.cyl("#e8e4da", [0, 0.032, 0], 0.04, 0.008, null, 12); for (const x of [-0.012, 0.012]) b.cyl("#b9bfcc", [x, 0.0, 0], 0.003, 0.06, null, 4); },
         fx(p) { const m = glowM("#ff6a3a"); T.mesh(p, add(new THREE.PlaneGeometry(0.32, 0.32)), m, "0 0.075 0.05"); const kerne = fladM("#ffd0b0"); T.mesh(p, add(new THREE.SphereGeometry(0.02, 8, 6)), kerne, "0 0.08 0.03");
           return (t, on) => { const v = on ? 0.35 + 0.65 * Math.abs(Math.sin(t * 3.2)) : 0; m.opacity = v; kerne.opacity = v; }; } },
@@ -431,18 +473,26 @@ export default function build(ctx) {
         fx(p) { const RG = add(new THREE.RingGeometry(0.05, 0.058, 28)); RG.rotateX(-Math.PI / 2);
           const ringe = [0, 1, 2].map(() => { const m = fladM(A); return { m, e: T.mesh(p, RG, m, "0 0.056 0") }; });
           return (t, on) => ringe.forEach((r, k) => { const f = (t * 1.4 + k / 3) % 1; r.e.object3D.scale.setScalar(1 + f * 2.4); r.e.object3D.position.y = 0.056 + f * 0.04; r.m.opacity = on ? (1 - f) * 0.95 : 0; }); } },
-      { navn: "afstandssensor", pos: [-0.4, -0.11], tilt: 20, sk: 2.0,
+      { navn: "afstandssensor", pos: [-0.4, -0.11], tilt: 20, sk: 2.1,
         byg(b) { b.box("#1d4f8a", [0, 0.008, 0], [0.16, 0.012, 0.07]); for (const x of [-0.04, 0.04]) { b.cyl("#c9cdd8", [x, 0.033, 0], 0.022, 0.035, null, 12); b.cyl("#2a2a33", [x, 0.051, 0], 0.016, 0.002, null, 10); } },
         fx(p) { const hånd = ctx.kit.grp(p, "0 0.2 0"); const hm = add(new THREE.MeshStandardMaterial({ color: "#c9a27e", flatShading: true, transparent: true, opacity: 0 }));
           const HB = new Batch({ uv: true }); HB.add(T.geo.box(), null, [0, 0, 0], null, [0.11, 0.02, 0.09]); for (let k = 0; k < 4; k++) HB.add(T.geo.box(), null, [-0.04 + k * 0.027, 0, 0.065], null, [0.018, 0.016, 0.05]); HB.add(T.geo.box(), null, [0.07, 0, 0.0], [0, 30, 0], [0.04, 0.016, 0.02]);
           T.mesh(hånd, HB.merge(), hm);
           const RG = add(new THREE.RingGeometry(0.02, 0.027, 20)); RG.rotateX(-Math.PI / 2);
           const bølger = [0, 1, 2, 3].map(() => { const m = fladM("#7fd0ff"); return { m, e: T.mesh(p, RG, m, "-0.04 0.06 0") }; });
+          // rækkevidden: en stiplet grænse over sensoren. Inden for den måles afstanden; uden for den: intet signal
+          const MAX = 0.17, grænseM = fladM("#e8638c");
+          const GB = new Batch({ uv: true }); for (let k = 0; k < 7; k++) GB.plane([-0.09 + k * 0.03, MAX + 0.055, 0], [0.018, 0.004]);
+          T.mesh(p, GB.merge(), grænseM);
           const tal = fladM(A);
           const bar = T.mesh(p, add(new THREE.PlaneGeometry(0.018, 0.2).translate(0, 0.1, 0)), tal, "0.12 0.02 0");
-          return (t, on) => { const hy = 0.1 + 0.07 * (0.5 + 0.5 * Math.sin(t * 1.3)); hånd.object3D.position.y = hy; hm.opacity = on ? 1 : 0;
-            bølger.forEach((b, k) => { const f = (t * 1.2 + k / 4) % 1; b.e.object3D.position.set(k % 2 ? 0.04 : -0.04, 0.055 + f * (hy - 0.07), 0); b.e.object3D.scale.setScalar(1 + f * 1.4); b.m.opacity = on ? (1 - f) * 0.9 : 0; });
-            tal.opacity = on ? 0.9 : 0; bar.object3D.scale.y = (hy - 0.1) / 0.2; }; } },
+          const krydsM = fladM("#e8638c"); const KB = new Batch({ uv: true }); KB.plane([0, 0, 0], [0.05, 0.008], [0, 0, 45]); KB.plane([0, 0, 0], [0.05, 0.008], [0, 0, -45]);
+          T.mesh(p, KB.merge(), krydsM, "0.12 0.05 0.001");
+          return (t, on) => { const hy = 0.12 + 0.13 * (0.5 + 0.5 * Math.sin(t * 1.1)); hånd.object3D.position.y = hy; hm.opacity = on ? 1 : 0;
+            const inde = hy - 0.055 < MAX, dist = Math.min(hy - 0.07, MAX);
+            bølger.forEach((b, k) => { const f = (t * 1.2 + k / 4) % 1, top = inde ? hy - 0.07 : MAX; b.e.object3D.position.set(k % 2 ? 0.04 : -0.04, 0.055 + f * top, 0); b.e.object3D.scale.setScalar(1 + f * 1.4); b.m.opacity = on ? (1 - f) * (inde ? 0.9 : 0.9 * (1 - f) * (1 - f)) : 0; });
+            grænseM.opacity = on ? (inde ? 0.35 : 0.95) : 0;
+            tal.opacity = on && inde ? 0.9 : 0; bar.object3D.scale.y = Math.max(0.05, dist / 0.2); krydsM.opacity = on && !inde ? 1 : 0; }; } },
       { navn: "ledende tråd", pos: [0, -0.11], tilt: 55, sk: 1.5,
         byg(b) { b.box("#b0413e", [0, 0.006, 0], [0.24, 0.012, 0.16]); b.cyl("#c9cdd8", [-0.12, 0.02, 0.06], 0.022, 0.03, null, 12); b.cyl("#fff1c9", [0.1, 0.018, -0.05], 0.012, 0.012, null, 8); },
         fx(p) { const pts = []; for (let k = 0; k <= 22; k++) { const u = k / 22; pts.push([-0.1 + u * 0.2, 0.013, 0.05 - u * 0.1 + Math.sin(u * Math.PI * 3) * 0.035]); }
@@ -461,7 +511,7 @@ export default function build(ctx) {
           return (t, on) => { const v = 0.5 + 0.5 * Math.sin(t * 1.8); sm.opacity = on ? v : 0; kerne.opacity = on ? 0.3 + 0.7 * v : 0; tal.opacity = on ? 1 : 0; ramme.opacity = on ? 1 : 0; bar.object3D.scale.y = 0.08 + 0.92 * v; }; } },
     ];
     const komp = fakt.map((f, i) => {
-      const e = kit.grp(g, `${f.pos[0]} ${Y + 0.022} ${f.pos[1]}`);
+      const e = kit.grp(g, `${f.pos[0]} ${Y + 0.022} ${f.pos[1]}`, { scale: "1.3 1.3 1.3" });
       const inner = kit.grp(e);
       const b = new Batch(); f.byg(b);
       T.mesh(inner, b.merge(), lb);
@@ -475,7 +525,7 @@ export default function build(ctx) {
     });
     const navn = fakt.map(f => { const tp = kit.textPlane(g, `0 ${Y + 0.72} 0.1`, f.navn, A, { width: 0.62, aspect: 0.22, size: 110, bg: true, ink: "#eef1ff" }); tp.object3D.visible = false; return tp; });
     // et lille hint: "klik på en komponent"
-    const hint = kit.textPlane(g, `0 ${Y + 0.03} ${BD / 2 + 0.09}`, "klik på en komponent", "#a9b0d6", { width: 0.6, aspect: 0.14, size: 90, bg: false, ink: "#d6dbf5", rotation: "-70 0 0" });
+    const hint = kit.textPlane(g, `0 ${Y + 0.05} ${BD / 2 + 0.16}`, "klik på en komponent", A, { width: 0.8, aspect: 0.11, size: 84, bg: true, ink: "#eef1ff", rotation: "-45 0 0" });
     let valgt = -1, tValgt = 0;
     return {
       nulstil() { if (tNu - tValgt > 300) valgt = -1; },   // et klik, der selv skiftede trin, bevares
@@ -490,7 +540,7 @@ export default function build(ctx) {
         komp.forEach((k, j) => {
           const op = j === i ? ease(clamp(ls / 0.45)) : 0;
           const o = k.inner.object3D;
-          o.position.set((DEMO[0] - k.home[0]) * op, (DEMO[1] - k.home[1]) * op, (DEMO[2] - k.home[2]) * op);
+          o.position.set((DEMO[0] - k.home[0]) * op / 1.3, (DEMO[1] - k.home[1]) * op / 1.3, (DEMO[2] - k.home[2]) * op / 1.3);
           o.rotation.set(op * k.tilt * D, 0, 0);
           o.scale.setScalar(1 + op * (k.sk - 1));
           k.anim(ls, op > 0.95);
@@ -502,55 +552,100 @@ export default function build(ctx) {
 
   function lampeStation(g0) {
     const Y = 0.93;
-    // modellen bygges i 1,35 gange størrelse omkring bordpladens midte
+    // modellen bygges i 1,25 gange størrelse omkring bordpladens midte
     const g = kit.grp(g0, `0 ${Y - Y * 1.25} 0`, { scale: "1.25 1.25 1.25" });
     const B = new Batch();
-    // lampe: tung fod, slank stang, opal kuppel; en lille sensor i foden
-    B.cyl("#2b2f40", [-0.32, Y + 0.02, -0.02], 0.14, 0.04, null, 18);
-    B.cyl("#b9bfcc", [-0.32, Y + 0.25, -0.02], 0.012, 0.44, null, 6);
-    B.cyl("#1b1d29", [-0.32, Y + 0.47, -0.02], 0.03, 0.03, null, 10);
-    B.sph("#7fd0ff", [-0.22, Y + 0.035, 0.1], 0.012);
+    // bordlampe: tung fod, knækket arm og en rigtig kegleformet skærm, der lyser ned på bordet
+    const LX = -0.36;
+    B.cyl("#2b2f40", [LX, Y + 0.02, -0.05], 0.13, 0.04, null, 18);
+    B.cyl("#b9bfcc", [LX, Y + 0.22, -0.05], 0.012, 0.38, null, 6);
+    B.cyl("#b9bfcc", [LX + 0.06, Y + 0.44, -0.05], 0.012, 0.16, [0, 0, -50], 6);
+    B.add(T.geo.cyl(18, 0.45), "#d9cfb8", [LX + 0.14, Y + 0.48, -0.05], [0, 0, 22], [0.26, 0.17, 0.26]);
+    B.cyl("#7fd0ff", [LX + 0.11, Y + 0.045, 0.06], 0.014, 0.012, null, 10);   // sensor i foden
     // telefonholder og telefon
-    B.box("#3a3f55", [0.32, Y + 0.012, 0.0], [0.14, 0.024, 0.12]);
-    B.box("#3a3f55", [0.32, Y + 0.08, -0.04], [0.14, 0.13, 0.015], [-18, 0, 0]);
-    B.box("#14161e", [0.32, Y + 0.15, 0.0], [0.11, 0.22, 0.012], [-18, 0, 0]);
+    B.box("#3a3f55", [0.34, Y + 0.012, 0.0], [0.14, 0.024, 0.12]);
+    B.box("#3a3f55", [0.34, Y + 0.08, -0.04], [0.14, 0.13, 0.015], [-18, 0, 0]);
+    B.box("#14161e", [0.34, Y + 0.15, 0.0], [0.11, 0.22, 0.012], [-18, 0, 0]);
+    // skærmtidsmåleren imellem dem: en lille stander med en tom søjle
+    B.box("#2b2f40", [0.0, Y + 0.012, 0.02], [0.12, 0.024, 0.1]);
+    B.box("#2b2f40", [0.0, Y + 0.2, 0.0], [0.08, 0.36, 0.02]);
     T.mesh(g, B.merge(), T.lit());
-    const kuppelM = T.hold(new THREE.MeshBasicMaterial({ color: "#fff1d0" }));
-    T.mesh(g, T.hold(new THREE.SphereGeometry(0.13, 18, 12)), kuppelM, `-0.32 ${Y + 0.58} -0.02`);
+    // pæren og lyset under skærmen
+    const pæreM = T.hold(new THREE.MeshBasicMaterial({ color: "#fff1d0" }));
+    T.mesh(g, T.hold(new THREE.CircleGeometry(0.1, 16)), pæreM, `${LX + 0.16} ${Y + 0.41} -0.05`, { rotation: "-90 0 22" });
     const haloM = T.hold(new THREE.MeshBasicMaterial({ map: T.glow("#ffc56a"), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-    T.mesh(g, T.hold(new THREE.PlaneGeometry(1.3, 1.3)), haloM, `-0.32 ${Y + 0.58} 0.0`);
+    T.mesh(g, T.hold(new THREE.PlaneGeometry(0.7, 0.7)), haloM, `${LX + 0.14} ${Y + 0.44} 0.06`);
+    const kegleB = new Batch(); kegleB.cone([0, 0, 0], 0.11, 0.32, 0.4, "#5a3a10");
+    const kegleM = T.additive({ opacity: 0.6 });
+    T.mesh(g, kegleB.merge(), kegleM, `${LX + 0.17} ${Y + 0.41} -0.05`);
     const bordM = T.hold(new THREE.MeshBasicMaterial({ map: T.glow("#ffc56a"), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-    const bg = T.hold(new THREE.PlaneGeometry(1.6, 1.0)); bg.rotateX(-Math.PI / 2);
-    T.mesh(g, bg, bordM, `-0.25 ${Y + 0.006} 0`);
-    // telefonens skærm: neutralt mønster af felter (ingen rigtige apps)
-    const skærmTex = T.canvas(128, 256, (c, w, h) => {
-      const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#5ab8ff"); gr.addColorStop(1, "#8a5aff"); c.fillStyle = gr; c.fillRect(0, 0, w, h);
-      c.fillStyle = "rgba(255,255,255,0.85)"; for (let r = 0; r < 4; r++) for (let k = 0; k < 3; k++) { K.roundRect(c, 14 + k * 36, 40 + r * 44, 28, 28, 8); c.fill(); }
-      c.fillStyle = "rgba(255,255,255,0.5)"; K.roundRect(c, 30, 226, 68, 8, 4); c.fill();
+    const bg = T.hold(new THREE.PlaneGeometry(1.1, 0.8)); bg.rotateX(-Math.PI / 2);
+    T.mesh(g, bg, bordM, `${LX + 0.18} ${Y + 0.006} 0`);
+    // telefonens skærm: ensfarvet og lysende (ingen hjemmeskærm)
+    const skærmTex = T.canvas(64, 128, (c, w, h) => {
+      const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#9ac4ff"); gr.addColorStop(1, "#6a7cff"); c.fillStyle = gr; c.fillRect(0, 0, w, h);
     });
     const skærmM = T.hold(new THREE.MeshBasicMaterial({ map: skærmTex, color: "#222" }));
-    T.mesh(g, T.hold(new THREE.PlaneGeometry(0.095, 0.2)), skærmM, `0.32 ${Y + 0.152} 0.0075`, { rotation: "-18 0 0" });
+    T.mesh(g, T.hold(new THREE.PlaneGeometry(0.095, 0.2)), skærmM, `0.34 ${Y + 0.152} 0.0075`, { rotation: "-18 0 0" });
     const telHaloM = T.hold(new THREE.MeshBasicMaterial({ map: T.glow("#7a9cff"), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
-    T.mesh(g, T.hold(new THREE.PlaneGeometry(0.9, 0.9)), telHaloM, `0.32 ${Y + 0.15} 0.02`, { rotation: "-18 0 0" });
-    // skærmtid flyder fra telefonen til lampens sensor som små lysprikker
+    T.mesh(g, T.hold(new THREE.PlaneGeometry(0.9, 0.9)), telHaloM, `0.34 ${Y + 0.15} 0.02`, { rotation: "-18 0 0" });
+    // måleren: søjlen vokser med skærmtiden
+    const målM = T.hold(new THREE.MeshBasicMaterial({ color: "#8fa8ff" }));
+    const mål = T.mesh(g, T.hold(new THREE.PlaneGeometry(0.05, 0.3).translate(0, 0.15, 0)), målM, `0 ${Y + 0.05} 0.012`);
+    const RB2 = new Batch({ uv: true }); for (let k = 0; k <= 6; k++) RB2.plane([0.034, 0.05 + k * 0.05, 0], [0.012, 0.004]);
+    T.mesh(g, RB2.merge(), T.hold(new THREE.MeshBasicMaterial({ color: "#a9b0d6" })), `0 ${Y} 0.012`);
+    const målTekst = kit.textPlane(g, `0 ${Y + 0.45} 0.012`, "skærmtid", A, { width: 0.3, aspect: 0.25, size: 150, bg: true, ink: "#eef1ff" });
+    // skærmtid flyder fra telefonen til måleren og videre til lampens sensor som små lysprikker
     const prikM = T.hold(new THREE.MeshBasicMaterial({ color: "#9fb6ff", transparent: true, opacity: 0 }));
-    const prikker = [0, 1, 2, 3, 4].map(() => T.mesh(g, T.hold(new THREE.SphereGeometry(0.012, 6, 4)), prikM));
-    const lampeLys = kit.el("a-entity", { position: `-0.32 ${Y + 0.6} 0.1`, light: "type: point; color: #ffc27a; intensity: 0; distance: 3.2; decay: 1.5" }, g);
+    const prikker = [0, 1, 2, 3, 4, 5].map(() => T.mesh(g, T.hold(new THREE.SphereGeometry(0.012, 6, 4)), prikM));
+    const lampeLys = kit.el("a-entity", { position: `${LX + 0.16} ${Y + 0.3} 0.05`, light: "type: point; color: #ffc27a; intensity: 0; distance: 2.4; decay: 1.5" }, g);
     return {
       tick(s, dt, rumLys) {
-        // over 8 sekunder: lampen dæmpes, telefonen lyser stærkere. Så starter cyklussen forfra.
+        // over 8 sekunder: lampen dæmpes, telefonen og måleren stiger. Så starter cyklussen forfra.
         const aktivN = s >= 0;
-        const p = aktivN ? (s % 9.5) : 0;
-        const k = aktivN ? (p < 8 ? ease(p / 8) : 1 - ease((p - 8) / 1.5)) : 0.0;
-        const lampe = aktivN ? 1 - 0.92 * k : 0.55, tel = aktivN ? 0.15 + 0.85 * k : 0.25;
-        kuppelM.color.setRGB(0.25 + 0.75 * lampe, 0.22 + 0.72 * lampe, 0.18 + 0.6 * lampe);
-        haloM.opacity = 0.9 * lampe; bordM.opacity = 0.7 * lampe;
-        skærmM.color.setScalar(0.2 + 0.8 * tel);
+        const p = aktivN ? (s % 10) : 0;
+        const k = aktivN ? (p < 8 ? ease(p / 8) : p < 8.8 ? 1 : 1 - ease((p - 8.8) / 1.2)) : 0.0;
+        const lampe = aktivN ? 1 - 0.95 * k : 0.35, tel = aktivN ? 0.15 + 0.85 * k : 0.2;
+        pæreM.color.setRGB(0.2 + 0.8 * lampe, 0.18 + 0.76 * lampe, 0.15 + 0.66 * lampe);
+        haloM.opacity = 0.8 * lampe; bordM.opacity = 0.85 * lampe; kegleM.opacity = 0.6 * lampe;
+        skærmM.color.setScalar(0.15 + 0.85 * tel);
         telHaloM.opacity = aktivN ? 0.95 * tel : 0;
-        T.lys(lampeLys, aktivN ? 2.4 * lampe : 0);
-        T.lys(rumLys, aktivN ? 0.55 : 1.3);
+        mål.object3D.scale.y = Math.max(0.02, aktivN ? k : 0.2);
+        målM.color.setRGB(0.4 + 0.2 * k, 0.5 + 0.1 * k, 1);
+        T.lys(lampeLys, aktivN ? 2.6 * lampe : 0);
+        T.lys(rumLys, aktivN ? 0.4 : 1.1);
         prikM.opacity = aktivN && p < 8 ? 0.9 : 0;
-        prikker.forEach((e, i) => { const f = ((s * 0.6 + i / 5) % 1); e.object3D.position.set(0.32 + (-0.1 - 0.32) * f, Y + 0.12 + Math.sin(f * Math.PI) * 0.12 - 0.08 * f, 0.08 + 0.02 * f); });
+        prikker.forEach((e, i) => { const f = ((s * 0.5 + i / 6) % 1); e.object3D.position.set(0.34 + (LX + 0.11 - 0.34) * f, Y + 0.14 + Math.sin(f * Math.PI) * 0.22 - 0.1 * f, 0.08); });
+      },
+    };
+  }
+
+  function designvalg(g) {
+    // En almindelig fjernbetjening uden mærke på en lav sokkel. I trinnets tredje fase lyser små markeringer op
+    // ved de valg, nogen har truffet: én stor rød knap, knappernes rækkefølge, formen der passer i hånden.
+    const B = new Batch();
+    B.cyl("#2b2f40", [0, 0.3, 0], 0.32, 0.6, null, 20); B.cyl("#3a3f55", [0, 0.61, 0], 0.36, 0.03, null, 20);
+    B.push([0, 0.64, 0], [-90, 25, 0]);
+    B.box("#1f222e", [0, 0, 0.015], [0.12, 0.42, 0.03]);
+    B.sph("#1f222e", [0, -0.2, 0.015], 0.06, [1, 0.55, 0.25]);
+    B.cyl("#d14b3c", [0, 0.15, 0.032], 0.028, 0.012, [90, 0, 0], 14);
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) B.cyl("#6b7299", [-0.035 + c * 0.035, 0.06 - r * 0.045, 0.032], 0.012, 0.008, [90, 0, 0], 8);
+    B.box("#4d5b7a", [0, -0.15, 0.032], [0.07, 0.03, 0.006]);
+    B.pop();
+    T.mesh(g, B.merge(), T.lit());
+    // markeringer: ring om tænd/sluk, ramme om tastaturet, bue langs grebet
+    const mM = [0, 1, 2].map(() => T.hold(new THREE.MeshBasicMaterial({ color: A, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })));
+    const ov = kit.grp(g, "0 0.665 0", { rotation: "-90 25 0" });
+    T.mesh(ov, T.hold(new THREE.RingGeometry(0.04, 0.05, 24)), mM[0], "0 0.15 0.04");
+    const RB2 = new Batch({ uv: true }); for (const [x, y, w, h] of [[0, 0.09, 0.14, 0.008], [0, -0.1, 0.14, 0.008], [-0.07, -0.005, 0.008, 0.19], [0.07, -0.005, 0.008, 0.19]]) RB2.plane([x, y, 0.04], [w, h]);
+    T.mesh(ov, RB2.merge(), mM[1]);
+    T.mesh(ov, T.hold(new THREE.RingGeometry(0.085, 0.095, 24, 1, Math.PI * 1.1, Math.PI * 0.8)), mM[2], "0 -0.19 0.04");
+    const etiketter = ["én knap til det vigtigste", "tal i fast rækkefølge", "form der passer i hånden"].map((t, i) =>
+      kit.textPlane(g, `${[-0.55, 0.62, -0.5][i]} ${[1.02, 0.92, 0.78][i]} 0.1`, t, A, { width: 0.62, aspect: 0.16, size: 80, bg: true, ink: "#eef1ff" }));
+    return {
+      tick(ls, intro) {
+        mM.forEach((m, i) => { m.opacity = ls < 0 ? 0 : clamp((ls - 0.2 - i * 0.55) / 0.3); });
+        etiketter.forEach((e, i) => { e.object3D.visible = ls >= 0 && ls > 0.2 + i * 0.55; });
       },
     };
   }
@@ -699,14 +794,17 @@ function vaerktoej(ctx) {
       g.strokeStyle = L; g.globalAlpha = 0.5; g.lineWidth = 3; g.beginPath(); g.arc(128, 128, 120, 0, 7); g.stroke(); g.globalAlpha = 1;
       g.fillStyle = L; g.font = '600 24px "JetBrains Mono", monospace'; g.textAlign = "center"; g.fillText("ERKENDEFORMER", 128, 290);
     });
-    mesh(grp, geo.plane(), hold(new THREE.MeshBasicMaterial({ map: pladeTex, transparent: true, depthWrite: false })), "0 -0.06 -0.005", { scale: "1.0 1.17 1" });
+    const pladeM = hold(new THREE.MeshBasicMaterial({ map: pladeTex, transparent: true, depthWrite: false }));
+    mesh(grp, geo.plane(), pladeM, "0 -0.06 -0.005", { scale: "1.0 1.17 1" });
+    const mats = [pladeM];
     const items = tegn.map((f, i) => {
       const tex = canvas(256, 256, g => { g.strokeStyle = L; g.fillStyle = L; g.lineWidth = 12; g.lineCap = "round"; g.lineJoin = "round"; f(g); });
-      const m = hold(new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.95, depthWrite: false }));
+      const m = hold(new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.95, depthWrite: false })); mats.push(m);
       return mesh(grp, geo.plane(), m, "0 0 0", { scale: "0.3 0.3 0.3" });
     });
     let a = 0;
-    return { tick(dt) { a += (dt || 16) * 0.00025; items.forEach((it, i) => { const v = a + i * 2.094; it.object3D.position.set(Math.cos(v) * 0.27, Math.sin(v) * 0.27, 0); }); } };
+    // alpha < 1 dæmper tegnet i trin, hvor det ikke er i fokus
+    return { tick(dt, alpha = 1) { mats.forEach((m, i) => { m.opacity = (i ? 0.95 : 1) * alpha; }); a += (dt || 16) * 0.00025; items.forEach((it, i) => { const v = a + i * 2.094; it.object3D.position.set(Math.cos(v) * 0.27, Math.sin(v) * 0.27, 0); }); } };
   }
   /* sæt et lys' styrke direkte (billigere end setAttribute hver frame) */
   function lys(el, v) { const l = el.getObject3D("light"); if (l) l.intensity = v; }

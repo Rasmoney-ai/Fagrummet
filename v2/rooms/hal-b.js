@@ -30,8 +30,8 @@ export default function build(ctx) {
   const CZ = -1.5;                 // hallens og tårnets centrum (x = 0)
   const R = 7.6;                   // hallens radius
   const H = 10.5;                  // væggens højde
-  const FLOORS = [3.6, 4.75, 5.9]; // etagernes højder (lag 1, 2, 3)
-  const FR = 2.3;                  // etagernes radius
+  const FLOORS = [2.7, 3.75, 4.8]; // etagernes højder (lag 1, 2, 3): lave nok til at kunne ses uden at bøje nakken
+  const FR = 2.2;                  // etagernes radius
   const EYE = [0, 5.4];            // typisk beskuerplads (x, z) til at dreje skilte
   // lagenes navne hentes fra delrummenes intro-trin, så de følger manus
   const LAYERS = [
@@ -97,32 +97,53 @@ export default function build(ctx) {
     mesh(new T.CylinderGeometry(FR, FR, 0.16, 48, 1, true), bandMat, [0, y - 0.08, 0], tower);
     const wall = new T.TorusGeometry(R - 0.22, 0.02, 3, 72); wall.rotateX(Math.PI / 2);
     mesh(wall, wallMat, [0, y, 0], tower);
-    // lagets navn hænger under etagens forkant til venstre og drejer mod beskueren
-    const lp = [-1.55, y - 0.34, FR * 0.72];
-    const lblMat = basic("#ffffff", { map: K.labelTex(LAYERS[k].name, B, { w: 1024, h: 220, size: k === 1 ? 60 : 72, sub: LAYERS[k].n, ink: "#eef1ff" }), transparent: true, side: T.DoubleSide, depthWrite: false });
-    mesh(new T.PlaneGeometry(1.75, 1.75 * 220 / 1024), lblMat, lp, tower, face([lp[0], lp[2] + CZ], EYE));
-    // hvad der sker med data på netop dette lag (vises i b0-2), til højre for tårnet
-    const cp = [1.55, y - 0.34, FR * 0.72];
-    const capMat = basic("#ffffff", { map: K.labelTex(LAYERS[k].what, B, { w: 1024, h: 170, size: 64, ink: "#dffffb" }), transparent: true, side: T.DoubleSide, depthWrite: false, opacity: 0 });
-    mesh(new T.PlaneGeometry(1.75, 1.75 * 170 / 1024), capMat, cp, tower, face([cp[0], cp[2] + CZ], EYE));
+    // lagets navn hænger ved etagens forkant til venstre og drejer mod beskueren;
+    // i b0-2 kommer det, der sker med data på laget, frem som en undertekst lige under navnet
+    const lp = [-FR - 0.45, y + 0.05, 1.4];
+    const lblMat = basic("#ffffff", { map: K.labelTex(LAYERS[k].name, B, { w: 1024, h: 220, size: k === 1 ? 62 : 76, sub: LAYERS[k].n, ink: "#eef1ff" }), transparent: true, side: T.DoubleSide, depthWrite: false });
+    const ry = face([lp[0], lp[2] + CZ], EYE);
+    // lagnavn og undertekst tegnes efter de fjerne dørskilte, så de aldrig skæres over af dem
+    mesh(new T.PlaneGeometry(1.9, 1.9 * 220 / 1024), lblMat, lp, tower, ry).getObject3D("mesh").renderOrder = 3;
+    const capMat = basic("#ffffff", { map: K.labelTex(LAYERS[k].what, B, { w: 1024, h: 150, size: 64, bg: true, ink: "#dffffb" }), transparent: true, side: T.DoubleSide, depthWrite: false, opacity: 0 });
+    mesh(new T.PlaneGeometry(1.9, 1.9 * 150 / 1024), capMat, [lp[0], lp[1] - 0.42, lp[2] + 0.02], tower, ry).getObject3D("mesh").renderOrder = 3;
+    // en tynd streg fra skiltet ind til etagekanten
+    const tie = new T.BoxGeometry(0.45, 0.015, 0.015); tie.translate(-FR + 0.05, y, 1.2);
+    mesh(tie, rimMat, [0, 0, 0], tower);
     return { y, discMat, rimMat, bandMat, wallMat, lblMat, capMat, g: 0 };
   });
-  // små motiver på hver etage, så lagene har hver sin karakter: printplader, flowdiagram, klodsmodel
+  // motiver på hver etage, store nok til at kunne kendes fra gulvet:
+  // lag 1 elektronik (printplader og chips hænger under skiven, kabler dingler ned),
+  // lag 2 et lille flowdiagram der står op på kanten, lag 3 ens klodser i en række (en forenklet model)
+  const motifMats = [0, 1, 2].map(() => std("#2a8f88", { emissive: new T.Color(B), emissiveIntensity: 0.3 }));
   (function motifs() {
-    const parts = [];
-    const put = (g, x, y, z, ry = 0) => { g.rotateY(ry); g.translate(x, y, z); parts.push(g); };
-    for (const [x, z, r] of [[-1.3, -0.7, 0.3], [1.15, -1.0, -0.4], [1.2, 0.9, 0.5]]) {
-      put(new T.BoxGeometry(0.62, 0.03, 0.42), x, FLOORS[0] + 0.03, z, r);
-      put(new T.BoxGeometry(0.16, 0.06, 0.16), x, FLOORS[0] + 0.07, z, r);
-    }
-    const n2 = [[-1.4, -0.4], [-0.8, -1.4], [0.6, -1.55], [1.5, -0.4]];
-    n2.forEach(([x, z], i) => {
-      put(new T.BoxGeometry(0.28, 0.14, 0.18), x, FLOORS[1] + 0.08, z);
-      if (i) { const [px, pz] = n2[i - 1]; const b = new T.BoxGeometry(0.03, 0.03, Math.hypot(x - px, z - pz)); b.rotateY(Math.atan2(x - px, z - pz)); b.translate((x + px) / 2, FLOORS[1] + 0.06, (z + pz) / 2); parts.push(b); }
+    const L1 = [], L2 = [], L3 = [];
+    const ring = (n, r, f) => { for (let i = 0; i < n; i++) { const a = (i + 0.5) / n * Math.PI * 2; f(Math.sin(a) * r, Math.cos(a) * r, a); } };
+    // lag 1: seks printplader med chips hængende lodret under kanten + kabler, der dingler ned
+    ring(8, FR - 0.25, (x, z, a) => {
+      const pcb = new T.BoxGeometry(0.5, 0.36, 0.025); const chip = new T.BoxGeometry(0.16, 0.16, 0.05); chip.translate(0, -0.02, 0.03);
+      const pins = []; for (let k = 0; k < 6; k++) { const p = new T.BoxGeometry(0.02, 0.03, 0.02); p.translate(-0.06 + k * 0.024, 0.07, 0.04); pins.push(p); }
+      [pcb, chip, ...pins].forEach(g => { g.translate(0, FLOORS[0] - 0.26, 0); g.rotateY(a); g.translate(x, 0, z); L1.push(g); });
+      const c = new T.CylinderGeometry(0.012, 0.012, 0.7 + ((x * 7) % 0.3), 4); c.translate(x * 0.9, FLOORS[0] - 0.8, z * 0.9); L1.push(c);
     });
-    for (let i = 0; i < 6; i++) put(new T.BoxGeometry(0.16, 0.16, 0.16), -1.1 + i * 0.32, FLOORS[2] + 0.09, -1.3 + i * 0.1);
-    mesh(merge(parts), std("#2a8f88", { emissive: new T.Color(B), emissiveIntensity: 0.25 }), [0, 0, 0], tower);
+    // lag 2: kasser og romber der står på kanten, forbundet med pinde (et flowdiagram rundt om etagen)
+    const n2 = 8; const pts2 = [];
+    ring(n2, FR - 0.25, (x, z, a) => pts2.push([x, z, a]));
+    pts2.forEach(([x, z, a], i) => {
+      const g = i % 3 === 1 ? new T.OctahedronGeometry(0.17, 0) : new T.BoxGeometry(0.34, 0.2, 0.08);
+      if (i % 3 === 1) g.scale(1.3, 1, 0.4);
+      g.rotateY(a); g.translate(x, FLOORS[1] + 0.2, z); L2.push(g);
+      const [nx, nz] = pts2[(i + 1) % n2]; const len = Math.hypot(nx - x, nz - z) - 0.36;
+      const b = new T.BoxGeometry(0.025, 0.025, len); b.rotateY(Math.atan2(nx - x, nz - z)); b.translate((x + nx) / 2, FLOORS[1] + 0.2, (z + nz) / 2); L2.push(b);
+    });
+    // lag 3: ens klodser i en ring (en forenklet model af noget i verden)
+    ring(12, FR - 0.25, (x, z, a) => { const g = new T.BoxGeometry(0.2, 0.2, 0.2); g.rotateY(a); g.translate(x, FLOORS[2] + 0.12, z); L3.push(g); });
+    [L1, L2, L3].forEach((gs, k) => mesh(merge(gs), motifMats[k], [0, 0, 0], tower));
   })();
+
+  // lodrette lysforbindelser mellem etagerne (samspil, vises til sidst i b0-1)
+  const linkMat = basic(B, { transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending });
+  { const gs = []; for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + 0.3, g = new T.CylinderGeometry(0.02, 0.02, FLOORS[2] - FLOORS[0], 4); g.translate(Math.sin(a) * (FR - 0.6), (FLOORS[0] + FLOORS[2]) / 2, Math.cos(a) * (FR - 0.6)); gs.push(g); }
+    mesh(merge(gs), linkMat, [0, 0, 0], tower); }
 
   // datapakkerne: én instanced mesh (ét draw call)
   const NP = 70, PH = H - 0.6;
@@ -132,40 +153,56 @@ export default function build(ctx) {
   group([0, 0, 0], tower).setObject3D("mesh", packs);
   const dummy = new T.Object3D();
   // den fremhævede pakke (b0-2): hvid kerne, glorie og et lysspor under sig
+  // den fremhævede pakke skifter udtryk pr. lag: en måling (bølge) → tallet behandles (tandhjul/flow) → udvalgt som data (flueben/kryds i en bakke)
   const hiGrp = group([0, 0.4, 0], tower);
-  mesh(new T.BoxGeometry(0.2, 0.2, 0.2), basic("#f4fffd"), [0, 0, 0], hiGrp);
+  const hiCore = mesh(new T.BoxGeometry(0.34, 0.34, 0.34), basic("#f4fffd"), [0, 0, 0], hiGrp);
+  const hiTex = [
+    (g, w, h) => { g.fillStyle = "#f4fffd"; g.fillRect(0, 0, w, h); g.strokeStyle = "#0b3b38"; g.lineWidth = 14; g.beginPath(); for (let x = 20; x <= w - 20; x += 4) g.lineTo(x, h / 2 + Math.sin(x / 22) * 60); g.stroke(); },
+    (g, w, h) => { g.fillStyle = "#f4fffd"; g.fillRect(0, 0, w, h); g.fillStyle = "#0b3b38"; g.font = '700 120px "JetBrains Mono", monospace'; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("214", w / 2, h / 2 + 6); },
+    (g, w, h) => { g.fillStyle = "#f4fffd"; g.fillRect(0, 0, w, h); g.strokeStyle = "#0b3b38"; g.lineWidth = 26; g.lineCap = "round"; g.beginPath(); g.moveTo(60, 140); g.lineTo(110, 195); g.lineTo(200, 70); g.stroke(); },
+  ].map(d => K.canvasTexture(256, 256, d));
+  const hiMat = basic("#ffffff", { map: hiTex[0] });
+  hiCore.setObject3D("mesh", new T.Mesh(new T.BoxGeometry(0.46, 0.46, 0.46), hiMat));
+  // en lille flowboks på lag 2, som pakken passerer igennem (algoritmen), og en sorteringsbakke på lag 3
+  const flowBox = mesh(new T.BoxGeometry(0.9, 0.5, 0.9), std("#9ff3ea", { transparent: true, opacity: 0.12, depthWrite: false, emissive: new T.Color(B), emissiveIntensity: 0.4 }), [0, FLOORS[1] + 0.25, 0], tower);
+  const trays = group([0, FLOORS[2] + 0.06, 0], tower);
+  const trayMat = std("#2a8f88", { emissive: new T.Color(B), emissiveIntensity: 0.3 });
+  mesh(merge([new T.BoxGeometry(0.6, 0.06, 0.5).translate(-0.7, 0, 0), new T.BoxGeometry(0.6, 0.06, 0.5).translate(0.7, 0, 0)]), trayMat, [0, 0, 0], trays);
   const halo = new T.Sprite(new T.SpriteMaterial({ map: K.glowTex("#7ffff0"), transparent: true, depthWrite: false, blending: T.AdditiveBlending }));
-  halo.scale.set(1.3, 1.3, 1); hiGrp.object3D.add(halo);
+  halo.scale.set(1.8, 1.8, 1); hiGrp.object3D.add(halo);
   const trailGeo = new T.CylinderGeometry(0.025, 0.025, 1, 6, 1, true); trailGeo.translate(0, -0.5, 0);
   const trail = mesh(trailGeo, basic("#7ffff0", { transparent: true, opacity: 0.5, depthWrite: false }), [0, 0, 0], hiGrp);
 
   /* ---------- døre: elevatorportaler til lagene og døren tilbage ---------- */
-  const lifts = [["b1", -46, 0], ["b2", -15, 1], ["b3", 16, 2]];
+  const lifts = [["b1", -88, 0], ["b2", -56, 1], ["b3", 56, 2]];   // spredt ud, så ingen står bag tårnet set fra indgangen
   const shaftMat = std(B, { emissive: new T.Color(B), emissiveIntensity: 0.6 });
+  const shaftMats = [];
   const shaftGlass = std("#7fe9df", { transparent: true, opacity: 0.1, depthWrite: false, side: T.DoubleSide });
   const bridgeMat = std("#7fe9df", { transparent: true, opacity: 0.14, depthWrite: false, side: T.DoubleSide });
   const shaftParts = [], glassParts = [], bridgeParts = [];
   for (const [id, deg, k] of lifts) {
     const w = onWall(deg);
     ctx.door(id, { position: `${w.x} 0 ${w.z}`, rotation: `0 ${w.ry / D2R} 0` });
+    // stort lagnummer over døren, så det matcher etagernes navneskilte
+    const lg = group([w.x, 0, w.z], root, w.ry / D2R);
+    kit.textPlane(lg, "0 3.35 0.12", LAYERS[k].n, B, { width: 1.0, aspect: 0.3, size: 150, bg: true, ink: "#eef1ff" });
     // elevatorskakt: lysende skinner fra over døren op til lagets højde, glasvæg og en repos
-    const y = FLOORS[k], y0 = 3.45, local = [];
-    for (const sx of [-0.95, 0.95]) { const g = new T.BoxGeometry(0.06, y + 0.5 - y0, 0.06); g.translate(sx, (y + 0.5 + y0) / 2, 0.05); local.push(g); }
+    const y = FLOORS[k], y0 = 3.55, local = [];
+    for (const sx of [-0.95, 0.95]) { const g = new T.BoxGeometry(0.06, Math.max(0.1, y + 0.5 - y0), 0.06); g.translate(sx, (y + 0.5 + y0) / 2, 0.05); local.push(g); }
     const top = new T.BoxGeometry(1.96, 0.06, 0.06); top.translate(0, y + 0.5, 0.05); local.push(top);
     const landing = new T.BoxGeometry(1.96, 0.06, 0.9); landing.translate(0, y, 0.45); local.push(landing);
     const xf = new T.Matrix4().makeRotationY(w.ry).setPosition(w.x, 0, w.z);
-    local.forEach(g => { g.applyMatrix4(xf); shaftParts.push(g); });
-    const gl = new T.PlaneGeometry(1.9, y + 0.5 - y0); gl.translate(0, (y + 0.5 + y0) / 2, 0.02); gl.applyMatrix4(xf); glassParts.push(gl);
+    local.forEach(g => g.applyMatrix4(xf)); const sm = std(B, { emissive: new T.Color(B), emissiveIntensity: 0.4 }); shaftMats.push(sm); mesh(merge(local), sm);
+    const gl = new T.PlaneGeometry(1.9, Math.max(0.1, y + 0.5 - y0)); gl.translate(0, (y + 0.5 + y0) / 2, 0.02); gl.applyMatrix4(xf); glassParts.push(gl);
     // gangbro i glas fra reposen ind til etagen
     const a = deg * D2R, r0 = R - 0.45 - 0.9, len = r0 - FR;
     const bg = new T.BoxGeometry(0.9, 0.04, len); bg.translate(0, y - 0.02, -(FR + len / 2)); bg.rotateY(-a); bg.translate(0, 0, CZ);
     bridgeParts.push(bg);
   }
-  mesh(merge(shaftParts), shaftMat);
   mesh(merge(glassParts), shaftGlass);
   mesh(merge(bridgeParts), bridgeMat);
-  const exitW = onWall(100);
-  ctx.door(ctx.room.parent, { position: `${exitW.x} 0 ${exitW.z}`, rotation: `0 ${exitW.ry / D2R} 0` });
+  const exitW = onWall(92);
+  const exitDoor = ctx.door(ctx.room.parent, { position: `${exitW.x} 0 ${exitW.z}`, rotation: `0 ${exitW.ry / D2R} 0` });
 
   /* ---------- rummets skilt ---------- */
   // lavt foran tårnets sokkel, så det ikke dækker dørene bagved
@@ -196,18 +233,18 @@ export default function build(ctx) {
     g.strokeStyle = "#f4fffd"; g.lineWidth = 6; g.beginPath(); g.moveTo(w / 2, 250); g.lineTo(w / 2, 175); g.stroke();
     g.beginPath(); g.moveTo(w / 2 - 22, 190); g.lineTo(w / 2, 168); g.lineTo(w / 2 + 22, 190); g.stroke();
   });
-  ctx.sign(ctx.step("b0-1").title, { parent: st1, position: "0 1.32 0", width: 1.45 });
-  ctx.sign(ctx.step("b0-2").title, { parent: st2, position: "0 1.32 0", width: 1.45 });
+  const sg1 = ctx.sign(ctx.step("b0-1").title, { parent: st1, position: "0 1.32 0", width: 1.45 });
+  const sg2 = ctx.sign(ctx.step("b0-2").title, { parent: st2, position: "0 1.32 0", width: 1.45 });
   ctx.station("b0-1", st1);
   ctx.station("b0-2", st2);
 
   /* ---------- målpladen (b0-3), hænger ved udgangen ---------- */
-  const PL = [4.4, 1.65, -0.9];
-  const plRy = face([PL[0], PL[2]], [2.4, 3.6]);
-  const plate = group(PL, root, plRy);
+  const PL = [3.5, 1.75, 2.5];   // frit på gulvet foran udgangen, med døren tilbage lidt til venstre bag sig
+  const plRy = face([PL[0], PL[2]], [1.2, 5.4]);
+  const plate = group(PL, root, plRy); plate.setAttribute("scale", "1.05 1.05 1.05");
   const plateSign = ctx.sign(ctx.step("b0-3").title, { parent: plate, position: "0 1.05 0", width: 1.9 });
   // ophæng fra loftet
-  mesh(merge([-1.2, 1.2].map(x => { const g = new T.CylinderGeometry(0.012, 0.012, 7, 4); g.translate(x, 4.6, -0.02); return g; })), std("#3a4a6c"), [0, 0, 0], plate);
+  mesh(merge([-1.2, 1.2].map(x => { const g = new T.CylinderGeometry(0.012, 0.012, 8, 4); g.translate(x, 4.6, -0.04); return g; })), std("#3a4a6c"), [0, 0, 0], plate);
   function goalTex(n, title, note, w3) {
     return K.canvasTexture(768, 512, (g, w, h) => {
       g.fillStyle = "rgba(9,20,32,0.95)"; K.roundRect(g, 6, 6, w - 12, h - 12, 26); g.fill();
@@ -226,7 +263,7 @@ export default function build(ctx) {
     { tex: goalTex("Mål 1", "Programmering som sprog og værktøj", "Tættest på programmeringen", [0.45, 1, 0.12]), side: -1, floors: [[0, 0.5], [1, 1]] },
     { tex: goalTex("Mål 2", "Modellers perspektiver og bias", "Tættest på modelleringen", [0.12, 0.25, 1]), side: 1, floors: [[2, 1]] },
   ].map(hv => {
-    const g = group([hv.side * 0.76, 0, 0], plate);
+    const g = group([hv.side * 0.82, 0, 0], plate);
     const m = basic("#ffffff", { map: hv.tex, transparent: true, side: T.DoubleSide, depthWrite: false });
     mesh(new T.PlaneGeometry(1.5, 1.0), m, [0, 0, 0.026], g);
     mesh(new T.BoxGeometry(1.52, 1.02, 0.05), std("#0b1424"), [0, 0, 0], g);
@@ -236,19 +273,27 @@ export default function build(ctx) {
   });
   ctx.station("b0-3", plate);
   // lysstråler fra halvdelene ind til deres etager (én pr. forbindelse)
-  const beamGeo = new T.CylinderGeometry(0.018, 0.018, 1, 6, 1, true); beamGeo.rotateX(Math.PI / 2); beamGeo.translate(0, 0, 0.5);
+  const beamGeo = new T.CylinderGeometry(0.035, 0.035, 1, 6, 1, true); beamGeo.rotateX(Math.PI / 2); beamGeo.translate(0, 0, 0.5);
   const beams = [[0, 0], [0, 1], [1, 2]].map(([h, k]) => ({ h, k, mat: basic(B, { transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending }) }));
   beams.forEach(b => { b.e = mesh(beamGeo, b.mat); b.e.object3D.visible = false; });
   // hvor halvdelene ender: ud for de etager, de hører til
-  const halfY = [1.55, 2.2];
+  const halfY = [1.6, 2.15];   // Mål 2 løftes en anelse (det øverste lag), begge bliver i øjenhøjde
 
   /* ---------- views ---------- */
-  ctx.view("b0-1", { position: [0, 0, 5.6], lookAt: [0, 0, CZ] });
-  ctx.view("b0-2", { position: [0.9, 0, 5.6], lookAt: [0.5, 0, CZ] });
-  ctx.view("b0-3", { position: [1.9, 0, 5.3], lookAt: [2.5, 0, -1.2] });
+  ctx.view("b0-1", { position: [0, 0, 5.4], lookAt: [0, 0, CZ] });
+  ctx.view("b0-2", { position: [-0.6, 0, 4.5], lookAt: [0.2, 0, CZ] });
+  ctx.view("b0-3", { position: [1.2, 0, 5.4], lookAt: [3.5, 0, 2.3] });
 
   /* ---------- tilstand og animation ---------- */
   let mode = null, t0 = 0, fresh = true;
+  // dæmper alt i en entitet (skilte, pulte, plader), når det ikke hører til det aktive trin
+  function dim(el, a) {
+    el.object3D.traverse(o => { if (!o.material) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+      ms.forEach(m => { if (m.userData.baseOp === undefined) { m.userData.baseOp = m.opacity; m.userData.baseTr = m.transparent; }
+        // massive dele gøres kun gennemsigtige, mens de er dæmpet; ellers sorteres de ind over teksten foran dem
+        m.transparent = a < 1 ? true : m.userData.baseTr; m.opacity = m.userData.baseOp * a; m.needsUpdate = true; }); });
+  }
+  const stationEls = { "b0-1": [st1, sg1], "b0-2": [st2, sg2], "b0-3": [plate] };
   const vA = new T.Vector3(), vB = new T.Vector3();
 
   function setFloor(k, g) {
@@ -257,11 +302,13 @@ export default function build(ctx) {
     f.discMat.opacity = 0.05 + 0.22 * g;
     f.bandMat.opacity = 0.04 + 0.45 * g;
     f.wallMat.opacity = 0.04 + 0.5 * g;
-    f.lblMat.opacity = 0.35 + 0.65 * g;
+    f.lblMat.opacity = 0.55 + 0.45 * g;
+    motifMats[k].emissiveIntensity = 0.1 + 0.9 * g;
   }
 
   return {
-    onStep(id) { mode = id; fresh = true; },
+    onStep(id) { mode = id; fresh = true;
+      Object.entries(stationEls).forEach(([k, els]) => els.forEach(e => dim(e, k === id ? 1 : 0.35)));  },
     tick(t) {
       if (fresh) { t0 = t; fresh = false; }
       // testkrog: window.__roomS låser animationstiden (bruges kun af skærmbilledværktøjet)
@@ -280,25 +327,35 @@ export default function build(ctx) {
 
       // etagerne
       hiGrp.object3D.visible = mode === "b0-2";
+      if (mode !== "b0-1") linkMat.opacity = 0;
+      trays.object3D.visible = flowBox.object3D.visible = mode === "b0-2";
       F.forEach(f => f.capMat.opacity = 0);
       if (mode === "b0-1") {
         // nedefra og op, én efter én; efter en pause slukker de og det gentages roligt
-        const c = s % 9;
-        FLOORS.forEach((_, k) => { const on = ease((c - 0.4 - k * 0.9) / 0.6); const off = 1 - ease((c - 7.6) / 0.8); setFloor(k, 0.08 + 0.92 * on * off); });
+        // nedefra og op, én efter én; derefter pulserer alle tre sammen, og lysforbindelser viser samspillet
+        const c = s % 11;
+        const together = ease((c - 3.6) / 0.8) * (1 - ease((c - 9.8) / 0.8));
+        FLOORS.forEach((_, k) => { const on = ease((c - 0.4 - k * 0.9) / 0.6) * (1 - ease((c - 9.8) / 0.8)); setFloor(k, 0.08 + 0.92 * on * (1 - 0.25 * together * (0.5 + 0.5 * Math.sin(t * 0.004 + k)))); });
+        linkMat.opacity = 0.8 * together;
       } else if (mode === "b0-2") {
         // én pakke følges hele vejen op; etagen blusser op, når den passerer, og lagets tekst bliver stående
         // pakken stiger og holder en lille pause ved hvert lag
         const c = s % 11;
-        const keys = [[0, 0.5], [1.6, FLOORS[0]], [2.9, FLOORS[0]], [3.9, FLOORS[1]], [5.2, FLOORS[1]], [6.2, FLOORS[2]], [8.4, FLOORS[2]], [9.6, H - 0.3], [11, H - 0.3]];
+        const keys = [[0, 0.5], [1.6, FLOORS[0] + 0.25], [2.9, FLOORS[0] + 0.25], [3.9, FLOORS[1] + 0.25], [5.2, FLOORS[1] + 0.25], [6.2, FLOORS[2] + 0.28], [9.0, FLOORS[2] + 0.28], [10.0, H - 0.3], [11, H - 0.3]];
         let yy = 0.5;
         for (let i = 1; i < keys.length; i++) if (c <= keys[i][0]) { const [ta, ya] = keys[i - 1], [tb, yb] = keys[i]; yy = ya + (yb - ya) * ease((c - ta) / (tb - ta)); break; }
         hiGrp.object3D.position.set(0, yy, 0);
         hiGrp.object3D.rotation.y = t * 0.002;
+        // pakkens udtryk følger det lag, den er nået til
+        const lay = yy < FLOORS[0] + 0.3 ? 0 : yy < FLOORS[1] + 0.3 ? 1 : 2;
+        if (hiMat.map !== hiTex[lay]) { hiMat.map = hiTex[lay]; hiMat.needsUpdate = true; }
+        // på lag 3 glider pakken ud i den ene bakke (valgt som data)
+        hiGrp.object3D.position.x = c > 6.4 && c < 9.6 ? -0.7 * ease((c - 6.4) / 0.8) : 0;
         trail.object3D.scale.set(1, Math.max(0.01, Math.min(1.8, yy - 0.3)), 1);
         halo.scale.setScalar(1.1 + 0.15 * Math.sin(t * 0.008));
         FLOORS.forEach((fy, k) => {
           const d = Math.abs(yy - fy); setFloor(k, Math.max(0.12 + 0.88 * clamp01(1 - d / 0.55), yy > fy ? 0.35 : 0.12));
-          F[k].capMat.opacity = c > 9.6 ? clamp01((10.4 - c) / 0.8) : clamp01((yy - fy + 0.3) / 0.3);
+          F[k].capMat.opacity = c > 9.8 ? clamp01((10.6 - c) / 0.8) : clamp01((yy - fy) / 0.25);
         });
       } else if (mode === "b0-3") {
         FLOORS.forEach((_, k) => setFloor(k, 0.1));
@@ -306,14 +363,17 @@ export default function build(ctx) {
         FLOORS.forEach((_, k) => setFloor(k, 0.3));
       }
 
+      // døren tilbage er kun fremtrædende i b0-3 (målene på vej ud); skaktene lyser i b0-1 i takt med etagerne
+      exitDoor.object3D.traverse(o => { if (o.material && o.material.opacity !== undefined && o.material.emissiveIntensity !== undefined) o.material.emissiveIntensity = mode === "b0-3" ? 0.6 : 0.12; });
+      shaftMats.forEach((m, k) => m.emissiveIntensity = 0.15 + 0.9 * F[k].g);
       // målpladen: deler sig, og halvdelene glider ud for de etager, de hører til, og lyser dem op
       const on = mode === "b0-3";
       const split = on ? ease((s - 0.3) / 0.6) : 0;
       const rise = on ? ease((s - 0.9) / 1.0) : 0;
       const lit = on ? ease((s - 1.7) / 0.5) : 0;
-      plateSign.object3D.position.y = 1.05 + 0.65 * rise;
+      plateSign.object3D.position.y = 1.05 + 0.6 * rise;
       halves.forEach((hv, i) => {
-        hv.g.object3D.position.set(hv.side * (0.76 + 0.22 * split), (halfY[i] - PL[1]) * rise, 0);
+        hv.g.object3D.position.set(hv.side * (0.82 + 0.3 * split), (halfY[i] - PL[1]) * rise, 0);
         hv.g.object3D.rotation.y = -hv.side * 0.12 * split;
         hv.frame.opacity = 0.9 * lit;
         hv.floors.forEach(([k, w]) => setFloor(k, Math.max(F[k].g, 0.1 + 0.9 * w * lit)));

@@ -44,6 +44,7 @@ export default function build(ctx) {
   const quad = (w, h, mat) => new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
   const FONT = (wgt, px) => `${wgt} ${px}px "Familjen Grotesk", "Segoe UI", system-ui, sans-serif`;
   const BODY = (wgt, px) => `${wgt} ${px}px "Source Sans 3", "Segoe UI", system-ui, sans-serif`;
+  const lerp = (a, b, k) => a + (b - a) * k;
   const ease = x => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
   const clamp01 = x => Math.max(0, Math.min(1, x));
   function setSignOpacity(el, o) { const m = el.getObject3D("mesh"); if (m) m.material.opacity = o; }
@@ -188,21 +189,25 @@ export default function build(ctx) {
   }) }));
   kioskScreen.position.set(-1.215, 1.35, 0.1); kioskScreen.rotation.y = -90 * D; kiosk.add(kioskScreen);
 
-  /* server i det fjerne: et højt rack-tårn med blinkende lamper bag tagene */
+  /* datacenter i det fjerne: en lav, bred hal med køleaggregater på taget og en kabelmast, der fører ned mod gaden */
   const SV = { x: 0.6, z: -15 };
-  S.box(3.0, 10.5, 2.2, "#1b1e2e", [SV.x, 5.25, SV.z]);
-  for (let y = 0.8; y < 10.2; y += 0.55) S.box(3.05, 0.05, 2.25, "#2b3046", [SV.x, y, SV.z]);
-  S.cyl(0.03, 0.03, 1.6, "#3b4058", [SV.x + 0.9, 11.3, SV.z], [0, 0, 0], 6);
+  S.box(9.0, 5.2, 4.0, "#1b1e2e", [SV.x, 2.6, SV.z - 0.8]);
+  S.box(9.2, 0.15, 4.2, "#2b3046", [SV.x, 5.25, SV.z - 0.8]);
+  for (let i = 0; i < 5; i++) { S.box(1.2, 0.7, 1.4, "#2f3550", [SV.x - 3.6 + i * 1.8, 5.65, SV.z - 0.8]); S.cyl(0.42, 0.42, 0.06, "#4a5272", [SV.x - 3.6 + i * 1.8, 6.03, SV.z - 0.8], [0, 0, 0], 12); }
+  for (let y = 0.9; y < 5.0; y += 0.55) S.box(8.0, 0.04, 0.04, "#2b3046", [SV.x, y, SV.z + 1.22]);
+  // kabelmast på taget af værkstedet (Bag skærmen), med kabler hen til datacentret
+  S.box(0.12, 3.0, 0.12, "#3b4058", [SV.x - 0.2, 5.7, -7.0]);
+  S.box(0.9, 0.08, 0.08, "#3b4058", [SV.x - 0.2, 7.1, -7.0]);
   const ledTex = on => K.canvasTexture(128, 512, (g, w, h) => {
     g.clearRect(0, 0, w, h);
     for (let y = 8; y < h; y += 14) for (let x = 10; x < w; x += 16) {
       const r = Math.random(); if (r < (on ? 0.45 : 0.3)) { g.fillStyle = r < 0.06 ? "#ff7aa2" : r < 0.2 ? "#9fe3a0" : "#86b4ff"; g.fillRect(x, y, 7, 4); }
     }
   });
-  const ledA = quad(2.8, 10, basic({ map: ledTex(true), blending: THREE.AdditiveBlending, fog: false })), ledB = quad(2.8, 10, basic({ map: ledTex(false), blending: THREE.AdditiveBlending, fog: false }));
-  ledA.position.set(SV.x, 5.3, SV.z + 1.12); ledB.position.set(SV.x, 5.3, SV.z + 1.125);
+  const ledA = quad(8.0, 4.4, basic({ map: ledTex(true), blending: THREE.AdditiveBlending, fog: false })), ledB = quad(8.0, 4.4, basic({ map: ledTex(false), blending: THREE.AdditiveBlending, fog: false }));
+  ledA.position.set(SV.x, 2.7, SV.z + 1.22); ledB.position.set(SV.x, 2.7, SV.z + 1.225);
   const serverG = new THREE.Group(); serverG.add(ledA, ledB); addObj(serverG);
-  G.sph(0.14, ROSE, [SV.x + 0.9, 12.15, SV.z], 8);
+  G.sph(0.12, ROSE, [SV.x - 0.2, 7.25, -7.0], 8);
 
   const statics = S.build(litMat); addObj(statics);
   const glowMesh = G.build(glowMat); addObj(glowMesh);
@@ -225,8 +230,10 @@ export default function build(ctx) {
   const billTex = K.canvasTexture(512, 256, (g, w, h) => {
     const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, "#2a2a7a"); gr.addColorStop(1, "#b04a7a");
     g.fillStyle = gr; g.fillRect(0, 0, w, h);
-    g.fillStyle = "rgba(255,255,255,0.88)"; for (let i = 0; i < 3; i++) { K.roundRect(g, 40 + i * 150, 60, 120, 140, 16); g.fill(); }
-    g.fillStyle = "#2a1f4a"; for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(85 + i * 150, 105); g.lineTo(85 + i * 150, 155); g.lineTo(125 + i * 150, 130); g.closePath(); g.fill(); }
+    // opfundet, neutralt motiv: en stor sol over bølger og en kort tekstlinje (ingen kendte symboler)
+    g.fillStyle = "rgba(255,226,170,0.95)"; g.beginPath(); g.arc(150, 110, 62, 0, 7); g.fill();
+    g.strokeStyle = "rgba(255,255,255,0.85)"; g.lineWidth = 10; for (let k = 0; k < 3; k++) { g.beginPath(); for (let x = 0; x <= w; x += 8) g.lineTo(x, 180 + k * 22 + Math.sin(x / 40 + k) * 8); g.stroke(); }
+    g.fillStyle = "#ffffff"; g.font = '700 46px "Familjen Grotesk", sans-serif'; g.fillText("Weekend ved vandet", 250, 100);
   });
   const billboard = quad(3.4, 1.7, basic({ map: billTex })); billboard.position.set(-8.9, 4.9, FZ + 0.08); addObj(billboard);
   // stuevinduet: malet stue med varmt lys, sofa, tv-skær og to silhuetter
@@ -248,11 +255,12 @@ export default function build(ctx) {
   });
   const busScreen = quad(0.46, 0.28, basic({ map: busTex })); busScreen.position.set(BS.x + 1.42, 1.85, BS.z - 0.315); addObj(busScreen);
   const stopSign = quad(0.6, 0.6, basic({ map: K.canvasTexture(200, 200, (g, w, h) => {
-    g.fillStyle = "#e6e9f5"; g.beginPath(); g.arc(100, 100, 96, 0, 7); g.fill(); g.fillStyle = "#2b3b8f"; g.beginPath(); g.arc(100, 100, 84, 0, 7); g.fill();
-    g.fillStyle = "#e6e9f5"; K.roundRect(g, 46, 60, 108, 62, 14); g.fill(); g.fillStyle = "#2b3b8f"; g.fillRect(56, 70, 40, 22); g.fillRect(104, 70, 40, 22);
-    g.fillStyle = "#e6e9f5"; g.beginPath(); g.arc(70, 130, 12, 0, 7); g.arc(130, 130, 12, 0, 7); g.fill();
+    // neutralt stoppestedsskilt: et lyst felt med et enkelt "stop"-symbol (en prik på en linje), ingen trafikselskabsfarver
+    g.fillStyle = "#e9e4d6"; K.roundRect(g, 8, 8, 184, 184, 30); g.fill(); g.strokeStyle = "#4a4e63"; g.lineWidth = 8; g.stroke();
+    g.strokeStyle = "#4a4e63"; g.lineWidth = 12; g.beginPath(); g.moveTo(30, 100); g.lineTo(170, 100); g.stroke();
+    g.fillStyle = "#4a4e63"; g.beginPath(); g.arc(100, 100, 30, 0, 7); g.fill(); g.fillStyle = "#e9e4d6"; g.beginPath(); g.arc(100, 100, 14, 0, 7); g.fill();
   }), side: THREE.DoubleSide }));
-  stopSign.position.set(BS.x - 1.85, 2.75, BS.z - 0.25); addObj(stopSign);
+  stopSign.position.set(BS.x - 1.85, 2.75, BS.z - 0.25); stopSign.scale.setScalar(0.7); addObj(stopSign);
   // lysreklame i læskurets ende (giver modlys bag personen)
   const adTex = K.canvasTexture(256, 512, (g, w, h) => {
     const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#ffd0e0"); gr.addColorStop(1, "#8f7bff"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
@@ -263,7 +271,9 @@ export default function build(ctx) {
   const glass = quad(2.8, 2.0, basic({ color: "#9fb7ff", opacity: 0.12, side: THREE.DoubleSide })); glass.position.set(BS.x, 1.25, BS.z - 0.35); addObj(glass);
 
   /* ---------- Personen ved busstoppestedet ---------- */
-  const silMat = new THREE.MeshStandardMaterial({ color: "#20233a", roughness: 0.9, flatShading: true, emissive: "#2a1f3a", emissiveIntensity: 0.35 });
+  // personen er ikke en mørk silhuet: en varm jakke og et lyst hoved, så det læses som et menneske (ikke et spøgelse)
+  const silMat = new THREE.MeshStandardMaterial({ color: "#7a4a5e", roughness: 0.85, flatShading: true, emissive: "#3a2030", emissiveIntensity: 0.4 });
+  const skinMat = new THREE.MeshStandardMaterial({ color: "#d9a88a", roughness: 0.8, flatShading: true, emissive: "#4a2a24", emissiveIntensity: 0.35 });
   function capsule(A, B, r) {
     const a = new THREE.Vector3(...A), b = new THREE.Vector3(...B), d = b.clone().sub(a), len = d.length();
     const g = new THREE.CapsuleGeometry(r, Math.max(0.001, len), 3, 8);
@@ -283,14 +293,16 @@ export default function build(ctx) {
     person.add(new THREE.Mesh(THREE.BufferGeometryUtils.mergeGeometries(parts), silMat));
   }
   const head = new THREE.Group(); head.position.set(0, 1.58, 0.02); person.add(head);
-  const headM = new THREE.Mesh(new THREE.SphereGeometry(0.115, 12, 8), silMat); headM.position.set(0, 0.11, 0.02); head.add(headM);
+  const headM = new THREE.Mesh(new THREE.SphereGeometry(0.115, 12, 8), skinMat); headM.position.set(0, 0.11, 0.02); head.add(headM);
   const phoneScreenMat = new THREE.MeshBasicMaterial({ color: "#cfe2ff" });
-  const phone = new THREE.Group(); phone.position.set(0, 1.25, 0.32); phone.rotation.x = -55 * D; person.add(phone);
-  phone.add(new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.15, 0.012), new THREE.MeshStandardMaterial({ color: "#111" })));
-  const phoneScreen = quad(0.07, 0.135, phoneScreenMat); phoneScreen.position.z = 0.007; phone.add(phoneScreen);
+  const phone = new THREE.Group(); phone.position.set(0, 1.25, 0.32); phone.rotation.x = -40 * D; person.add(phone);
+  phone.add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.19, 0.014), new THREE.MeshStandardMaterial({ color: "#111" })));
+  const phoneScreen = quad(0.088, 0.172, phoneScreenMat); phoneScreen.position.z = 0.008; phone.add(phoneScreen);
+  const phoneHalo = quad(0.5, 0.5, basic({ map: K.glowTex("#cfe2ff"), blending: THREE.AdditiveBlending, opacity: 0 })); phoneHalo.position.z = 0.02; phone.add(phoneHalo);
   const faceGlow = quad(0.6, 0.6, basic({ map: K.glowTex("#bcd4ff"), blending: THREE.AdditiveBlending, opacity: 0 }));
   faceGlow.position.set(0, 1.42, 0.25); person.add(faceGlow);
-  person.position.set(BS.x + 1.95, 0, BS.z + 0.75); person.rotation.y = 62 * D;     // vender mod gaden/brugeren i profil
+  const PERSON = { x: BS.x + 2.35, z: BS.z + 1.25 };
+  person.position.set(PERSON.x, 0, PERSON.z); person.rotation.y = 25 * D;     // et skridt fri af skuret, halvt vendt mod beskueren
   addObj(person);
 
   /* ---------- Lyslinjer: telefon → person, gade og server ---------- */
@@ -302,120 +314,217 @@ export default function build(ctx) {
   const targets = [
     { to: headW.clone().add(new THREE.Vector3(0, 0.02, 0)), lift: 0.12, t: 0.8, d: 0.4, col: "#ffd3e0" },                          // personen
     { to: new THREE.Vector3(BS.x + 1.42, 1.85, BS.z - 0.3), lift: 0.5, t: 1.1, d: 0.6, col: ROSE },                                     // køreplanen
-    { to: kioskTerm, lift: 1.3, t: 1.3, d: 0.8, col: ROSE },                                                                             // betaling i kiosken
-    { to: new THREE.Vector3(-8.9, 4.9, FZ + 0.1), lift: 2.2, t: 1.5, d: 0.8, col: ROSE },                                              // reklametavlen
-    { to: new THREE.Vector3(SV.x, 9.5, SV.z + 1.1), lift: 7.5, t: 1.7, d: 1.1, col: "#ffb3c9" },                                       // serveren
+    { to: kioskTerm, lift: 0.9, t: 1.3, d: 0.8, col: ROSE },                                                                             // betaling i kiosken
+    { to: new THREE.Vector3(-8.9, 4.9, FZ + 0.1), lift: 1.6, t: 1.5, d: 0.8, col: ROSE },                                              // reklametavlen
+    { to: new THREE.Vector3(SV.x - 0.2, 7.1, -7.0), lift: 1.8, t: 1.7, d: 1.0, col: "#ffb3c9", tail: new THREE.Vector3(SV.x, 4.6, SV.z + 1.2) },   // kabelmasten → datacentret
   ];
   const lines = targets.map(tg => {
     const a = P0.clone(), b = tg.to, m = a.clone().lerp(b, 0.5); m.y += tg.lift;
-    const curve = new THREE.QuadraticBezierCurve3(a, m, b);
+    let curve = new THREE.QuadraticBezierCurve3(a, m, b);
+    if (tg.tail) { const p2 = b.clone().lerp(tg.tail, 0.5); p2.y += 0.6; curve = new THREE.CatmullRomCurve3([a, m, b, p2, tg.tail]); }
     const seg = 48, geo = new THREE.TubeGeometry(curve, seg, tg === targets[4] ? 0.022 : 0.012, 5, false);
     const mat = basic({ color: tg.col, opacity: 0.9, blending: THREE.AdditiveBlending, fog: false });
     const mesh = new THREE.Mesh(geo, mat); geo.setDrawRange(0, 0);
     addObj(mesh); return { ...tg, curve, mesh, total: geo.index.count, mat };
   });
   // lyspulser, der løber langs linjerne (ét Points-objekt)
-  const NP = lines.length * 3;
+  const NP = lines.length * 3;       // udgående pulser (rosa): telefonen påvirker verden
+  const NI = lines.length * 2;       // indgående pulser (kold blå): verden påvirker telefonen og personen
   const pulseGeo = new THREE.BufferGeometry(); pulseGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(NP * 3), 3));
   const pulseMat = new THREE.PointsMaterial({ map: K.glowTex("#ffffff"), color: "#ffd6e4", size: 0.28, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, opacity: 0 });
   addObj(new THREE.Points(pulseGeo, pulseMat));
+  const inGeo = new THREE.BufferGeometry(); inGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(NI * 3), 3));
+  const inMat = new THREE.PointsMaterial({ map: K.glowTex("#ffffff"), color: "#9fc4ff", size: 0.34, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, opacity: 0 });
+  addObj(new THREE.Points(inGeo, inMat));
   const endGlows = lines.slice(1).map(l => { const q = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), basic({ map: K.glowTex(ROSE), blending: THREE.AdditiveBlending, opacity: 0, fog: false })); q.position.copy(l.to); addObj(q); return q; });
+
+  /* ---------- Vejen tilbage: et lille klikbart skilt i hvert view med en pil mod døren til forælderen ---------- */
+  const VIEWS = {};
+  const view = (id, o) => { VIEWS[id] = o; ctx.view(id, o); };
+  function makeBackHint(doorPos) {
+    const g = new THREE.Group();
+    const name = ctx.rooms[ctx.room.parent].name;
+    const tex = K.canvasTexture(640, 150, (c, w, h) => {
+      c.fillStyle = "rgba(14,12,26,0.9)"; K.roundRect(c, 4, 4, w - 8, h - 8, 60); c.fill(); c.strokeStyle = ctx.rooms[ctx.room.parent].color; c.lineWidth = 6; c.stroke();
+      c.fillStyle = "#ffffff"; c.font = `600 54px "Source Sans 3", "Segoe UI", sans-serif`; c.textBaseline = "middle"; c.fillText(`Tilbage: ${name}`, 150, h / 2 + 2);
+    });
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(0.64, 0.15), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.85 }));
+    g.add(panel);
+    const ar = new THREE.Shape(); ar.moveTo(-0.012, -0.04); ar.lineTo(0.012, -0.04); ar.lineTo(0.012, 0.005); ar.lineTo(0.03, 0.005); ar.lineTo(0, 0.045); ar.lineTo(-0.03, 0.005); ar.lineTo(-0.012, 0.005); ar.closePath();
+    const arrowM = new THREE.Mesh(new THREE.ShapeGeometry(ar), new THREE.MeshBasicMaterial({ color: ctx.rooms[ctx.room.parent].color, transparent: true, depthWrite: false }));
+    arrowM.position.set(-0.24, 0, 0.002); g.add(arrowM);
+    g.renderOrder = 30; panel.renderOrder = 30; arrowM.renderOrder = 31;
+    const e = addObj(g);
+    ctx.onClick(e, () => ctx.goRoom(ctx.room.parent));
+    return {
+      place(id) {
+        const v = VIEWS[id]; if (!v) { g.visible = false; return; }
+        g.visible = true;
+        const p = v.position, la = v.lookAt || [p[0], 1.6, p[2] - 1];
+        const fx = la[0] - p[0], fz = la[2] - p[2], fl = Math.hypot(fx, fz) || 1, ux = fx / fl, uz = fz / fl;
+        // nede til venstre i synsfeltet, vippet op mod øjet
+        const pitch = typeof v.pitch === "number" ? v.pitch : 0;
+        const px = p[0] + ux * 1.3 + uz * 0.95, pz = p[2] + uz * 1.3 - ux * 0.95;
+        g.position.set(px, 1.6 + Math.tan(pitch * D) * 1.3 - 0.8, pz);
+        g.rotation.set(0, Math.atan2(-ux, -uz), 0, "YXZ"); g.rotateX((pitch - 22) * D);
+        // pilens retning: vinkel fra blikretningen til døren (positiv = til venstre)
+        const dx = doorPos[0] - p[0], dz = doorPos[2] - p[2];
+        arrowM.rotation.z = Math.atan2(ux * dz - uz * dx, ux * dx + uz * dz) * -1;
+      },
+    };
+  }
 
   /* ---------- Skilte og døre ---------- */
   // rummets skilt hænger over gaden mellem to wirer
-  const roomSign = ctx.sign(ctx.room.name, { position: "0.4 4.7 -3.9", width: 3.2, sub: ctx.room.sub });
-    kit.link(root, [-1.0, 5.15, -3.9], [-1.6, 4.25, FZ - 0.1], 0.008, K.flat("#555a74"));
-  kit.link(root, [1.8, 5.15, -3.9], [2.4, 6.0, FZ - 0.1], 0.008, K.flat("#555a74"));
+  const roomSign = ctx.sign(ctx.room.name, { position: "0.4 5.6 -1.2", width: 3.0, sub: ctx.room.sub });
+  kit.link(root, [-1.0, 6.05, -1.2], [-6.2, 4.2, 1.25], 0.008, K.flat("#555a74"));
+  kit.link(root, [1.8, 6.05, -1.2], [9.0, 4.2, 1.25], 0.008, K.flat("#555a74"));
 
-  ctx.door("c1", { position: `-2.9 0 ${FZ + 0.14}` });
-  ctx.door("c2", { position: `0.4 0 ${FZ + 0.14}` });
-  ctx.door("c3", { position: `4.9 0 ${FZ + 0.14}` });
-  ctx.door(ctx.room.parent, { position: "-9.4 0 6.6", rotation: "0 70 0" });
+  // tre døre ind i facaderne; bag hver dør et kig ind i rummet (et oplyst "indre"), og en stor husnummerplade
+  const DOORS = [
+    { id: "c1", x: -2.9, inner: (g, w, h) => { const gr = g.createRadialGradient(w * 0.3, h * 0.35, 10, w / 2, h / 2, w); gr.addColorStop(0, "#ffd9a6"); gr.addColorStop(1, "#7a4a40"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+        g.fillStyle = "#5b3644"; K.roundRect(g, 30, h * 0.62, w * 0.6, h * 0.18, 16); g.fill(); g.fillStyle = "rgba(255,240,210,0.8)"; g.beginPath(); g.arc(w * 0.78, h * 0.32, 22, 0, 7); g.fill(); g.fillStyle = "#3a2430"; g.fillRect(w * 0.78 - 3, h * 0.32, 6, h * 0.5); } },
+    { id: "c2", x: 0.4, inner: (g, w, h) => { g.fillStyle = "#e8e2d6"; g.fillRect(0, 0, w, h); g.fillStyle = "#c79b6c"; g.fillRect(10, h * 0.6, w - 20, 16);
+        ["#ff8fb1", "#c9a0ff", "#8fb2ff", "#7fd1a6"].forEach((c, i) => { g.fillStyle = c; g.globalAlpha = 0.85; K.roundRect(g, 26 + i * 26, h * 0.25 - i * 10, 50, 90, 8); g.fill(); }); g.globalAlpha = 1; } },
+    { id: "c3", x: 4.9, inner: (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#3a2440"); gr.addColorStop(1, "#7a4a5a"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+        g.fillStyle = "#d8b46e"; g.fillRect(w / 2 - 3, h * 0.35, 6, h * 0.35); g.fillRect(w / 2 - 50, h * 0.35, 100, 6); g.beginPath(); g.arc(w / 2 - 50, h * 0.48, 16, 0, Math.PI); g.arc(w / 2 + 50, h * 0.48, 16, 0, Math.PI); g.fill();
+        g.fillStyle = "#a0707a"; for (let i = 0; i < 3; i++) g.fillRect(0, h * (0.78 + i * 0.07), w, 8); } },
+  ];
+  // facadeskilt (som et butiksskilt) med rummets navn i stor skrift; rammens dørskilt under det bærer undertitlen
+  const doorLabelTex = (r) => K.canvasTexture(800, 200, (g, w, h) => {
+    g.fillStyle = "rgba(14,12,26,0.94)"; K.roundRect(g, 4, 4, w - 8, h - 8, 34); g.fill(); g.strokeStyle = r.color; g.lineWidth = 8; g.stroke();
+    g.shadowColor = r.color; g.shadowBlur = 20; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#fff"; g.font = FONT(700, 104); g.fillText(r.name, w / 2, h / 2 + 4);
+  });
+  const doorPeeks = [];
+  DOORS.forEach(d => {
+    ctx.door(d.id, { position: `${d.x} 0 ${FZ + 0.14}` });
+    const peek = quad(1.5, 2.4, new THREE.MeshBasicMaterial({ map: K.canvasTexture(200, 320, d.inner), fog: false }));
+    peek.position.set(d.x, 1.25, FZ + 0.06); addObj(peek); doorPeeks.push(peek);
+    // stor plade over døren (læses fra spawn)
+    const lab = quad(2.5, 0.625, basic({ map: doorLabelTex(ctx.rooms[d.id]), fog: false })); lab.position.set(d.x, 4.05, FZ + 0.12); addObj(lab);
+  });
+  // stuevinduet hører til Stuen: en rosa lysstribe forbinder vinduet med Stuen-døren
+  { const B = batch(); B.box(Math.abs(SW.x - (-2.9)) + 0.3, 0.04, 0.04, ROSE, [(SW.x + -2.9) / 2 + 0.1, SW.y + SW.h / 2 + 0.16, FZ + 0.1]); addObj(B.build(glowMat)); }
+  const DOOR_UP = [-9.0, 0, 7.4];
+  ctx.door(ctx.room.parent, { position: DOOR_UP.join(" "), rotation: "0 60 0" });
+  // to ekstra lygtepæle og et lavt hus på forkanten, så man står I gaden
+  {
+    const B = batch();
+    for (const [x, z] of [[-5.0, 10.0], [6.5, 9.8]]) { B.cyl(0.06, 0.08, 4.0, "#4a4e63", [x, 2.0, z], [0, 0, 0], 8); B.box(0.08, 0.08, 0.7, "#4a4e63", [x, 3.98, z - 0.32]); B.box(0.36, 0.1, 0.22, "#3a3d50", [x, 3.92, z - 0.66]); }
+    addObj(B.build(litMat));
+    const Gl = batch(); for (const [x, z] of [[-5.0, 10.0], [6.5, 9.8]]) Gl.box(0.3, 0.04, 0.16, "#ffe2b0", [x, 3.86, z - 0.66]); addObj(Gl.build(glowMat));
+  }
 
   /* ---------- c0-1: station = personen ved busstoppestedet ---------- */
-  const st1 = kit.grp(root, `${BS.x + 1.95} 0 ${BS.z + 0.75}`);
-  const hit1 = kit.box(st1, "0 1.0 0", 0.8, 2.0, 0.8, "opacity: 0; transparent: true; depthWrite: false", { visible: true });
+  const st1 = kit.grp(root, `${PERSON.x} 0 ${PERSON.z}`);
+  kit.box(st1, "0 1.0 0", 0.8, 2.0, 0.8, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c0-1", st1);
-  const s01 = ctx.sign(ctx.step("c0-1").title, { position: `${BS.x + 0.3} 2.95 ${BS.z + 0.85}`, width: 1.7 });
-  ctx.view("c0-1", { position: [1.1, 0, 5.9], lookAt: [0.2, 2.2, -4] });
+  const s01 = ctx.sign(ctx.step("c0-1").title, { position: `${PERSON.x + 0.25} 2.3 ${PERSON.z + 0.55}`, width: 1.3 });
+  view("c0-1", { position: [1.2, 0, 6.6], lookAt: [-0.5, 2.0, -4], pitch: 8 });
 
   /* ---------- c0-2: målpladen ved udgangen ---------- */
-  const goal = kit.grp(root, "-6.6 0 4.6", { rotation: "0 36 0" });
+  const goal = kit.grp(root, "-6.4 0 5.0", { rotation: "0 40 0" });
   const goalG = new THREE.Group();
   {
     const B2 = batch();
-    B2.box(0.08, 1.0, 0.08, "#5b6078", [-1.15, 0.5, -0.05]); B2.box(0.08, 1.0, 0.08, "#5b6078", [1.15, 0.5, -0.05]);
-    B2.box(2.6, 1.32, 0.08, "#20233a", [0, 1.62, -0.06]);
-    B2.box(2.66, 0.05, 0.12, ROSE, [0, 2.3, -0.04]);
+    B2.box(0.08, 1.0, 0.08, "#5b6078", [-1.2, 0.5, -0.05]); B2.box(0.08, 1.0, 0.08, "#5b6078", [1.2, 0.5, -0.05]);
+    B2.box(2.7, 1.05, 0.08, "#20233a", [0, 1.5, -0.06]);
+    B2.box(2.76, 0.05, 0.12, ROSE, [0, 2.04, -0.04]);
     goalG.add(B2.build(litMat));
   }
-  const cardTex = (word, sub) => K.canvasTexture(512, 400, (g, w, h) => {
+  const cardTex = (word, sub, fill) => K.canvasTexture(512, 400, (g, w, h) => {
     g.fillStyle = "rgba(11,15,30,0.92)"; K.roundRect(g, 8, 8, w - 16, h - 16, 30); g.fill();
     g.strokeStyle = ROSE; g.lineWidth = 7; g.stroke();
     g.textAlign = "center"; g.textBaseline = "middle";
-    g.fillStyle = "#ffffff"; g.font = FONT(700, 66); K.wrap(g, word, w - 60).forEach((l, i, a) => g.fillText(l, w / 2, 130 - (a.length - 1) * 36 + i * 72));
-    g.fillStyle = "#c9cfe8"; g.font = BODY(500, 36); const sl = K.wrap(g, sub, w - 64); sl.forEach((l, i) => g.fillText(l, w / 2, 290 - (sl.length - 1) * 21 + i * 42));
+    g.fillStyle = "#ffffff"; g.font = FONT(700, 66); K.wrap(g, word, w - 60).forEach((l, i, a) => g.fillText(l, w / 2, 110 - (a.length - 1) * 36 + i * 72));
+    g.fillStyle = "#c9cfe8"; g.font = BODY(500, 36); const sl = K.wrap(g, sub, w - 64); sl.forEach((l, i) => g.fillText(l, w / 2, 230 - (sl.length - 1) * 21 + i * 42));
+    if (fill) { g.strokeStyle = "rgba(232,99,140,0.6)"; g.lineWidth = 4; K.roundRect(g, 60, 300, w - 120, 50, 25); g.stroke(); }
   });
   const cardL = quad(1.04, 0.81, basic({ map: cardTex("undersøge", "digitale fænomener i eget hverdagsliv"), color: "#5a5f7a", depthWrite: true }));
-  const cardR = quad(1.04, 0.81, basic({ map: cardTex("tage stilling", "til fænomeners betydning for mennesker eller verden"), color: "#5a5f7a", depthWrite: true }));
-  cardL.position.set(-0.74, 1.6, 0.0); cardR.position.set(0.74, 1.6, 0.0); goalG.add(cardL, cardR);
-  // pilen (vokser fra venstre mod højre)
+  const cardR = quad(1.04, 0.81, basic({ map: cardTex("tage stilling", "til fænomeners betydning for mennesker eller verden", true), color: "#5a5f7a", depthWrite: true }));
+  cardL.position.set(-0.76, 1.5, 0.0); cardR.position.set(0.76, 1.5, 0.0); goalG.add(cardL, cardR);
+  // "tage stilling"-kortets måler fyldes op af undersøgelser (gradvis opbygning)
+  const meter = quad(0.76, 0.085, new THREE.MeshBasicMaterial({ color: ROSE })); meter.position.set(0.76, 1.5 - 0.81 * (325 - 200) / 400, 0.004); goalG.add(meter);
+  // pilen
   const arrowShape = new THREE.Shape(); arrowShape.moveTo(0, -0.03); arrowShape.lineTo(0.3, -0.03); arrowShape.lineTo(0.3, -0.08); arrowShape.lineTo(0.42, 0); arrowShape.lineTo(0.3, 0.08); arrowShape.lineTo(0.3, 0.03); arrowShape.lineTo(0, 0.03); arrowShape.closePath();
   const arrowMat = basic({ color: ROSE, opacity: 0.25 });
-  const arrow = new THREE.Mesh(new THREE.ShapeGeometry(arrowShape), arrowMat); arrow.position.set(-0.21, 1.6, 0.02); goalG.add(arrow);
-  const goalGlow = quad(3.6, 2.2, basic({ map: K.glowTex(ROSE), blending: THREE.AdditiveBlending, opacity: 0 })); goalGlow.position.set(0, 1.62, -0.12); goalG.add(goalGlow);
+  const arrow = new THREE.Mesh(new THREE.ShapeGeometry(arrowShape), arrowMat); arrow.position.set(-0.21, 1.5, 0.02); goalG.add(arrow);
+  // undersøgelsesmarkører: små ikoner (telefon, kiosk, tavle, døgnurskive) samler sig og glider langs pilen ind i kortet
+  const markTex = [
+    (g, w) => { g.fillStyle = "#cfe2ff"; K.roundRect(g, w * 0.32, 10, w * 0.36, w - 20, 10); g.fill(); g.fillStyle = "#1c2236"; g.fillRect(w * 0.38, 22, w * 0.24, w - 52); },
+    (g, w) => { g.fillStyle = "#ffcf9a"; g.fillRect(14, w * 0.45, w - 28, w * 0.45); g.fillStyle = ROSE; for (let i = 0; i < 4; i++) g.fillRect(14 + i * (w - 28) / 4, w * 0.25, (w - 28) / 8, w * 0.2); },
+    (g, w) => { g.fillStyle = "#c3a3ff"; g.fillRect(10, w * 0.28, w - 20, w * 0.44); g.fillStyle = "#ffe2aa"; g.beginPath(); g.arc(w * 0.35, w * 0.5, 12, 0, 7); g.fill(); },
+    (g, w) => { const c = w / 2; g.fillStyle = "#24182a"; g.beginPath(); g.arc(c, c, c - 6, 0, 7); g.fill(); g.strokeStyle = ROSE; g.lineWidth = 6; g.stroke(); ["#ffc56b", "#ff6f9e", "#8fb2ff"].forEach((cl, i) => { g.fillStyle = cl; g.beginPath(); g.arc(c + Math.cos(i * 2) * c * 0.45, c + Math.sin(i * 2) * c * 0.45, 8, 0, 7); g.fill(); }); },
+  ].map(fn => K.canvasTexture(96, 96, (g, w) => { g.fillStyle = "rgba(20,24,40,0.9)"; g.beginPath(); g.arc(w / 2, w / 2, w / 2 - 2, 0, 7); g.fill(); g.save(); g.translate(w * 0.15, w * 0.15); g.scale(0.7, 0.7); fn(g, w); g.restore(); }));
+  const marks = markTex.map(tx => { const q = quad(0.24, 0.24, basic({ map: tx, opacity: 0, depthTest: false })); q.renderOrder = 6; goalG.add(q); return q; });
+  const goalGlow = quad(3.6, 2.0, basic({ map: K.glowTex(ROSE), blending: THREE.AdditiveBlending, opacity: 0 })); goalGlow.position.set(0, 1.5, -0.12); goalG.add(goalGlow);
   goal.setObject3D("mesh", goalG); goalG.traverse(o => { o.el = goal; });
   ctx.station("c0-2", goal);
-  const s02 = ctx.sign(ctx.step("c0-2").title, { parent: goal, position: "0 2.62 0", width: 1.8 });
-  ctx.view("c0-2", { position: [-5.1, 0, 6.8], lookAt: [-6.6, 1.55, 4.6] });
+  const s02 = ctx.sign(ctx.step("c0-2").title, { parent: goal, position: "0 2.45 0", width: 1.8 });
+  view("c0-2", { position: [-4.0, 0, 7.6], lookAt: [-6.4, 1.5, 5.0] });
+  const back = makeBackHint(DOOR_UP);
 
   /* ---------- Tilstand og animation ---------- */
   let cur = null, t0 = null, now = 0;
   const dark = new THREE.Color("#141626"), tmp = new THREE.Color();
+  const DIM = 0.35;
   return {
-    onStep(id) { cur = id; t0 = null; },
+    onStep(id) { cur = id; t0 = null; back.place(id === "c0-2" ? null : id); },   // i c0-2 er døren til forhallen selv i billedet
     tick(t) {
       now = t; if (t0 === null) t0 = t;
       const e = (t - t0) / 1000, s = t / 1000;
-      const wake = cur === "c0-1" ? e : 99;          // gaden vågner kun i c0-1, ellers er den vågen
-      // vinduer tændes et for et; skærmvinduer flimrer svagt
+      const A1 = cur === "c0-1", A2 = cur === "c0-2";
+      const wake = A1 ? e : 99;          // gaden vågner kun i c0-1, ellers er den vågen
       for (const w of windows) {
         const k = ease((wake - 0.1 - w.delay * 1.4) / 0.35);
         tmp.copy(dark).lerp(w.lit, k);
         if (w.screen && k > 0.99) tmp.multiplyScalar(0.82 + 0.18 * Math.sin(s * 3 + w.delay * 20));
+        if (A2) tmp.multiplyScalar(0.6);                    // i målpladens trin dæmpes gaden
         setRangeColor(w.id, tmp);
       }
       gcol.needsUpdate = true;
-      const scr = ease((wake - 0.3) / 0.5);
+      const scr = ease((wake - 0.3) / 0.5) * (A2 ? 0.5 : 1);
       billboard.material.opacity = scr; kioskScreen.material.opacity = scr; busScreen.material.opacity = scr; adPanel.material.opacity = 0.25 + 0.75 * scr;
       stueWin.material.opacity = 0.35 + 0.65 * ease((wake - 0.6) / 0.6);
       billboard.material.color.setHSL(0, 0, 0.8 + 0.2 * Math.sin(s * 1.3));
-      ledA.material.opacity = 0.35 + 0.65 * (Math.sin(s * 5.1) > 0 ? 1 : 0.3); ledB.material.opacity = 0.35 + 0.65 * (Math.sin(s * 3.7 + 1) > 0 ? 1 : 0.2);
+      ledA.material.opacity = (0.35 + 0.65 * (Math.sin(s * 5.1) > 0 ? 1 : 0.3)) * (A2 ? 0.4 : 1); ledB.material.opacity = (0.35 + 0.65 * (Math.sin(s * 3.7 + 1) > 0 ? 1 : 0.2)) * (A2 ? 0.4 : 1);
       // telefonen og personen
       const ph = ease((wake - 0.5) / 0.3);
       phoneScreenMat.color.setRGB(0.1 + 0.7 * ph, 0.12 + 0.75 * ph, 0.18 + 0.82 * ph);
-      faceGlow.material.opacity = 0.55 * ph;
+      faceGlow.material.opacity = 0.55 * ph; phoneHalo.material.opacity = (A1 ? 0.9 : 0.4) * ph;
       head.rotation.x = (8 + 22 * ph) * D + Math.sin(s * 0.8) * 0.02;
       // linjerne vokser frem
       const camQ = new THREE.Quaternion(); root.sceneEl.camera.getWorldQuaternion(camQ);
-      const lineAlpha = cur === "c0-1" ? 1 : 0.18;
+      const lineAlpha = A1 ? 1 : 0.15;
       lines.forEach((l, i) => {
-        const k = cur === "c0-1" ? ease((e - l.t) / l.d) : 1;
+        const k = A1 ? ease((e - l.t) / l.d) : 1;
         l.mesh.geometry.setDrawRange(0, Math.floor(l.total * k / 3) * 3);
         l.mat.opacity = lineAlpha * (0.65 + 0.25 * Math.sin(s * 2 + i));
         if (i > 0) { endGlows[i - 1].material.opacity = (k >= 1 ? 0.8 : 0) * lineAlpha; endGlows[i - 1].quaternion.copy(camQ); }
       });
       const pa = pulseGeo.attributes.position;
-      lines.forEach((l, i) => { for (let j = 0; j < 3; j++) { const u = ((s * (0.35 + 0.08 * i)) + j / 3 + i * 0.13) % 1; const p = l.curve.getPoint(i % 2 ? 1 - u : u); pa.setXYZ(i * 3 + j, p.x, p.y, p.z); } });
-      pa.needsUpdate = true; pulseMat.opacity = cur === "c0-1" ? ease((e - 2.0) / 0.5) : 0.15;
-      // målpladen
-      const g = cur === "c0-2" ? e : -1;
-      const lit = ease((g - 0.2) / 0.5), ar = ease((g - 0.7) / 1.2), lit2 = ease((g - 1.8) / 0.5);
-      cardL.material.color.setScalar(0.35 + 0.65 * lit); cardR.material.color.setScalar(0.35 + 0.65 * lit2);
-      arrow.scale.x = cur === "c0-2" ? Math.max(0.02, ar) : 1; arrowMat.opacity = cur === "c0-2" ? 1 : 0.3;
-      goalGlow.material.opacity = (0.3 + 0.08 * Math.sin(s * 2.5)) * lit;
-      // skiltene ved de inaktive stationer dæmpes
-      setSignOpacity(s01, cur === "c0-1" ? 1 : 0.55); setSignOpacity(s02, cur === "c0-2" ? 1 : 0.55);
+      // ud: fra telefonen mod verden (rosa); ind: fra verden tilbage mod telefonen og personen (blå) — gensidig påvirkning
+      lines.forEach((l, i) => { for (let j = 0; j < 3; j++) { const u = ((s * (0.32 + 0.06 * i)) + j / 3 + i * 0.13) % 1; const p = l.curve.getPoint(u); pa.setXYZ(i * 3 + j, p.x, p.y, p.z); } });
+      pa.needsUpdate = true; pulseMat.opacity = A1 ? ease((e - 2.0) / 0.5) : 0;
+      const ia = inGeo.attributes.position;
+      lines.forEach((l, i) => { for (let j = 0; j < 2; j++) { const u = ((s * (0.27 + 0.05 * i)) + j / 2 + i * 0.29 + 0.5) % 1; const p = l.curve.getPoint(1 - u); ia.setXYZ(i * 2 + j, p.x, p.y, p.z); } });
+      ia.needsUpdate = true; inMat.opacity = A1 ? ease((e - 3.2) / 0.6) : 0;
+      // målpladen: kortene tændes, markørerne samles og glider langs pilen ind i "tage stilling", og måleren fyldes
+      const g = A2 ? e : -1;
+      const lit = ease((g - 0.2) / 0.5), ar = ease((g - 0.6) / 0.8);
+      const fillK = A2 ? Math.min(1, Math.max(0, (g - 1.2) / 4.4)) : 0;
+      cardL.material.color.setScalar(A2 ? 0.35 + 0.65 * lit : 0.4); cardR.material.color.setScalar(A2 ? 0.35 + 0.65 * ease(fillK * 1.4) : 0.4);
+      arrow.scale.x = A2 ? Math.max(0.02, ar) : 1; arrowMat.opacity = A2 ? 1 : 0.3;
+      marks.forEach((q, i) => {   // fire undersøgelser bygger stillingtagen op
+        const k = A2 ? ease((g - 1.2 - i * 1.1) / 1.0) : 0;
+        q.material.opacity = A2 && g > 1.0 + i * 1.1 ? 1 : 0;
+        // de dukker op i "undersøge"-kortets nederste kant, svæver over pilen og lander i "tage stilling"-kortets måler
+        q.position.set(lerp(-0.76 + (i - 1.5) * 0.2, 0.5 + i * 0.17, k), lerp(1.24, 1.25, k) + Math.sin(k * Math.PI) * 0.32, 0.06);
+        q.scale.setScalar(1 - 0.35 * k);
+      });
+      meter.scale.x = Math.max(0.001, fillK); meter.position.x = 0.76 - 0.38 * (1 - fillK); meter.visible = A2;
+      goalGlow.material.opacity = A2 ? (0.3 + 0.08 * Math.sin(s * 2.5)) * lit : 0;
+      setSignOpacity(s01, A1 ? 1 : DIM); setSignOpacity(s02, A2 ? 1 : DIM);
     },
   };
 }

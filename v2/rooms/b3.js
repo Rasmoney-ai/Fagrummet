@@ -70,12 +70,12 @@ export default function build(ctx) {
   // vinduesramme med sprosser og en bred vindueskarm
   const fr = [bx(2 * WX + 0.2, 0.12, 0.24, 0, WY1, Z0 + 0.02), bx(0.12, WY1 - WY0, 0.24, -WX, (WY0 + WY1) / 2, Z0 + 0.02), bx(0.12, WY1 - WY0, 0.24, WX, (WY0 + WY1) / 2, Z0 + 0.02)];
   for (const x of [-WX / 3, WX / 3]) fr.push(bx(0.06, WY1 - WY0, 0.12, x * 1, (WY0 + WY1) / 2, Z0 + 0.02));
-  fr.push(bx(2 * WX, 0.05, 0.05, 0, 0.95, Z0 + 0.05), bx(2 * WX, 0.1, 0.3, 0, 0.05, Z0 + 0.05));   // gelænder og bundprofil foran den gulvdybe rude
+  fr.push(bx(2 * WX, 0.1, 0.3, 0, 0.05, Z0 + 0.05));   // bundprofil foran den gulvdybe rude (intet gelænder, så køen ikke skæres over)
   mesh(merge(fr), std("#3d4a63", { metalness: 0.4 }));
   mesh(new T.PlaneGeometry(2 * WX, WY1 - WY0), basic("#dff0ff", { transparent: true, opacity: 0.08, depthWrite: false }), [0, (WY0 + WY1) / 2, Z0 + 0.03]);
 
   /* ---------- kantinen nedenunder, set gennem vinduet ---------- */
-  const CY = -0.7;   // kantinegulvets højde (tegnestuen ligger højere)
+  const CY = -0.45;   // kantinegulvets højde (tegnestuen ligger højere)
   const kTex = K.canvasTexture(256, 256, (g, w, h) => { g.fillStyle = "#cfc6b2"; g.fillRect(0, 0, w, h); g.fillStyle = "#c2b9a4"; for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) if ((i + j) % 2) g.fillRect(i * 32, j * 32, 32, 32); });
   kTex.wrapS = kTex.wrapT = T.RepeatWrapping; kTex.repeat.set(8, 5);
   const kfl = new T.PlaneGeometry(24, 15); kfl.rotateX(-Math.PI / 2);
@@ -88,7 +88,7 @@ export default function build(ctx) {
   mesh(new T.PlaneGeometry(24, 5.5), std("#ffffff", { map: kwTex }), [0, CY + 2.75, -18.5]);
   mesh(merge([bx(0.2, 5.5, 12, -12, CY + 2.75, -12.5), bx(0.2, 5.5, 12, 12, CY + 2.75, -12.5), bx(24, -CY, 0.2, 0, CY / 2, -6.6)]), std("#d9cfb8"));
   // disk med mad, madtavle, nogle borde
-  const DX = -0.9;
+  const DX = -0.6;
   mesh(merge([bx(1.0, 0.95, 3.4, DX - 0.6, CY + 0.475, -9.8), bx(1.1, 0.06, 3.5, DX - 0.6, CY + 0.98, -9.8)]), std("#6f82a6"));
   mesh(merge([0, 1, 2].map(i => bx(0.6, 0.1, 0.6, DX - 0.6, CY + 1.06, -10.9 + i * 1.1))), std("#e7c26b"));
   const menuTex = K.canvasTexture(512, 160, (g, w, h) => { g.fillStyle = "#26334d"; g.fillRect(0, 0, w, h); g.fillStyle = "#f6f3ea"; g.font = '700 70px "Familjen Grotesk", sans-serif'; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("Kantine", w / 2, h / 2 + 4); });
@@ -99,9 +99,9 @@ export default function build(ctx) {
   kit.el("a-entity", { light: `type: point; color: #fff2d8; intensity: 0.8; distance: 14; decay: 1.0`, position: `1 ${CY + 4.0} -11` });
 
   // køen: 9 elever står på række mod disken (langs x); én bagerst springer frem og stiller sig næsten forrest
-  const QN = 9, QZ = -9.0, QX = i => DX + 0.55 + i * 0.66;
+  const QN = 9, QZ = -9.0, QX = i => DX + 0.55 + i * 0.47;
   const qColors = ["#5b7fd6", "#d68b5b", "#5bb38a", "#b05bd6", "#d6c25b", "#3fa7a0", "#d65b7f", "#c97a6b", "#9aa6ba"];
-  const QS = 1.6;   // elevernes skala (personGeo er ca. 0,9 m)
+  const QS = 1.45;   // elevernes skala (personGeo er ca. 0,9 m)
   const queue = qColors.map((c, i) => {
     const m = std(c, { emissive: new T.Color(WARN), emissiveIntensity: 0 });
     const jit = ((i * 37) % 5 - 2) * 0.07;
@@ -114,12 +114,12 @@ export default function build(ctx) {
   const jumpRing = mesh(new T.TorusGeometry(0.42, 0.06, 6, 24), jumpRingMat, [0, CY + 0.05, 0], root, [-90, 0, 0]);
   // en glorie om den, der springer over
   const jumpHalo = new T.Sprite(new T.SpriteMaterial({ map: K.glowTex(WARN), transparent: true, depthWrite: false, opacity: 0 }));
-  jumpHalo.scale.set(1.6, 2.2, 1); jumpRing.object3D.parent.add(jumpHalo);
+  jumpHalo.scale.set(2.2, 3.0, 1); jumpRing.object3D.parent.add(jumpHalo);
 
   /* ---------- modelbordet: køen som ens klodser ---------- */
-  const MT = group([-2.2, 0, -3.2]);
+  const MT = group([-1.95, 0, -3.9]); MT.setAttribute("scale", "0.82 0.82 0.82");
   mesh(merge([bx(3.4, 0.06, 1.0, 0, 0.86, 0), bx(0.07, 0.86, 0.07, -1.6, 0.43, 0.42), bx(0.07, 0.86, 0.07, 1.6, 0.43, 0.42), bx(0.07, 0.86, 0.07, -1.6, 0.43, -0.42), bx(0.07, 0.86, 0.07, 1.6, 0.43, -0.42)]), std("#8a6a4a"), [0, 0, 0], MT);
-  MT.setAttribute("rotation", "0 18 0");
+  MT.setAttribute("rotation", "0 0 0");
   mesh(bx(3.1, 0.01, 0.7, 0, 0.895, 0), std(PAPER), [0, 0, 0], MT);
   // disken som en lang klods og 9 ens klodser i en ret linje, samme retning som køen
   mesh(bx(0.22, 0.2, 0.5, -1.42, 0.99, 0), std("#6f82a6"), [0, 0, 0], MT);
@@ -133,11 +133,13 @@ export default function build(ctx) {
   const gapMat = basic(WARN, { transparent: true, opacity: 0 });
   const gapParts = []; for (let k = 0; k < 4; k++) { gapParts.push(bx(0.06, 0.012, 0.012, -0.95 + k * 0.08, 1.11, 0.12)); }
   const gapG = merge([bx(0.22, 0.012, 0.012, 0, 0.11, 0.11), bx(0.22, 0.012, 0.012, 0, -0.11, 0.11), bx(0.012, 0.22, 0.012, -0.11, 0, 0.11), bx(0.012, 0.22, 0.012, 0.11, 0, 0.11)]);
-  const gap = mesh(gapG, gapMat, [-0.85, 1.0, 0], MT);
-  label("Model af køen", [0, 1.32, 0.0], MT, 0.13);
-  const miss = label("Ikke med i modellen: at springe over", [0.0, 1.58, 0.0], MT, 0.13, { edge: WARN });
-  const missQ = label("Springer over", [0, CY + 2.4, 0], root, 0.3, { edge: WARN });
-  ctx.sign(ctx.step("b3-0").title, { parent: MT, position: "0 2.05 -0.2", width: 1.8 });
+  const gap = mesh(gapG, gapMat, [1.25, 1.0, 0.32], MT);
+  // (den tomme stiplede plads står uden for klodsrækken: modellen har ingen plads til den, der springer over)
+  label("Model af køen", [-0.6, 1.32, 0.0], MT, 0.14);
+  // ét samlet skilt for det, modellen mangler; det står over den, der springer over
+  const miss = label("Ikke med i modellen: at springe over", [0.3, 1.62, 0.34], MT, 0.13, { edge: WARN });
+  const missQ = label("Springer over", [0, CY + 2.4, 0], root, 0.5, { edge: WARN });
+  ctx.sign(ctx.step("b3-0").title, { parent: MT, position: "-0.2 2.3 -0.3", width: 2.0 });
   ctx.station("b3-0", MT);
 
   /* ---------- diagramvæggen (venstre væg): rutediagram og tilstandsdiagram ---------- */
@@ -155,10 +157,10 @@ export default function build(ctx) {
   ];
   // tilstandsdiagram (højre halvdel): Venter → I køen → Ved disken → Spiser, med hændelser på pilene
   const SD = [
-    { t: "Venter", x: 1290, y: 260 },
-    { t: "I køen", x: 1840, y: 260 },
-    { t: "Ved disken", x: 1840, y: 720 },
-    { t: "Spiser", x: 1290, y: 720 },
+    { t: "Venter", x: 1260, y: 300 },
+    { t: "I køen", x: 1810, y: 300 },
+    { t: "Ved disken", x: 1810, y: 700 },
+    { t: "Spiser", x: 1260, y: 700 },
   ];
   const SE = [[0, 1, "klokken ringer"], [1, 2, "tur"], [2, 3, "har mad"], [3, 0, "færdig"]];
   function drawDiagrams(nf, ns, missing) {
@@ -188,11 +190,11 @@ export default function build(ctx) {
       g.strokeStyle = INK; g.fillStyle = INK; g.lineWidth = 6; g.beginPath(); g.moveTo(670, 485); g.lineTo(850, 485); g.lineTo(850, 300); g.lineTo(702, 300); g.stroke(); arrowHead(692, 300, Math.PI);
       g.font = '600 40px "Source Sans 3", sans-serif'; g.fillText("nej", 760, 455);
     }
-    // det modellen mangler: en stiplet, rød pil "springer over" fra Start direkte til "Min tur?"
+    // det modellen mangler: en stiplet, rød pil "springer over" fra "Stil dig i køen" uden om "Min tur?" direkte til "Tag mad"
     if (missing) {
       g.strokeStyle = WARN; g.fillStyle = WARN; g.lineWidth = 7; g.setLineDash([22, 16]);
-      g.beginPath(); g.moveTo(310, 130); g.lineTo(190, 130); g.lineTo(190, 485); g.lineTo(320, 485); g.stroke(); g.setLineDash([]); arrowHead(330, 485, 0);
-      g.save(); g.translate(150, 310); g.rotate(-Math.PI / 2); g.font = '700 40px "Familjen Grotesk", sans-serif'; g.fillText("springer over?", 0, 0); g.restore();
+      g.beginPath(); g.moveTo(310, 300); g.lineTo(190, 300); g.lineTo(190, 670); g.lineTo(300, 670); g.stroke(); g.setLineDash([]); arrowHead(310, 670, 0);
+      g.save(); g.translate(150, 485); g.rotate(-Math.PI / 2); g.font = '700 40px "Familjen Grotesk", sans-serif'; g.fillText("springer over?", 0, 0); g.restore();
     }
     // tilstandsdiagrammet: tilstande som cirkler, overgange som buede pile med hændelsen skrevet på
     SD.forEach((n, i) => {
@@ -209,9 +211,13 @@ export default function build(ctx) {
       g.strokeStyle = INK; g.fillStyle = INK; g.lineWidth = 6; g.beginPath(); g.moveTo(sx, sy); g.lineTo(ex, ey); g.stroke(); arrowHead(ex + ux * 8, ey + uy * 8, Math.atan2(uy, ux));
       g.font = '600 40px "Source Sans 3", sans-serif'; g.fillStyle = "#3a8f88";
       g.textAlign = dy ? (a === 1 ? "left" : "right") : "center";
-      const mx = (sx + ex) / 2 + (dy ? (a === 1 ? 24 : -24) : 0), my = (sy + ey) / 2 + (dy ? 0 : (a === 0 ? -38 : 46));
+      const mx = (sx + ex) / 2 + (dy ? (a === 1 ? 24 : -24) : 0), my = (sy + ey) / 2 + (dy ? 0 : (a === 0 ? -58 : 50));
       g.fillText(ev, mx, my); g.textAlign = "center";
     });
+    if (missing) {   // en tilstand, modellen ikke har: ingen pil fører ind i den
+      g.strokeStyle = WARN; g.lineWidth = 7; g.setLineDash([18, 12]); g.beginPath(); g.ellipse(1535, 500, 185, 72, 0, 0, 7); g.stroke(); g.setLineDash([]);
+      g.fillStyle = WARN; g.font = '700 40px "Familjen Grotesk", sans-serif'; g.textAlign = "center"; g.fillText("Sprunget over?", 1535, 502);
+    }
     dc.tex.needsUpdate = true;
   }
   drawDiagrams(0, 0, false);
@@ -235,7 +241,8 @@ export default function build(ctx) {
     const A = [330, 470], Bp = [690, 470];
     const lerp = (a, b, t) => a + (b - a) * t;
     // stadie 0–1: en nuanceret scene: himmel, bænk, to figurer, der deler en sandwich, griner, en hund, minder i tankebobler
-    const sc = stage === 0 ? 1 : stage === 1 ? 1 - f : 0;
+    // det fjernede bliver som et svagt aftryk, så tabet kan ses
+    const sc = stage === 0 ? 1 : stage === 1 ? 1 - f * 0.88 : 0.12;
     if (sc > 0) {
       g.globalAlpha = sc;
       const sky = g.createLinearGradient(0, 0, 0, h); sky.addColorStop(0, "#9dd2f0"); sky.addColorStop(1, "#f6e3b8"); g.fillStyle = sky; g.fillRect(0, 0, w, h * 0.7);
@@ -250,9 +257,9 @@ export default function build(ctx) {
       g.fillStyle = "#b98a5a"; g.beginPath(); g.ellipse(880, 600, 55, 30, 0, 0, 7); g.fill(); g.beginPath(); g.arc(930, 570, 24, 0, 7); g.fill();
     }
     // figurerne: fra detaljerede personer til silhuetter til prikker
-    const det = stage <= 1 ? 1 : stage === 2 ? 1 - f : 0;
+    const det = stage <= 1 ? 1 : 0;   // fra figurer direkte til to prikker (ingen mellemsilhuet)
     const col = stage === 0 ? 1 : stage === 1 ? 1 - f : 0;
-    const shrink = stage <= 2 ? 0 : stage === 3 ? f : 1;
+    const shrink = stage <= 1 ? 0 : stage === 2 ? f : 1;
     g.globalAlpha = 1;
     [A, Bp].forEach(([x, y], i) => {
       const r = lerp(70, 26, shrink);
@@ -278,10 +285,15 @@ export default function build(ctx) {
       g.beginPath(); const pts = [[360, 420], [470, 540], [690, 260]]; g.moveTo(...pts[0]);
       if (p < 0.4) g.lineTo(lerp(pts[0][0], pts[1][0], p / 0.4), lerp(pts[0][1], pts[1][1], p / 0.4)); else { g.lineTo(...pts[1]); g.lineTo(lerp(pts[1][0], pts[2][0], (p - 0.4) / 0.6), lerp(pts[1][1], pts[2][1], (p - 0.4) / 0.6)); }
       g.stroke();
-      g.globalAlpha = clamp01((f - 0.7) / 0.3); g.fillStyle = INK; g.font = '700 64px "JetBrains Mono", monospace'; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("ven = sand", w / 2, 680);
+      // datafeltet i programmet: kun to muligheder
+      const fa = clamp01((f - 0.6) / 0.3); g.globalAlpha = fa;
+      g.fillStyle = "#ffffff"; K.roundRect(g, 220, 610, 584, 120, 18); g.fill(); g.strokeStyle = INK; g.lineWidth = 5; g.stroke();
+      g.fillStyle = INK; g.font = '700 54px "Familjen Grotesk", sans-serif'; g.textAlign = "left"; g.textBaseline = "middle"; g.fillText("Ven:", 250, 670);
+      const box = (x, on, t) => { g.strokeStyle = INK; g.lineWidth = 5; g.strokeRect(x, 642, 56, 56); if (on) { g.strokeStyle = "#2a8f88"; g.lineWidth = 9; g.beginPath(); g.moveTo(x + 10, 670); g.lineTo(x + 24, 686); g.lineTo(x + 48, 652); g.stroke(); } g.fillStyle = INK; g.font = '600 46px "Source Sans 3", sans-serif'; g.fillText(t, x + 70, 672); };
+      box(380, true, "ja"); box(560, false, "nej");
     }
     // stadie-tekst nederst til venstre: hvad der bliver fjernet
-    const names = ["Et venskab", "Uden farver og stemning", "Kun to personer og en forbindelse", "To punkter og en kant", "Ja eller nej"];
+    const names = ["Et venskab", "Uden stemning", "To punkter", "En kant", "Ja eller nej"];
     g.globalAlpha = 1; g.fillStyle = "rgba(246,243,234,0.85)"; g.fillRect(0, 0, w, 84); g.fillStyle = INK; g.font = '700 54px "Familjen Grotesk", sans-serif'; g.textAlign = "left"; g.textBaseline = "middle"; g.fillText(`${stage + 1}/5  ${names[stage]}`, 34, 44);
     fc.tex.needsUpdate = true;
   }
@@ -290,7 +302,7 @@ export default function build(ctx) {
   mesh(new T.PlaneGeometry(1.56, 1.17), basic("#ffffff", { map: fc.tex }), [0, 1.42, 0.022], DG, [-6, 0, 0]);
   // trappetrin under lærredet: fem små plader, hvor den aktuelle lyser (forenkling i trin)
   const stepMats = [0, 1, 2, 3, 4].map(() => std("#cfc8b8", { emissive: new T.Color(B), emissiveIntensity: 0 }));
-  stepMats.forEach((m, i) => mesh(bx(0.24, 0.04, 0.1, -0.56 + i * 0.28, 0.76, 0.06), m, [0, 0, 0], DG));
+  stepMats.forEach((m, i) => mesh(bx(0.26, 0.06 + i * 0.0, 0.12, -0.56 + i * 0.28, 0.64 + (4 - i) * 0.025, 0.08), m, [0, 0, 0], DG));
   ctx.sign(ctx.step("b3-2").title, { parent: DG, position: "0 2.45 0", width: 2.1 });
   ctx.station("b3-2", DG);
 
@@ -302,11 +314,12 @@ export default function build(ctx) {
     { n: "Dina", lvl: 3, col: "#b05bd6" }, { n: "Eik", lvl: 1, col: "#d6c25b" }, { n: "Fie", lvl: 2, col: "#d65b7f" },
   ];
   // model A (fagligt niveau): høj + lav;  model B (venskaber): bedste venner sammen
+  // ingen af de tre par går igen i begge modeller
   const PAIR_A = [[0, 4], [3, 1], [2, 5]];
-  const PAIR_B = [[0, 3], [1, 4], [2, 5]];
-  const MISS = ["Bo og Eik når ikke opgaven", "Asta og Dina hjælper ingen"];   // det modellerne ikke tog højde for
-  const MISS_A = "Asta og Eik er uvenner";
-  const MISS_B = "Bo og Eik er begge usikre";
+  const PAIR_B = [[0, 3], [4, 5], [2, 1]];   // Asta+Dina, Eik+Fie, Cem+Bo
+  const MISS_A = "Asta og Eik er uvenner";      // rammer par 0 i model A
+  const MISS_B = "Asta og Dina hjælper ingen";   // rammer par 0 i model B
+  const MISS_PAIR = [0, 0];
   const boardW = 2.0, boardH = 1.6;
   const boards = [-1.15, 1.15].map((x, k) => {
     const g = group([x, 0, 0], MV);
@@ -329,7 +342,9 @@ export default function build(ctx) {
     g.fillStyle = "#6b7590"; g.font = '600 38px "Source Sans 3", sans-serif';
     g.fillText(k ? "Par bedste venner sammen" : "Par en stærk med en svag", w / 2, 112);
     // tabel/diagram: elever som cirkler i en kolonne til venstre, makkerkanter tegnes
-    const pos = PEOPLE.map((p, i) => [k ? 220 + (i % 2) * 260 : 220 + (i % 2) * 260, 230 + Math.floor(i / 2) * 170]);
+    // model B ordner eleverne, så vennerne står ved siden af hinanden (ingen krydsende streger)
+    const orderB = [0, 3, 4, 5, 2, 1];
+    const pos = PEOPLE.map((p, i) => { const r = k ? orderB.indexOf(i) : i; return [220 + (r % 2) * 260, 230 + Math.floor(r / 2) * 170]; });
     // kriteriet vises som streger ved siden af navnet: niveau-søjler (A) eller vennehjerter → neutral prik-række (B)
     PEOPLE.forEach((p, i) => {
       const [x, y] = pos[i];
@@ -339,14 +354,16 @@ export default function build(ctx) {
     });
     // model B's kriterium: venskaber som stiplede, lige streger mellem vennerne
     if (k) { g.strokeStyle = "#8a93a8"; g.lineWidth = 6; g.setLineDash([12, 10]);
-      for (const [a, c] of [[0, 3], [1, 4], [2, 5]]) { const [x1, y1] = pos[a], [x2, y2] = pos[c], L = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / L, uy = (y2 - y1) / L; g.beginPath(); g.moveTo(x1 + ux * 50, y1 + uy * 50); g.lineTo(x2 - ux * 50, y2 - uy * 50); g.stroke(); }
+      for (const [a, c] of [[0, 3], [4, 5], [2, 1]]) { const [x1, y1] = pos[a], [x2, y2] = pos[c], L = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / L, uy = (y2 - y1) / L; g.beginPath(); g.moveTo(x1 + ux * 50, y1 + uy * 50); g.lineTo(x2 - ux * 50, y2 - uy * 50); g.stroke(); }
       g.setLineDash([]); }
     // makkerkanter til højre: par vises som forbundne kort i "par"-kolonnen
     const pairs = k ? PAIR_B : PAIR_A;
     pairs.forEach(([a, c], j) => {
       const yy = 260 + j * 170, xa = 720, xc = 900, ff = clamp01(f * 3 - j);
       g.globalAlpha = 0.25 + 0.75 * ff;
-      g.strokeStyle = B; g.lineWidth = 10; g.beginPath(); g.moveTo(xa, yy); g.lineTo(xa + (xc - xa) * ff, yy); g.stroke();
+      const bad = showMiss && j === MISS_PAIR[k];
+      if (bad) { g.fillStyle = "rgba(232,106,79,0.18)"; K.roundRect(g, 660, yy - 62, 300, 124, 24); g.fill(); g.strokeStyle = WARN; g.lineWidth = 6; g.stroke(); }
+      g.strokeStyle = bad ? WARN : B; g.lineWidth = 10; g.beginPath(); g.moveTo(xa, yy); g.lineTo(xa + (xc - xa) * ff, yy); g.stroke();
       [[a, xa], [c, xc]].forEach(([i, x]) => { g.fillStyle = PEOPLE[i].col; g.beginPath(); g.arc(x, yy, 40, 0, 7); g.fill(); g.fillStyle = "#fff"; g.font = '700 30px "Familjen Grotesk", sans-serif'; g.fillText(PEOPLE[i].n, x, yy + 2); });
       g.globalAlpha = 1;
     });
@@ -354,7 +371,7 @@ export default function build(ctx) {
     g.strokeStyle = "#d8d3c6"; g.lineWidth = 3; g.beginPath(); g.moveTo(610, 160); g.lineTo(610, 760); g.stroke();
     if (showMiss) {
       g.fillStyle = "rgba(232,106,79,0.14)"; g.fillRect(0, h - 110, w, 110);
-      g.fillStyle = WARN; g.font = '700 42px "Familjen Grotesk", sans-serif'; g.fillText("Tog ikke højde for: " + (k ? MISS_B : MISS_A), w / 2, h - 55);
+      g.fillStyle = WARN; g.font = '700 42px "Familjen Grotesk", sans-serif'; g.font = '700 40px "Familjen Grotesk", sans-serif'; g.fillText("Tog ikke højde for: " + (k ? MISS_B : MISS_A), w / 2, h - 55);
     }
     b.cv.tex.needsUpdate = true;
   }
@@ -364,21 +381,47 @@ export default function build(ctx) {
   const st3 = group([0, 0, 1.0], MV);
   ctx.station("b3-3", st3);
 
+  /* ---------- tegnestuens vægge: svage skitser og et tegnebord, så rummet føles som et arbejdssted ---------- */
+  {
+    const sketch = (draw) => K.canvasTexture(512, 384, (g, w, h) => { g.fillStyle = "#f6f3ea"; g.fillRect(0, 0, w, h); g.strokeStyle = "rgba(29,43,69,0.45)"; g.lineWidth = 5; draw(g, w, h); });
+    const sheets = [
+      sketch((g) => { for (let i = 0; i < 4; i++) { g.strokeRect(60 + i * 110, 150, 80, 60); if (i) { g.beginPath(); g.moveTo(i * 110 + 30, 180); g.lineTo(i * 110 + 60, 180); g.stroke(); } } }),
+      sketch((g) => { [[130, 120], [380, 120], [255, 290]].forEach(([x, y]) => { g.beginPath(); g.ellipse(x, y, 70, 40, 0, 0, 7); g.stroke(); }); g.beginPath(); g.moveTo(200, 120); g.lineTo(310, 120); g.moveTo(350, 155); g.lineTo(290, 255); g.stroke(); }),
+      sketch((g) => { g.beginPath(); for (let x = 40; x < 470; x += 60) { g.moveTo(x, 330); g.lineTo(x, 330 - 40 - ((x * 7) % 200)); } g.stroke(); }),
+    ];
+    const sm = sheets.map(t => basic("#ffffff", { map: t, transparent: true, opacity: 0.85 }));
+    [[X1 - 0.12, 2.3, 1.6, -90, 0], [X1 - 0.12, 2.2, 3.4, -90, 1], [X1 - 0.12, 2.4, -3.6, -90, 2], [-3.0, 2.6, Z1 - 0.12, 180, 0], [-1.2, 2.4, Z1 - 0.12, 180, 2]]
+      .forEach(([x, y, z, ry, k]) => mesh(new T.PlaneGeometry(0.9, 0.68), sm[k], [x, y, z], root, [0, ry, 0]));
+    // tegnebord med skrå plade, lineal og blyanter
+    const tb = group([-4.3, 0, 4.3], root, [0, 140, 0]);
+    mesh(merge([bx(1.4, 0.05, 0.9, 0, 0.95, 0).rotateX(0.25), bx(0.06, 0.9, 0.06, -0.6, 0.45, 0.35), bx(0.06, 0.9, 0.06, 0.6, 0.45, 0.35), bx(0.06, 1.05, 0.06, -0.6, 0.52, -0.35), bx(0.06, 1.05, 0.06, 0.6, 0.52, -0.35)]), std("#8a6a4a"), [0, 0, 0], tb);
+    mesh(bx(1.2, 0.01, 0.7, 0, 0.99, 0).rotateX(0.25), basic("#ffffff", { map: sheets[0] }), [0, 0, 0], tb);
+    // varmt arbejdslys over modelbordet
+    kit.el("a-entity", { light: "type: point; color: #ffe2b8; intensity: 0.45; distance: 5; decay: 1.6", position: "-1.9 2.6 -3.6" });
+  }
+
   /* ---------- lys, skilt og dør ---------- */
   kit.el("a-entity", { light: `type: point; color: #fff8ea; intensity: 0.7; distance: 14; decay: 1.0`, position: "0 3.8 1" });
-  ctx.sign(ctx.room.name, { position: `4.9 2.7 ${Z0 + 0.13}`, width: 2.3, sub: ctx.room.sub });
-  ctx.door(ctx.room.parent, { position: `${X0 + 0.15} 0 3.8`, rotation: "0 90 0" });
+  ctx.sign(ctx.room.name, { position: `5.0 2.7 ${Z0 + 0.13}`, width: 2.3, sub: ctx.room.sub });
+  ctx.door(ctx.room.parent, { position: `-5.4 0 ${Z0 + 0.15}`, rotation: "0 0 0" });
 
   /* ---------- views ---------- */
-  ctx.view("b3-0", { position: [0.4, 0, -0.4], lookAt: [-0.2, 0, -6.0] });
+  ctx.view("b3-0", { position: [-0.4, 0, -0.5], lookAt: [0.2, 0, -6.0] });
   ctx.view("b3-1", { position: [-3.9, 0, -0.2], lookAt: [X0, 0, -0.2] });
   ctx.view("b3-2", { position: [2.15, 0, 0.0], lookAt: [4.2, 0, -1.2] });
-  ctx.view("b3-3", { position: [2.15, 0, 2.55], lookAt: [3.6, 0, 4.8] });
+  ctx.view("b3-3", { position: [1.75, 0, 1.95], lookAt: [3.6, 0, 4.8] });
 
   /* ---------- tilstand og animation ---------- */
   let mode = null, t0 = 0, fresh = true;
+  function dim(el, a) {
+    el.object3D.traverse(o => { if (!o.material) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+      ms.forEach(m => { if (m.userData.baseOp === undefined) { m.userData.baseOp = m.opacity; m.userData.baseTr = m.transparent; }
+        m.transparent = a < 1 ? true : m.userData.baseTr; m.opacity = m.userData.baseOp * a; m.needsUpdate = true; }); });
+  }
+  const stationEls = { "b3-0": [MT], "b3-1": [DW], "b3-2": [DG], "b3-3": [MV] };
   return {
-    onStep(id) { mode = id; fresh = true; },
+    onStep(id) { mode = id; fresh = true;
+      Object.entries(stationEls).forEach(([k, els]) => els.forEach(e => dim(e, k === id ? 1 : 0.4))); },
     tick(t) {
       if (fresh) { t0 = t; fresh = false; }
       // testkrog: window.__roomS låser animationstiden (bruges kun af skærmbilledværktøjet)
@@ -395,7 +438,7 @@ export default function build(ctx) {
           const tx = (QX(0) + QX(1)) / 2, tz = QZ;
           x = x + (tx - x) * jump; z = z + 0.9 * Math.sin(jump * Math.PI) + (tz + 0.28 - z) * jump;   // ender skråt foran nr. 2
           ry = jump > 0 && jump < 1 ? -90 - 25 * Math.cos(jump * Math.PI) : -90;
-        } else if (i >= 1 && a0) x += 0.48 * ease((c0 - 2.6) / 0.8);   // de andre rykker et halvt skridt bagud for at give plads
+        } else if (i >= 1 && a0) x += 0.36 * ease((c0 - 2.6) / 0.8);   // de andre rykker et halvt skridt bagud for at give plads
         q.e.object3D.position.set(x + sway, CY, z);
         q.e.object3D.rotation.y = ry * D2R;
         q.m.emissiveIntensity = i === JUMP && a0 && c0 > 1.2 ? 0.9 + 0.4 * Math.sin(t * 0.01) : 0;
@@ -405,7 +448,7 @@ export default function build(ctx) {
       jumpRing.object3D.position.set(jq.x, CY + 0.05, jq.z);
       jumpRingMat.opacity = a0 && c0 > 1.2 ? 0.9 : 0;
       jumpHalo.material.opacity = a0 && c0 > 1.2 ? 0.9 : 0; jumpHalo.position.set(jq.x, CY + 0.8, jq.z);
-      missQ.object3D.visible = a0 && c0 > 3.6; missQ.object3D.position.set(jq.x, CY + 2.15, jq.z);
+      missQ.object3D.visible = a0 && c0 > 3.6; missQ.object3D.position.set(jq.x, CY + 1.95, jq.z);
       miss.object3D.visible = a0 && c0 > 4.4;
       gapMat.opacity = a0 && c0 > 4.4 ? 0.9 : 0;
 
@@ -432,7 +475,7 @@ export default function build(ctx) {
       const stage = a2 ? Math.min(4, Math.floor(c2 / 2.6)) : 0;
       const f2 = a2 ? (stage === 4 ? clamp01((c2 - 10.4) / 2.2) : ease(clamp01((c2 - stage * 2.6 - 0.8) / 1.4))) : 0;
       drawFriends(stage, stage === 0 ? 0 : f2);
-      stepMats.forEach((m, i) => { m.emissiveIntensity = a2 && i === stage ? 0.9 : 0; m.color.set(a2 && i <= stage ? "#bfe9e4" : "#cfc8b8"); });
+      stepMats.forEach((m, i) => { m.emissiveIntensity = a2 && i === stage ? 1.2 : 0; m.color.set(a2 && i <= stage ? "#7fe0d6" : "#9a9282"); });
 
       /* modeller mod verden: de samme seks figurer parres forskelligt på hver side */
       const a3 = mode === "b3-3";
@@ -446,9 +489,14 @@ export default function build(ctx) {
         PEOPLE.forEach((p, i) => {
           const row = [-0.7 + i * 0.28, 0.45];
           let j = pairs.findIndex(pr => pr.includes(i)), side = pairs[j][0] === i ? -1 : 1;
-          const pair = [-0.62 + j * 0.62 + side * 0.11, 0.4];
+          const pair = [-0.66 + j * 0.66 + side * 0.12, 0.42];
           const x = row[0] + (pair[0] - row[0]) * pf, z = row[1] + (pair[1] - row[1]) * pf;
           pegs[k][i].object3D.position.set(x, 0, z);
+          // det par, modellen ikke tog højde for, vender sig fra hinanden
+          const bad = showMiss && j === MISS_PAIR[k];
+          // vipper væk fra hinanden og trækker sig et lille skridt ud, så det ses i et stillbillede
+          pegs[k][i].object3D.rotation.z = bad ? -side * 0.3 : 0;
+          if (bad) pegs[k][i].object3D.position.x += side * 0.08;
         });
       });
     },
