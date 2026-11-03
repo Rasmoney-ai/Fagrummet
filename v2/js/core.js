@@ -115,7 +115,7 @@ async function loadRoom(id, stepId, { instant = false } = {}) {
       return entity;
     },
     view(sid, { position, lookAt }) { rctx.views[sid] = { position, lookAt }; },
-    onClick(entity, fn) { entity.classList.add("klik"); entity.addEventListener("click", fn); return entity; },
+    onClick(entity, fn) { entity.classList.add("klik"); entity.addEventListener("click", ev => { ev.stopPropagation(); fn(ev); }); return entity; },
     env({ background, fog } = {}) { if (background) scene.setAttribute("background", `color: ${background}`); if (fog) scene.setAttribute("fog", fog); },
     goStep: sid => setStep(sid), goRoom,
   };
@@ -232,7 +232,7 @@ AFRAME.registerComponent("stick-move", {
   },
 });
 /* Rummets tick */
-AFRAME.registerComponent("room-ticker", { tick(t, dt) { if (api && api.tick) { try { api.tick(t, dt); } catch (e) { api.tick = null; console.warn(e); } } } });
+AFRAME.registerComponent("room-ticker", { tick(t, dt) { if (api && api.tick) { try { api.tick(t, dt); } catch (e) { api.tick = null; console.error("Rummets tick fejlede og er slået fra:", e); } } } });
 
 /* ---------- Start ---------- */
 function begin(sound) {

@@ -83,7 +83,8 @@ export default function build(ctx) {
   kit.el("a-entity", { light: `type: point; color: ${B}; intensity: 0.5; distance: 10; decay: 1.3`, position: "0 4.2 -3" });
 
   /* ---------- skilte og dør ---------- */
-  ctx.sign(ctx.room.name, { position: `3.4 3.6 ${Z0 + 0.25}`, width: 2.4, sub: ctx.room.sub });
+  // rummets skilt står lavt i midtergangen, så det ses fra indgangen uden at dække stationerne
+  ctx.sign(ctx.room.name, { position: `0 0.95 2.3`, rotation: "-12 0 0", width: 2.1, sub: ctx.room.sub });
   ctx.door(ctx.room.parent, { position: `${X0 + 0.15} 0 3.6`, rotation: "0 90 0" });
 
   /* ---------- fem stationer: placering, lampe og gulvplade ---------- */
@@ -93,7 +94,7 @@ export default function build(ctx) {
     "b2-2": { p: [-5.6, -6.2], view: [-3.6, -2.4], look: [-5.6, -6.4] },
     "b2-3": { p: [0, -8.75], view: [0, -4.9] },
     "b2-4": { p: [4.8, -6.0], view: [3.2, -3.6] },
-    "b2-5": { p: [5.2, -0.4], view: [2.6, 1.6] },
+    "b2-5": { p: [5.3, -0.6], view: [2.3, 1.7] },
   };
   const stationIds = Object.keys(ST);
   stationIds.forEach(id => {
@@ -439,7 +440,7 @@ export default function build(ctx) {
       }
     });
     if (state === "error") { g.fillStyle = RED; g.font = '700 34px "Source Sans 3", sans-serif'; g.fillText("Ukendt kommando i linje 3", 24, h - 34); }
-    if (state === "done" && p.kind === "logisk") { g.fillStyle = "#ffb3ab"; g.font = '700 34px "Source Sans 3", sans-serif'; g.fillText("Kørte uden fejl – men nåede ikke målet", 24, h - 34); }
+    if (state === "done" && p.kind === "logisk") { g.fillStyle = "#ffb3ab"; g.font = '700 34px "Source Sans 3", sans-serif'; g.fillText("Kørte fint – men nåede ikke målet", 24, h - 34); }
     p.cv.tex.needsUpdate = true;
   }
   P4.forEach(p => drawCode4(p, -1, "idle"));
@@ -452,7 +453,7 @@ export default function build(ctx) {
   const bub = new T.Shape(); { const w = 1.0, h = 0.42, r = 0.16;
     bub.moveTo(-w + r, -h); bub.lineTo(-0.35, -h); bub.lineTo(-0.55, -h - 0.25); bub.lineTo(-0.15, -h); bub.lineTo(w - r, -h); bub.quadraticCurveTo(w, -h, w, -h + r); bub.lineTo(w, h - r); bub.quadraticCurveTo(w, h, w - r, h); bub.lineTo(-w + r, h); bub.quadraticCurveTo(-w, h, -w, h - r); bub.lineTo(-w, -h + r); bub.quadraticCurveTo(-w, -h, -w + r, -h); }
   const bubG = new T.ExtrudeGeometry(bub, { depth: 0.06, bevelEnabled: false, curveSegments: 4 });
-  const bubble = group([-0.85, 2.15, 0.0], S5);
+  const bubble = group([-1.15, 2.2, 0.0], S5);
   mesh(bubG, std("#eef3ff"), [0, 0, -0.03], bubble);
   const bubTex = K.canvasTexture(1024, 420, (g, w, h) => {
     g.fillStyle = "#13203a"; g.font = '600 62px "Source Sans 3", sans-serif'; g.textAlign = "center"; g.textBaseline = "middle";
@@ -460,9 +461,9 @@ export default function build(ctx) {
   });
   mesh(new T.PlaneGeometry(1.9, 0.78), texMat(bubTex), [0, 0, 0.035], bubble);
   // eleven, der spørger
-  const student = mesh(figureGeo(1.45), std("#c9d6ea"), [-1.55, 0, -0.1], S5, [0, 30, 0]);
+  const student = mesh(figureGeo(1.45), std("#c9d6ea"), [-1.85, 0, -0.1], S5, [0, 30, 0]);
   // "modellen": en neutral, lysende form (ingen logoer) mellem boblen og koden
-  const hub = group([0.25, 1.75, 0.1], S5);
+  const hub = group([-0.05, 1.75, 0.1], S5);
   const hubMat = std("#bff7f1", { emissive: new T.Color(B), emissiveIntensity: 0.5, transparent: true, opacity: 0.9 });
   mesh(new T.IcosahedronGeometry(0.17, 0), hubMat, [0, 0, 0], hub);
   // kodepanelet med linjer, der kan klikkes på
@@ -473,8 +474,8 @@ export default function build(ctx) {
     { t: "        dage += 1", q: "Hvorfor dage og ikke timer?" },
     { t: "print(dage)", q: "Hvem skal bruge tallet?" },
   ];
-  const PX = 1.15, PY = 1.75, LH = 0.24, PW = 1.75;
-  mesh(new T.BoxGeometry(PW + 0.16, 1.62, 0.05), std("#111a2e"), [PX, PY, 0.0], S5);
+  const PX = 1.45, PY = 1.75, LH = 0.24, PW = 1.75;
+  mesh(new T.BoxGeometry(PW + 0.16, 1.4, 0.05), std("#111a2e"), [PX, PY + 0.04, 0.0], S5);
   const lines5 = AI.map((a, i) => {
     const y = PY + 0.52 - i * LH;
     const tex = K.canvasTexture(1024, 136, (g, w, h) => {
@@ -500,14 +501,18 @@ export default function build(ctx) {
     g.fillStyle = "#13203a"; g.font = '600 50px "Source Sans 3", sans-serif'; g.fillText(i >= 0 ? AI[i].q : "", 34, 146);
     why.tex.needsUpdate = true;
   }
-  const whyE = mesh(new T.PlaneGeometry(1.25, 0.32), texMat(why.tex), [PX + 0.3, 0, 0.12], S5);
+  const whyE = mesh(new T.PlaneGeometry(1.5, 0.384), texMat(why.tex), [PX + 0.3, 0, 0.12], S5);
+  // en tynd streg fra spørgsmålstegnet til forklaringsboblen
+  const whyLink = mesh(bx(0.16, 0.012, 0.01, 0.08, 0, 0), basic(B), [0, 0, 0.1], S5);
   const lineHl = mesh(new T.PlaneGeometry(PW + 0.06, LH - 0.02), basic(B, { transparent: true, opacity: 0.25, depthWrite: false }), [PX, 0, 0.025], S5);
   let picked = -1, pickedAt = 0, now = 0;
-  signAt("b2-5", `0.2 3.15 0`, 2.3);
+  signAt("b2-5", `0.4 3.05 0`, 2.3);
   ctx.station("b2-5", S5);
 
   /* ---------- views ---------- */
   ctx.view("b2-0", { position: [0, 0, 4.6], lookAt: [0, 0, -3] });
+  // b2-5: kig mod midten af indholdet (lidt til højre for stationens origo)
+  { const r = ST["b2-5"].ry * D2R; ST["b2-5"].look = [ST["b2-5"].p[0] - Math.cos(r) * 0.0 + Math.cos(r) * 0.9, ST["b2-5"].p[1] + Math.sin(r) * 0.9]; }
   stationIds.forEach(id => { const L = ST[id].look || ST[id].p; ctx.view(id, { position: [ST[id].view[0], 0, ST[id].view[1]], lookAt: [L[0], 0, L[1]] }); });
 
   /* ---------- tilstand og animation ---------- */
@@ -624,7 +629,7 @@ export default function build(ctx) {
       /* B2.5: talebobblen bliver til kode, og hver linje får et spørgsmålstegn */
       const a5 = mode === "b2-5";
       const sb = a5 ? ease((s - 2.2) / 0.9) : 0;    // boblen suges ind i modellen
-      bubble.object3D.position.set(-0.85 + 1.1 * sb, 2.15 - 0.4 * sb, 0.0);
+      bubble.object3D.position.set(-1.15 + 1.1 * sb, 2.2 - 0.45 * sb, 0.0);
       bubble.object3D.scale.setScalar(Math.max(0.001, 1 - 0.95 * sb));
       bubble.object3D.visible = !a5 || s < 3.1;
       hub.object3D.rotation.set(t * 0.0007, t * 0.001, 0);
@@ -643,7 +648,8 @@ export default function build(ctx) {
       if (a5 && s > 6.8) sel = picked >= 0 && t - pickedAt < 8000 ? picked : [2, 0, 3, 1, 4][Math.floor((s - 6.8) / 2.6) % 5];
       drawWhy(sel);
       whyE.object3D.visible = sel >= 0; lineHl.object3D.visible = sel >= 0;
-      if (sel >= 0) { whyE.object3D.position.set(PX + 0.35, lines5[sel].y - 0.27, 0.12); lineHl.object3D.position.set(PX, lines5[sel].y, 0.025); }
+      whyLink.object3D.visible = sel >= 0;
+      if (sel >= 0) { whyE.object3D.position.set(PX + PW / 2 + 1.05, lines5[sel].y, 0.12); whyLink.object3D.position.set(PX + PW / 2 + 0.22, lines5[sel].y, 0.1); lineHl.object3D.position.set(PX, lines5[sel].y, 0.025); }
     },
   };
 }

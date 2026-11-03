@@ -21,7 +21,7 @@ const browser = await puppeteer.launch({
 const page = await browser.newPage();
 await page.setViewport({ width: wide ? 1600 : 1200, height: wide ? 900 : 760 });
 const errors = [];
-page.on("console", m => { if (["error", "warning"].includes(m.type())) errors.push(`${m.type()}: ${m.text()}`); });
+page.on("console", m => { if (["error", "warn"].includes(m.type())) errors.push(`${m.type()}: ${m.text()}`); });
 page.on("pageerror", e => errors.push(`pageerror: ${e.message}`));
 page.on("requestfailed", r => { if (!/fonts\.(googleapis|gstatic)/.test(r.url())) errors.push(`requestfailed: ${r.url()}`); });
 
@@ -33,7 +33,7 @@ if (!steps.length) steps = await page.evaluate(r => fetch("manus.json").then(x =
 const report = [];
 for (const s of steps) {
   await page.evaluate(id => window.__fagrum.setStep(id), s);
-  await new Promise(r => setTimeout(r, 2600));   // lad kamera-animation og rummets animationer køre
+  await new Promise(r => setTimeout(r, 4200));   // lad kamera-animation (1,4 s, langsom under swiftshader) og rummets animationer køre
   const f = path.join(outDir, `${s}.png`);
   await page.screenshot({ path: f });
   const st = await page.evaluate(() => window.__fagrum.stats());
