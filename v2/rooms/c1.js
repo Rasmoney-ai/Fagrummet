@@ -396,7 +396,6 @@ export default function build(ctx) {
   const s13 = ctx.sign(ctx.step("c1-3").title, { position: `${SB.x - 0.2} 2.35 ${SB.z - 1.25}`, width: 1.8, rotation: "0 50 0" });
   ctx.view("c1-3", { position: [0.6, 0, 1.5], lookAt: [-2.4, 0.9, -1.7] });
 
-  window.__dbgC1 = fam; /*DBG*/
   /* ---------- Tilstand og animation ---------- */
   let cur = null, t0 = null;
   const tmpV = new THREE.Vector3();
@@ -422,6 +421,19 @@ export default function build(ctx) {
   }
   const devOn = (m, on) => { const sc = m.dev.userData.scr; if (sc) sc.material.color.set(on ? (m.kind === "tablet" ? "#ffd9a0" : m.kind === "pad" ? "#9fe3a0" : "#a9c6ff") : "#22232c"); };
 
+  // gå langs en polylinje med fast fart; t i sekunder siden start, v i m/s
+  function walkPath(pts, t, v) {
+    const segs = []; let L = 0;
+    for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); segs.push([pts[i - 1], pts[i], L, l]); L += l; }
+    const dur = L / v, end = Math.max(0, t) >= dur;
+    const d = Math.max(0, Math.min(L, t * v));
+    let sg = segs[segs.length - 1];
+    for (const x of segs) if (d <= x[2] + x[3]) { sg = x; break; }
+    const k = sg[3] ? (d - sg[2]) / sg[3] : 1;
+    return { x: lerp(sg[0][0], sg[1][0], k), z: lerp(sg[0][1], sg[1][1], k), yaw: Math.atan2(sg[1][0] - sg[0][0], sg[1][1] - sg[0][1]) / D,
+      moving: t > 0 && !end, done: end, t, end: dur + (pts === pts ? 0.3 : 0) };
+  }
+  let drawerOpen = 0;
   return {
     onStep(id) { cur = id; t0 = null; },
     tick(t) {
@@ -448,30 +460,26 @@ export default function build(ctx) {
         }
         if (cur === "c1-3") {
           if (m.who === "Storesøster") {
-            // hun rejser sig, går rundt om sofaen til skænken, lægger telefonen i skuffen og sætter sig igen
-            const WP = [[ax, az], [ax + 0.15, SOF.z + 1.75], [SB.x + 0.85, SB.z - 0.44]];
-            const w1 = ease((e - 0.3) / 1.1), w2 = ease((e - 1.4) / 1.3), put = ease((e - 2.8) / 1.0);
-            const r1 = ease((e - 4.2) / 1.3), r2 = ease((e - 5.5) / 1.1);
-            let x = lerp(WP[0][0], WP[1][0], w1), z = lerp(WP[0][1], WP[1][1], w1);
-            x = lerp(x, WP[2][0], w2); z = lerp(z, WP[2][1], w2);
-            x = lerp(x, WP[1][0], r1); z = lerp(z, WP[1][1], r1);
-            x = lerp(x, WP[0][0], r2); z = lerp(z, WP[0][1], r2);
-            let yaw = ay;
-            if (e > 0.3) yaw = 0;
-            if (e > 1.4) yaw = Math.atan2(WP[2][0] - WP[1][0], WP[2][1] - WP[1][1]) / D;
-            if (e > 2.5) yaw = -90;
-            if (e > 4.2) yaw = Math.atan2(WP[1][0] - WP[2][0], WP[1][1] - WP[2][1]) / D;
-            if (e > 5.5) yaw = 180;
-            if (e > 6.6) yaw = angLerp(Math.PI, ay * D, ease((e - 6.6) / 0.5)) / D;
-            const moving = (w1 > 0 && w1 < 1) || (w2 > 0 && w2 < 1) || (r1 > 0 && r1 < 1) || (r2 > 0 && r2 < 1);
-            const seated = e < 0.3 || e > 6.6;
-            pose(m, x, z, yaw, seated, lerp(28, 6, put), put < 0.6, 1 - put, moving ? Math.abs(Math.sin(e * 7)) * 0.025 : 0);
+            // hun rejser sig, går rundt om skænken, lægger telefonen i skuffen og går tilbage til sofaen
+            const path = [[ax, az], [ax, SOF.z + 1.55], [SB.x + 0.85, SOF.z + 1.55], [SB.x + 0.8, SB.z - 0.44]];
+            const out = walkPath(path, e - 0.3, 1.1);                 // ud til skuffen
+            const put = ease((e - out.end - 0.2) / 1.0);
+            const home = walkPath(path.slice().reverse(), e - out.end - 1.5, 1.1);
+            const p = home.t > 0 ? home : out;
+            const moving = p.moving;
+            const seated = e < 0.3 || home.done;
+            let yaw = e < 0.3 ? ay : p.yaw;
+            if (out.done && home.t <= 0) yaw = -90;
+            if (home.done) yaw = ay;
+            pose(m, p.x, p.z, yaw, seated, home.t > 0 ? 6 : lerp(28, 6, put), home.t > 0 ? false : put < 0.6, 1 - put, moving ? Math.abs(Math.sin(e * 7)) * 0.025 : 0);
             m.fig.f.updateMatrixWorld(true); m.fig.hand.getWorldPosition(tmpV);
             const dx = SB.x + 0.42, dy = 0.6, dz = SB.z - 0.44;
-            m.dev.visible = e < 3.9;
+            m.dev.visible = put < 0.98 && home.t <= 0;
             m.dev.position.set(lerp(tmpV.x, dx, put), lerp(tmpV.y, dy, put) + Math.sin(put * Math.PI) * 0.12, lerp(tmpV.z, dz, put));
             m.dev.rotation.set(lerp(-50 * D, -90 * D, put), -90 * D, 0, "YXZ");
             devOn(m, put < 0.9);
+            drawerOpen = ease((e - out.end + 0.4) / 0.5) * (1 - ease((e - out.end - 1.2) / 0.5));
+            if (home.done) { pose(m, ax, az, ay, true, lerp(6, 14, ease((e - home.end) / 2)), false, 0); }
             return;
           }
           // de andre ændrer langsomt adfærd: kigger op, lægger tingen fra sig, vender sig mod hinanden
@@ -522,8 +530,7 @@ export default function build(ctx) {
 
       /* skuffen og ringene */
       const C3 = cur === "c1-3";
-      const open = C3 ? ease((e - 2.4) / 0.5) * (1 - ease((e - 3.9) / 0.6)) : 0;
-      drawer.position.x = SB.x + 0.24 + open * 0.34;
+      drawer.position.x = SB.x + 0.24 + (C3 ? drawerOpen : 0) * 0.34;
       board.material.opacity = C3 ? ease((e - 7.0) / 1.2) : 0;
       pieces.visible = C3 && e > 7.5;
       ripples.forEach((r, i) => {
