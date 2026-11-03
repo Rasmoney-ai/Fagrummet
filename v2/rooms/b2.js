@@ -51,7 +51,7 @@ export default function build(ctx) {
   ctx.env({ background: "#05080f", fog: "type: exponential; color: #05080f; density: 0.02" });
 
   /* ---------- rummet ---------- */
-  const X0 = -8, X1 = 8, Z0 = -9, Z1 = 7, HC = 5.2;
+  const X0 = -8, X1 = 8, Z0 = -9, Z1 = 7, HC = 6;
   const floorTex = K.canvasTexture(512, 512, (g, w, h) => {
     g.fillStyle = "#121a2b"; g.fillRect(0, 0, w, h);
     g.strokeStyle = "rgba(0,0,0,0.55)"; g.lineWidth = 4; g.strokeRect(0, 0, w, h);
@@ -65,11 +65,11 @@ export default function build(ctx) {
   mesh(merge(W), std("#161e33"));
   const deco = [];
   for (let z = Z0 + 2; z < Z1; z += 3) deco.push(bx(0.3, HC, 0.4, X0 + 0.2, HC / 2, z), bx(0.3, HC, 0.4, X1 - 0.2, HC / 2, z));
-  for (let x = X0 + 2; x < X1; x += 4) deco.push(bx(0.4, HC, 0.3, x, HC / 2, Z0 + 0.2));
+  for (const x of [-6.5, -3.6, 3.6, 6.5]) deco.push(bx(0.4, HC, 0.3, x, HC / 2, Z0 + 0.2));
   deco.push(bx(X1 - X0, 0.3, 0.08, 0, 0.15, Z0 + 0.14), bx(0.08, 0.3, Z1 - Z0, X0 + 0.14, 0.15, (Z0 + Z1) / 2), bx(0.08, 0.3, Z1 - Z0, X1 - 0.14, 0.15, (Z0 + Z1) / 2));
   mesh(merge(deco), std("#1d2742"));
   const pipes = [];
-  for (const [y, r] of [[4.3, 0.09], [4.55, 0.06], [4.75, 0.12]]) {
+  for (const [y, r] of [[5.0, 0.09], [5.25, 0.06], [5.45, 0.12]]) {
     const a = new T.CylinderGeometry(r, r, Z1 - Z0, 8); a.rotateX(Math.PI / 2); a.translate(X0 + 0.45, y, (Z0 + Z1) / 2); pipes.push(a);
     const b = a.clone(); b.translate(X1 - X0 - 0.9, 0, 0); pipes.push(b);
     const c = new T.CylinderGeometry(r, r, X1 - X0, 8); c.rotateZ(Math.PI / 2); c.translate(0, y, Z0 + 0.45); pipes.push(c);
@@ -83,18 +83,17 @@ export default function build(ctx) {
   kit.el("a-entity", { light: `type: point; color: ${B}; intensity: 0.5; distance: 10; decay: 1.3`, position: "0 4.2 -3" });
 
   /* ---------- skilte og dør ---------- */
-  ctx.sign(ctx.room.name, { position: `0 2.3 4.2`, rotation: "0 180 0", width: 2.2, sub: ctx.room.sub });   // ses, når man vender sig om
-  ctx.sign(ctx.room.name, { position: `-3.2 4.35 ${Z0 + 0.25}`, width: 2.4, sub: ctx.room.sub });
+  ctx.sign(ctx.room.name, { position: `-5.4 3.2 ${Z0 + 0.25}`, width: 2.4, sub: ctx.room.sub });
   ctx.door(ctx.room.parent, { position: `${X0 + 0.15} 0 3.6`, rotation: "0 90 0" });
 
   /* ---------- fem stationer: placering, lampe og gulvplade ---------- */
   const EYE = [0, 5.4];
   const ST = {
-    "b2-1": { p: [-5.1, -0.4], view: [-2.2, 1.6] },
-    "b2-2": { p: [-5.4, -6.3], view: [-3.0, -2.6], corner: true },
-    "b2-3": { p: [0, -8.75], view: [0, -4.6] },
-    "b2-4": { p: [4.6, -6.0], view: [2.2, -2.7] },
-    "b2-5": { p: [5.4, -0.6], view: [2.4, 1.6] },
+    "b2-1": { p: [-5.0, -0.2], view: [-2.5, 1.5] },
+    "b2-2": { p: [-5.6, -6.2], view: [-4.0, -1.6], look: [-5.9, -6.6] },
+    "b2-3": { p: [0, -8.75], view: [0, -4.9] },
+    "b2-4": { p: [4.8, -6.0], view: [3.2, -3.6] },
+    "b2-5": { p: [5.2, -0.4], view: [2.6, 1.6] },
   };
   const stationIds = Object.keys(ST);
   stationIds.forEach(id => {
@@ -103,10 +102,10 @@ export default function build(ctx) {
     s.g = group([s.p[0], 0, s.p[1]], root, [0, s.ry, 0]);
     // lampen over stationen og en lysende kant på gulvet (ét materiale, så hele stationen kan "tænde")
     s.mat = std(B, { emissive: new T.Color(B), emissiveIntensity: 0.15 });
-    const shade = new T.CylinderGeometry(0.18, 0.55, 0.32, 16, 1, true); shade.translate(0, 4.15, 0.4);
-    const bulb = new T.CircleGeometry(0.5, 16); bulb.rotateX(Math.PI / 2); bulb.translate(0, 3.99, 0.4);
-    const cord = new T.CylinderGeometry(0.01, 0.01, HC - 4.3, 4); cord.translate(0, (HC + 4.3) / 2, 0.4);
-    mesh(merge([shade, bulb, cord]), s.mat, [0, 0, 0], s.g);
+    const shade = new T.CylinderGeometry(0.1, 0.3, 0.22, 12, 1, true); shade.translate(0, 4.75, 0.3);
+    const rim = new T.TorusGeometry(0.3, 0.025, 4, 16); rim.rotateX(Math.PI / 2); rim.translate(0, 4.64, 0.3);
+    const cord = new T.CylinderGeometry(0.01, 0.01, HC - 4.86, 4); cord.translate(0, (HC + 4.86) / 2, 0.3);
+    mesh(merge([shade, rim, cord]), s.mat, [0, 0, 0], s.g);
   });
   // stationernes navne (fra manus)
   const signAt = (id, pos, w = 1.9) => ctx.sign(ctx.step(id).title, { parent: ST[id].g, position: pos, width: w });
@@ -149,7 +148,7 @@ export default function build(ctx) {
     fdc.tex.needsUpdate = true;
   }
   drawFlow(null);
-  const FW = 8.4, FH = FW * FD.h / FD.w, FY = 3.75, FZ = -2.6, TILT = 52;
+  const FW = 7.6, FH = FW * FD.h / FD.w, FY = 4.45, FZ = -3.0, TILT = 58;
   const flow = group([0, FY, FZ], root, [TILT, 0, 0]);
   const flowMat = texMat(fdc.tex);
   mesh(new T.PlaneGeometry(FW, FH), flowMat, [0, 0, 0], flow);
@@ -176,7 +175,7 @@ export default function build(ctx) {
     g.fillStyle = "#0d1526"; g.fillRect(0, 0, w, h);
     g.strokeStyle = "rgba(79,209,197,0.12)"; g.lineWidth = 2; for (let i = 0; i < w; i += 32) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.stroke(); g.beginPath(); g.moveTo(0, i); g.lineTo(w, i); g.stroke(); }
   });
-  mesh(new T.BoxGeometry(2.3, 1.75, 0.05), [std("#1c2440"), std("#1c2440"), std("#1c2440"), std("#1c2440"), std("#ffffff", { map: boardTex }), std("#1c2440")], [0, 1.95, -0.35], S1);
+  mesh(new T.BoxGeometry(2.4, 1.85, 0.05), [std("#1c2440"), std("#1c2440"), std("#1c2440"), std("#1c2440"), std("#ffffff", { map: boardTex }), std("#1c2440")], [0, 1.95, -0.35], S1);
   // tre navngivne kasser: hver med navn, indhold og datatype på et mærke
   function crateTex(name, val, type) {
     return K.canvasTexture(320, 300, (g, w, h) => {
@@ -223,7 +222,7 @@ export default function build(ctx) {
   ];
   // en lille kørselsprik, der går rundt i løkken, når programmet er samlet
   const run1 = mesh(new T.SphereGeometry(0.05, 10, 6), basic("#eafffb"), [0, 0, 0], S1);
-  signAt("b2-1", "0 3.2 -0.35", 2.0);
+  signAt("b2-1", "0 3.3 -0.35", 2.0);
   ctx.station("b2-1", S1);
 
   /* ================= B2.2 · Det skærmløse hjørne ================= */
@@ -257,8 +256,8 @@ export default function build(ctx) {
     g.font = '600 52px "Familjen Grotesk", sans-serif'; g.fillText("Præcis?", 820, 270);
     g.fillRect(40, 440, 160, 10);
   });
-  mesh(new T.PlaneGeometry(2.6, 1.3), std("#ffffff", { map: chalk }), [gx(1.5), 1.75, -2.98], S2);
-  mesh(merge([bx(2.75, 0.08, 0.1, gx(1.5), 2.43, -2.97), bx(2.75, 0.08, 0.16, gx(1.5), 1.07, -2.94), bx(0.08, 1.4, 0.1, gx(1.5) - 1.34, 1.75, -2.97), bx(0.08, 1.4, 0.1, gx(1.5) + 1.34, 1.75, -2.97)]), std("#6b5440"), [0, 0, 0], S2);
+  mesh(new T.PlaneGeometry(2.6, 1.3), std("#ffffff", { map: chalk }), [gx(1.5), 1.75, -2.56], S2);
+  mesh(merge([bx(2.75, 0.08, 0.1, gx(1.5), 2.43, -2.58), bx(2.75, 0.08, 0.16, gx(1.5), 1.07, -2.55), bx(0.08, 1.4, 0.1, gx(1.5) - 1.34, 1.75, -2.58), bx(0.08, 1.4, 0.1, gx(1.5) + 1.34, 1.75, -2.58)]), std("#6b5440"), [0, 0, 0], S2);
   const desks = [];
   for (const [x, z] of [[1.7, -1.6], [1.7, -0.2]]) {
     desks.push(bx(0.9, 0.04, 0.55, x, 0.72, z), bx(0.04, 0.72, 0.04, x - 0.4, 0.36, z - 0.22), bx(0.04, 0.72, 0.04, x + 0.4, 0.36, z - 0.22), bx(0.04, 0.72, 0.04, x - 0.4, 0.36, z + 0.22), bx(0.04, 0.72, 0.04, x + 0.4, 0.36, z + 0.22));
@@ -275,8 +274,10 @@ export default function build(ctx) {
     g.font = '700 150px "Familjen Grotesk", sans-serif'; g.fillText(ic, w / 2, 140);
     g.font = '700 50px "Familjen Grotesk", sans-serif'; g.fillText(t, w / 2, 270);
   });
+  // kortene ligger i en række foran feltet; rækkens gruppe er stationen (ringen lægges foran kortene)
+  const cardRow = group([gx(1.5), 0, gz(GR - 1) + 1.65], S2);
   const cards = CARDS.map((c, k) => {
-    const e = group([gx(0) - 0.2 + k * 0.5, 0.02, gz(GR - 1) + 0.75], S2, [-62, 0, 0]);
+    const e = group([(k - 2.5) * 0.5, 0.02, -0.88], cardRow, [-62, 0, 0]);
     const m = texMat(cardTex(c, c[0] === "?"));
     mesh(new T.PlaneGeometry(0.38, 0.5), m, [0, 0.25, 0], e);
     const hl = basic(B, { transparent: true, opacity: 0 });
@@ -304,8 +305,8 @@ export default function build(ctx) {
       else d = (d + 1) % 4;   // den uklare "drej": figuren gætter på højre, men der var ment venstre
       plan.push({ i, j, d });
     } }
-  signAt("b2-2", `${gx(1.5)} 2.95 -2.9`, 2.0);
-  ctx.station("b2-2", S2);
+  signAt("b2-2", `${gx(1.5)} 2.95 -2.5`, 2.0);
+  ctx.station("b2-2", cardRow);
 
   /* ================= B2.3 · Blokke og tekst side om side ================= */
   const S3 = ST["b2-3"].g;
@@ -388,7 +389,7 @@ export default function build(ctx) {
     g.fillStyle = "#e9edf5"; g.fillRect(0, 0, w, h);
     g.strokeStyle = "#8d97b0"; g.lineWidth = 4; for (let i = 0; i <= 5; i++) { g.beginPath(); g.moveTo(i * 100, 0); g.lineTo(i * 100, h); g.stroke(); } for (let j = 0; j <= 3; j++) { g.beginPath(); g.moveTo(0, j * 100); g.lineTo(w, j * 100); g.stroke(); }
   });
-  const CS = 0.16;     // cellestørrelse på de små brætter
+  const CS = 0.22;     // cellestørrelse på de små brætter
   const P4 = PROGS.map((pr, k) => {
     const x0 = k ? 0.78 : -0.78;
     // skærm på fod
@@ -399,12 +400,12 @@ export default function build(ctx) {
     const bg = group([x0, 0.875, 0.12], S4);
     const bp = new T.PlaneGeometry(5 * CS, 3 * CS); bp.rotateX(-Math.PI / 2);
     mesh(bp, std("#ffffff", { map: boardTex4 }), [0, 0, 0], bg);
-    const sg = starG.clone(); sg.scale(0.3, 1, 0.3);
+    const sg = starG.clone(); sg.scale(0.4, 1, 0.4);
     const cell = (i, j) => [(i - 2) * CS, (j - 1) * CS];
     mesh(sg, basic(B), [cell(2, 2)[0], 0.004, cell(2, 2)[1]], bg);
     const f = group([0, 0, 0], bg);
     const fm = std("#3d5a80", { emissive: new T.Color("#9fb6d8"), emissiveIntensity: 0.15 });
-    mesh(figureGeo(0.3), fm, [0, 0, 0], f);
+    mesh(figureGeo(0.42), fm, [0, 0, 0], f);
     // forkert slutfelt markeres rødt (logisk fejl)
     const wrongMat = basic(RED, { transparent: true, opacity: 0 });
     const wp = new T.PlaneGeometry(CS * 0.9, CS * 0.9); wp.rotateX(-Math.PI / 2);
@@ -446,7 +447,7 @@ export default function build(ctx) {
   const bub = new T.Shape(); { const w = 1.0, h = 0.42, r = 0.16;
     bub.moveTo(-w + r, -h); bub.lineTo(-0.35, -h); bub.lineTo(-0.55, -h - 0.25); bub.lineTo(-0.15, -h); bub.lineTo(w - r, -h); bub.quadraticCurveTo(w, -h, w, -h + r); bub.lineTo(w, h - r); bub.quadraticCurveTo(w, h, w - r, h); bub.lineTo(-w + r, h); bub.quadraticCurveTo(-w, h, -w, h - r); bub.lineTo(-w, -h + r); bub.quadraticCurveTo(-w, -h, -w + r, -h); }
   const bubG = new T.ExtrudeGeometry(bub, { depth: 0.06, bevelEnabled: false, curveSegments: 4 });
-  const bubble = group([-0.75, 2.3, 0.15], S5);
+  const bubble = group([-0.85, 2.15, 0.0], S5);
   mesh(bubG, std("#eef3ff"), [0, 0, -0.03], bubble);
   const bubTex = K.canvasTexture(1024, 420, (g, w, h) => {
     g.fillStyle = "#13203a"; g.font = '600 62px "Source Sans 3", sans-serif'; g.textAlign = "center"; g.textBaseline = "middle";
@@ -454,7 +455,7 @@ export default function build(ctx) {
   });
   mesh(new T.PlaneGeometry(1.9, 0.78), texMat(bubTex), [0, 0, 0.035], bubble);
   // eleven, der spørger
-  const student = mesh(figureGeo(1.5), std("#c9d6ea"), [-1.35, 0, 0.45], S5, [0, 0, 0]);
+  const student = mesh(figureGeo(1.45), std("#c9d6ea"), [-1.55, 0, -0.1], S5, [0, 30, 0]);
   // "modellen": en neutral, lysende form (ingen logoer) mellem boblen og koden
   const hub = group([0.25, 1.75, 0.1], S5);
   const hubMat = std("#bff7f1", { emissive: new T.Color(B), emissiveIntensity: 0.5, transparent: true, opacity: 0.9 });
@@ -501,8 +502,8 @@ export default function build(ctx) {
   ctx.station("b2-5", S5);
 
   /* ---------- views ---------- */
-  ctx.view("b2-0", { position: [0, 0, 5.6], lookAt: [0, 0, -2] });
-  stationIds.forEach(id => ctx.view(id, { position: [ST[id].view[0], 0, ST[id].view[1]], lookAt: [ST[id].p[0], 0, ST[id].p[1]] }));
+  ctx.view("b2-0", { position: [0, 0, 4.6], lookAt: [0, 0, -3] });
+  stationIds.forEach(id => { const L = ST[id].look || ST[id].p; ctx.view(id, { position: [ST[id].view[0], 0, ST[id].view[1]], lookAt: [L[0], 0, L[1]] }); });
 
   /* ---------- tilstand og animation ---------- */
   let mode = null, t0 = 0, fresh = true;
@@ -615,24 +616,24 @@ export default function build(ctx) {
 
       /* B2.5: talebobblen bliver til kode, og hver linje får et spørgsmålstegn */
       const a5 = mode === "b2-5";
-      const sb = a5 ? ease((s - 1.6) / 1.0) : 0;    // boblen suges ind i modellen
-      bubble.object3D.position.set(-0.75 + 1.0 * sb, 2.3 - 0.55 * sb, 0.15);
+      const sb = a5 ? ease((s - 2.2) / 0.9) : 0;    // boblen suges ind i modellen
+      bubble.object3D.position.set(-0.85 + 1.1 * sb, 2.15 - 0.4 * sb, 0.0);
       bubble.object3D.scale.setScalar(Math.max(0.001, 1 - 0.95 * sb));
-      bubble.object3D.visible = !a5 || s < 2.6 || s > 99;
-      if (a5 && s >= 2.6) bubble.object3D.visible = false;
+      bubble.object3D.visible = !a5 || s < 3.1;
       hub.object3D.rotation.set(t * 0.0007, t * 0.001, 0);
-      hubMat.emissiveIntensity = a5 && s > 2.0 && s < 4.6 ? 1.2 + 0.6 * Math.sin(t * 0.02) : 0.45;
-      hub.object3D.scale.setScalar(a5 && s > 2.0 && s < 4.6 ? 1.25 : 1);
+      const busy = a5 && s > 2.6 && s < 5.2;
+      hubMat.emissiveIntensity = busy ? 1.2 + 0.6 * Math.sin(t * 0.02) : 0.45;
+      hub.object3D.scale.setScalar(busy ? 1.25 : 1);
       lines5.forEach((L, i) => {
-        const ap = a5 ? ease((s - 2.8 - i * 0.35) / 0.3) : 1;
+        const ap = a5 ? ease((s - 3.3 - i * 0.35) / 0.3) : 1;
         L.m.opacity = 0.15 + 0.85 * ap;
         L.e.object3D.position.x = PX + (1 - ap) * -0.4;
-        const qa = a5 ? ease((s - 5.0 - i * 0.25) / 0.25) : 0;
+        const qa = a5 ? ease((s - 5.4 - i * 0.25) / 0.25) : 0;
         L.q.object3D.visible = qa > 0.02; L.q.object3D.scale.setScalar(0.4 + 0.6 * qa);
       });
       // uden klik vises et "hvorfor sådan?" ad gangen; et klik på en linje vælger den
       let sel = -1;
-      if (a5 && s > 6.6) sel = picked >= 0 && t - pickedAt < 8000 ? picked : [2, 0, 3, 1, 4][Math.floor((s - 6.6) / 2.6) % 5];
+      if (a5 && s > 6.8) sel = picked >= 0 && t - pickedAt < 8000 ? picked : [2, 0, 3, 1, 4][Math.floor((s - 6.8) / 2.6) % 5];
       drawWhy(sel);
       whyE.object3D.visible = sel >= 0; lineHl.object3D.visible = sel >= 0;
       if (sel >= 0) { whyE.object3D.position.set(PX + 0.35, lines5[sel].y - 0.27, 0.12); lineHl.object3D.position.set(PX, lines5[sel].y, 0.025); }

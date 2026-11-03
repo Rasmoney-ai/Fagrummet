@@ -215,7 +215,7 @@ export default function build(ctx) {
       STATION.forEach((st, i) => {
         const o = stationer[st.id];
         const gruppe = i < 2 ? 0 : 1;
-        const tændt = intro ? (gruppe === fase ? blødt : 0.15) : st.id === aktiv ? 1 : 0.12;
+        const tændt = intro ? (gruppe === fase ? blødt : 0.15) : st.id === aktiv ? (aktiv === "a1-4" ? 0.3 : 1) : 0.12;
         o.kegleMat.opacity = 0.05 + 0.3 * tændt; o.poolMat.opacity = 0.05 + 0.5 * tændt;
         o.pære.getObject3D("mesh").material.color.setScalar(0.35 + 0.65 * tændt).multiply(new THREE.Color("#ffd9a0"));
       });
@@ -498,8 +498,10 @@ export default function build(ctx) {
     };
   }
 
-  function lampeStation(g) {
+  function lampeStation(g0) {
     const Y = 0.93;
+    // modellen bygges i 1,35 gange størrelse omkring bordpladens midte
+    const g = kit.grp(g0, `0 ${Y - Y * 1.35} 0`, { scale: "1.35 1.35 1.35" });
     const B = new Batch();
     // lampe: tung fod, slank stang, opal kuppel; en lille sensor i foden
     B.cyl("#2b2f40", [-0.32, Y + 0.02, -0.02], 0.14, 0.04, null, 18);
@@ -543,7 +545,7 @@ export default function build(ctx) {
         haloM.opacity = 0.9 * lampe; bordM.opacity = 0.7 * lampe;
         skærmM.color.setScalar(0.2 + 0.8 * tel);
         telHaloM.opacity = aktivN ? 0.95 * tel : 0;
-        T.lys(lampeLys, aktivN ? 1.8 * lampe : 0);
+        T.lys(lampeLys, aktivN ? 2.4 * lampe : 0);
         T.lys(rumLys, aktivN ? 0.55 : 1.3);
         prikM.opacity = aktivN && p < 8 ? 0.9 : 0;
         prikker.forEach((e, i) => { const f = ((s * 0.6 + i / 5) % 1); e.object3D.position.set(0.32 + (-0.1 - 0.32) * f, Y + 0.12 + Math.sin(f * Math.PI) * 0.12 - 0.08 * f, 0.08 + 0.02 * f); });
