@@ -1,0 +1,421 @@
+/* Hal C · Gaden — Undersøgelse og stillingtagen.
+   En stiliseret gade i skumring: busstoppested, kiosk, et vindue ind til en stue, skærme overalt
+   og en server i det fjerne. Tre døre til delrummene, én tilbage til Forhallen, og målpladen ved udgangen.
+   c0-1: gaden vågner, og lyslinjer forbinder telefonen med personen, gaden og serveren.
+   c0-2: målpladen lyser op, og en pil går fra "undersøge" til "tage stilling". */
+
+export default function build(ctx) {
+  const { THREE, K, kit, C, root } = ctx;
+  const D = Math.PI / 180;
+  const ROSE = C.c;
+
+  /* ---------- Hjælpere: samlet statisk geometri med vertex-farver (én draw call pr. materiale) ---------- */
+  function batch() {
+    const parts = [], ranges = [];
+    function add(geo, color, p = [0, 0, 0], r = [0, 0, 0], s = 1) {
+      let g = geo.index ? geo.toNonIndexed() : geo;
+      for (const k of Object.keys(g.attributes)) if (k !== "position" && k !== "normal") g.deleteAttribute(k);
+      const sv = Array.isArray(s) ? s : [s, s, s];
+      g.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(...p), new THREE.Quaternion().setFromEuler(new THREE.Euler(r[0] * D, r[1] * D, r[2] * D)), new THREE.Vector3(...sv)));
+      const c = new THREE.Color(color), n = g.attributes.position.count, a = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) { a[i * 3] = c.r; a[i * 3 + 1] = c.g; a[i * 3 + 2] = c.b; }
+      g.setAttribute("color", new THREE.BufferAttribute(a, 3));
+      const start = parts.reduce((s2, x) => s2 + x.attributes.position.count, 0);
+      parts.push(g); ranges.push([start, n]);
+      return ranges.length - 1;
+    }
+    return {
+      add,
+      box: (w, h, d, c, p, r, s) => add(new THREE.BoxGeometry(w, h, d), c, p, r, s),
+      cyl: (rt, rb, h, c, p, r, seg = 10) => add(new THREE.CylinderGeometry(rt, rb, h, seg), c, p, r),
+      sph: (rad, c, p, seg = 10) => add(new THREE.SphereGeometry(rad, seg, Math.max(4, Math.round(seg * 0.6))), c, p),
+      ranges,
+      build(material) {
+        const g = THREE.BufferGeometryUtils.mergeGeometries(parts, false);
+        parts.forEach(x => x.dispose()); g.computeBoundingSphere();
+        return new THREE.Mesh(g, material);
+      },
+    };
+  }
+  const litMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, metalness: 0.05, flatShading: true });
+  const glowMat = new THREE.MeshBasicMaterial({ vertexColors: true });
+  const addObj = (obj, parent = root, pos = "0 0 0") => { const e = kit.grp(parent, pos); e.setObject3D("mesh", obj); obj.traverse(o => { o.el = e; }); return e; };
+  const basic = (o = {}) => new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, ...o });
+  const quad = (w, h, mat) => new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+  const FONT = (wgt, px) => `${wgt} ${px}px "Familjen Grotesk", "Segoe UI", system-ui, sans-serif`;
+  const BODY = (wgt, px) => `${wgt} ${px}px "Source Sans 3", "Segoe UI", system-ui, sans-serif`;
+  const ease = x => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+  const clamp01 = x => Math.max(0, Math.min(1, x));
+  function setSignOpacity(el, o) { const m = el.getObject3D("mesh"); if (m) m.material.opacity = o; }
+
+  ctx.env({ background: "#141432", fog: "type: exponential; color: #241d44; density: 0.028" });
+
+  /* ---------- Himmel i skumring ---------- */
+  const skyTex = K.canvasTexture(64, 512, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, 0, h);
+    gr.addColorStop(0, "#0d1030"); gr.addColorStop(0.32, "#1f1d4d"); gr.addColorStop(0.47, "#5a2f63");
+    gr.addColorStop(0.53, "#b4566f"); gr.addColorStop(0.58, "#3b2650"); gr.addColorStop(1, "#151330");
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  });
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(48, 24, 14), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false, depthWrite: false }));
+  addObj(sky);
+  // stjerner (ét Points-objekt)
+  {
+    const n = 140, pos = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, el = (12 + Math.random() * 60) * D, r = 44;
+      pos[i * 3] = Math.cos(a) * Math.cos(el) * r; pos[i * 3 + 1] = Math.sin(el) * r; pos[i * 3 + 2] = Math.sin(a) * Math.cos(el) * r;
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    addObj(new THREE.Points(g, new THREE.PointsMaterial({ color: "#c9d1ff", size: 0.12, fog: false, transparent: true, opacity: 0.7 })));
+  }
+
+  /* ---------- Statisk gade ---------- */
+  const S = batch();     // belyst
+  const G = batch();     // selvlysende (uden lys)
+  // fortov nær (brugeren står her), kantsten, vej (sænket), fortov fjernt
+  S.box(24, 0.3, 10.6, "#3a3d52", [0, -0.15, 6.3]);
+  S.box(24, 0.18, 0.22, "#6d7088", [0, -0.06, 1.05]);
+  S.box(24, 0.3, 4.4, "#1f2133", [0, -0.3, -1.2]);
+  S.box(24, 0.18, 0.22, "#6d7088", [0, -0.06, -3.35]);
+  S.box(24, 0.3, 2.4, "#363a4f", [0, -0.15, -4.6]);
+  // fliser: tynde fuger på det nære fortov
+  for (let x = -11; x <= 11; x += 1.5) S.box(0.025, 0.01, 10.4, "#2c2f42", [x, 0.003, 6.3]);
+  for (let z = 1.9; z < 11.4; z += 1.5) S.box(24, 0.01, 0.025, "#2c2f42", [0, 0.003, z]);
+  // vejstriber og fodgængerovergang ud for døren til "Bag skærmen"
+  for (let x = -11; x < 11; x += 2.2) if (Math.abs(x - 0.4) > 1.8) S.box(1.1, 0.01, 0.1, "#9a9cae", [x, -0.145, -1.2]);
+  for (let i = -3; i <= 3; i++) S.box(0.34, 0.01, 3.8, "#b9bccb", [0.4 + i * 0.62, -0.145, -1.2]);
+
+  // facader langs z = -6.6
+  const FZ = -5.8;
+  const bld = [
+    { x0: -11, x1: -6.8, h: 6.6, c: "#272a40" },
+    { x0: -6.8, x1: -1.6, h: 5.0, c: "#3b2c3c" },   // hus med stuevindue og dør til Stuen
+    { x0: -1.6, x1: 2.4, h: 4.2, c: "#2e3446" },    // værksted: Bag skærmen
+    { x0: 2.4, x1: 7.4, h: 6.9, c: "#33354a" },     // forsamlingshus
+    { x0: 7.4, x1: 11, h: 5.6, c: "#262a3d" },
+  ];
+  for (const b of bld) {
+    const w = b.x1 - b.x0, cx = (b.x0 + b.x1) / 2;
+    S.box(w, b.h, 1.2, b.c, [cx, b.h / 2, FZ - 0.6]);
+    S.box(w + 0.1, 0.18, 1.35, "#1a1c2b", [cx, b.h + 0.09, FZ - 0.6]);     // tagkant
+    S.box(w, 0.12, 0.08, "#4a4d66", [cx, 2.95, FZ + 0.03]);                 // gesims over stueetagen
+  }
+  // forsamlingshusets søjler og trappe
+  for (const x of [3.0, 6.8]) S.box(0.36, 2.9, 0.36, "#4b4d66", [x, 1.45, FZ + 0.2]);
+  S.box(3.2, 0.12, 0.6, "#4a4c63", [4.9, 0.06, FZ + 0.32]);
+  // værkstedets rulleport-ramme
+  S.box(2.6, 0.14, 0.14, "#5a6078", [0.4, 2.85, FZ + 0.08]);
+
+  // vinduer på øverste etager: hvert vindue er et område i det selvlysende batch, så de kan tændes enkeltvis
+  const windows = [];
+  const WARM = ["#ffcf8a", "#ffd9a0", "#f7b977"], SCREEN = ["#86b4ff", "#a6c6ff", "#c3a3ff"];
+  for (const b of bld) {
+    for (let y = 3.6; y < b.h - 0.6; y += 1.3) {
+      for (let x = b.x0 + 0.75; x < b.x1 - 0.5; x += 1.15) {
+        const kind = Math.random();
+        const lit = kind < 0.42 ? WARM[(x * 7 + y) % 3 | 0] : kind < 0.8 ? SCREEN[(x * 3 + y) % 3 | 0] : "#1a1d2e";
+        S.box(0.84, 1.0, 0.06, "#1d1f30", [x, y, FZ + 0.01]);
+        const id = G.box(0.7, 0.86, 0.04, "#000000", [x, y, FZ + 0.05]);
+        windows.push({ id, lit: new THREE.Color(lit), delay: Math.random(), screen: kind >= 0.42 && kind < 0.8 });
+      }
+    }
+  }
+  // gadens bagside: lave huse bag brugeren, så gaden er lukket
+  for (const [x0, x1, h, c] of [[-12, -6.5, 5.2, "#25283b"], [-6.5, -1, 4.0, "#2d2a3d"], [-1, 4.5, 5.8, "#272b3e"], [4.5, 12, 4.6, "#2a2c40"]]) {
+    S.box(x1 - x0, h, 1.2, c, [(x0 + x1) / 2, h / 2, 12.2]);
+    for (let y = 1.6; y < h - 0.5; y += 1.4) for (let x = x0 + 0.8; x < x1 - 0.5; x += 1.3)
+      (Math.random() < 0.45 ? G : S).box(0.7, 0.85, 0.05, Math.random() < 0.5 ? "#ffcf8a" : Math.random() < 0.6 ? "#8fb2f0" : "#1d1f30", [x, y, 11.58]);
+  }
+  for (const sx of [-1, 1]) {
+    S.box(1.0, 5.4, 18, "#24273a", [sx * 12.4, 2.7, 3.2]);
+    for (let z = -4; z < 11.5; z += 1.4) for (let y = 1.8; y < 5; y += 1.4)
+      (Math.random() < 0.4 ? G : S).box(0.05, 0.85, 0.7, Math.random() < 0.5 ? "#ffcf8a" : Math.random() < 0.6 ? "#8fb2f0" : "#1d1f30", [sx * 11.88, y, z]);
+  }
+  // vinduet ind til stuen (stueetagen i huset), med karm og sålbænk
+  const SW = { x: -5.0, y: 1.55, w: 2.0, h: 1.4 };
+  S.box(SW.w + 0.2, 0.1, 0.2, "#5d4b55", [SW.x, SW.y - SW.h / 2 - 0.05, FZ + 0.1]);
+  S.box(SW.w + 0.2, 0.08, 0.1, "#5d4b55", [SW.x, SW.y + SW.h / 2 + 0.04, FZ + 0.05]);
+  for (const dx of [-SW.w / 2 - 0.05, 0, SW.w / 2 + 0.05]) S.box(0.07, SW.h, 0.1, "#5d4b55", [SW.x + dx, SW.y, FZ + 0.06]);
+
+  // gadelygter
+  const lamps = [[-6.2, 1.25], [9.0, 1.25], [-9.6, -3.65], [9.4, -3.65]];
+  for (const [x, z] of lamps) {
+    const dir = z > 0 ? -1 : 1;
+    S.cyl(0.06, 0.08, 4.2, "#4a4e63", [x, 2.1, z], [0, 0, 0], 8);
+    S.box(0.08, 0.08, 0.9, "#4a4e63", [x, 4.15, z + dir * 0.42]);
+    S.box(0.36, 0.1, 0.22, "#3a3d50", [x, 4.1, z + dir * 0.86]);
+    G.box(0.3, 0.04, 0.16, "#ffe2b0", [x, 4.04, z + dir * 0.86]);
+  }
+
+  /* busstoppested (venstre, nær side) */
+  const BS = { x: -2.6, z: 1.9 };
+  S.box(3.0, 0.08, 1.3, "#2b2f42", [BS.x, 2.45, BS.z + 0.2]);                      // tag
+  for (const dx of [-1.42, 1.42]) S.box(0.07, 2.45, 0.07, "#585d74", [BS.x + dx, 1.22, BS.z + 0.75]);
+  for (const dx of [-1.42, 1.42]) S.box(0.07, 2.45, 0.07, "#585d74", [BS.x + dx, 1.22, BS.z - 0.35]);
+  S.box(1.6, 0.06, 0.38, "#6b5a63", [BS.x + 0.5, 0.48, BS.z + 0.55]);              // bænk
+  S.box(0.06, 0.45, 0.06, "#585d74", [BS.x - 0.2, 0.24, BS.z + 0.55]);
+  S.box(0.06, 0.45, 0.06, "#585d74", [BS.x + 1.2, 0.24, BS.z + 0.55]);
+  // stoppestedsskilt: stang med rundt skilt (neutralt bussymbol tegnes på tekstur)
+  S.cyl(0.035, 0.035, 2.9, "#6d7088", [BS.x - 1.85, 1.45, BS.z - 0.25], [0, 0, 0], 8);
+  // køreplansskærm på stolpen
+  S.box(0.52, 0.32, 0.06, "#1a1c2a", [BS.x + 1.42, 1.85, BS.z - 0.35]);
+
+  /* kiosk (højre, nær side) */
+  const KS = { x: 5.6, z: 2.3, ry: -32 };
+  const kiosk = new THREE.Group(); kiosk.position.set(KS.x, 0, KS.z); kiosk.rotation.y = KS.ry * D;
+  const KSb = batch(), KSg = batch();
+  KSb.box(2.4, 2.5, 1.7, "#4a2a36", [0, 1.25, 0]);
+  KSb.box(2.6, 0.12, 1.9, "#2a1b24", [0, 2.56, 0]);
+  KSb.box(2.2, 0.08, 0.55, "#5e4048", [0, 1.02, 1.06]);                        // disk
+  KSb.box(2.2, 1.0, 0.06, "#2a1b24", [0, 0.5, 0.86]);
+  for (let i = 0; i < 7; i++) KSb.box(0.36, 0.05, 0.8, i % 2 ? "#f0e6ea" : ROSE, [-1.08 + i * 0.36, 2.28, 1.2], [-24, 0, 0]);   // markise
+  for (let i = 0; i < 6; i++) KSb.box(0.22, 0.3, 0.03, ["#c9d1ff", "#ffcf8a", "#8fd694", "#e8a0b8", "#86b4ff", "#ffe08a"][i], [-1.0 + i * 0.24, 1.25, 1.24], [-15, 0, 0]);  // blade i stativ
+  KSg.box(2.0, 0.95, 0.04, "#ffcf9a", [0, 1.6, 0.86]);                         // oplyst åbning
+  KSg.box(0.12, 0.06, 0.18, "#9fe3a0", [0.75, 1.1, 1.12]);                     // betalingsterminal
+  kiosk.add(KSb.build(litMat), KSg.build(glowMat));
+  addObj(kiosk);
+  const kioskSign = quad(1.7, 0.36, basic({ map: K.canvasTexture(512, 108, (g, w, h) => {
+    g.fillStyle = "#1a0f16"; K.roundRect(g, 2, 2, w - 4, h - 4, 18); g.fill();
+    g.shadowColor = ROSE; g.shadowBlur = 18; g.fillStyle = "#ffd3e0"; g.font = FONT(700, 66); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("KIOSK", w / 2, h / 2 + 4);
+  }) }));
+  kioskSign.position.set(0, 2.82, 0.9); kiosk.add(kioskSign);
+  // reklameskærm på kioskens side (skifter farver)
+  const kioskScreen = quad(1.1, 1.4, basic({ map: K.canvasTexture(256, 320, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, "#ff9ab8"); gr.addColorStop(1, "#7f6bff");
+    g.fillStyle = gr; g.fillRect(0, 0, w, h); g.fillStyle = "rgba(255,255,255,0.9)"; g.beginPath(); g.arc(w * 0.5, h * 0.42, 62, 0, 7); g.fill();
+    g.fillStyle = "#2a1b34"; K.roundRect(g, 40, h - 78, w - 80, 36, 18); g.fill();
+  }) }));
+  kioskScreen.position.set(-1.215, 1.35, 0.1); kioskScreen.rotation.y = -90 * D; kiosk.add(kioskScreen);
+
+  /* server i det fjerne: et højt rack-tårn med blinkende lamper bag tagene */
+  const SV = { x: 0.6, z: -15 };
+  S.box(3.0, 10.5, 2.2, "#1b1e2e", [SV.x, 5.25, SV.z]);
+  for (let y = 0.8; y < 10.2; y += 0.55) S.box(3.05, 0.05, 2.25, "#2b3046", [SV.x, y, SV.z]);
+  S.cyl(0.03, 0.03, 1.6, "#3b4058", [SV.x + 0.9, 11.3, SV.z], [0, 0, 0], 6);
+  const ledTex = on => K.canvasTexture(128, 512, (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    for (let y = 8; y < h; y += 14) for (let x = 10; x < w; x += 16) {
+      const r = Math.random(); if (r < (on ? 0.45 : 0.3)) { g.fillStyle = r < 0.06 ? "#ff7aa2" : r < 0.2 ? "#9fe3a0" : "#86b4ff"; g.fillRect(x, y, 7, 4); }
+    }
+  });
+  const ledA = quad(2.8, 10, basic({ map: ledTex(true), blending: THREE.AdditiveBlending, fog: false })), ledB = quad(2.8, 10, basic({ map: ledTex(false), blending: THREE.AdditiveBlending, fog: false }));
+  ledA.position.set(SV.x, 5.3, SV.z + 1.12); ledB.position.set(SV.x, 5.3, SV.z + 1.125);
+  const serverG = new THREE.Group(); serverG.add(ledA, ledB); addObj(serverG);
+  G.sph(0.14, ROSE, [SV.x + 0.9, 12.15, SV.z], 8);
+
+  const statics = S.build(litMat); addObj(statics);
+  const glowMesh = G.build(glowMat); addObj(glowMesh);
+  const gcol = glowMesh.geometry.attributes.color;
+  // husk vinduernes position i det samlede batch (rækkefølgen er bevaret ved sammenfletning)
+  const setRangeColor = (id, c) => { const [s0, n] = G.ranges[id]; for (let i = s0; i < s0 + n; i++) gcol.setXYZ(i, c.r, c.g, c.b); };
+
+  // lyskegler på jorden fra gadelygterne (én samlet geometri med uv, additiv)
+  {
+    const pools = lamps.map(([x, z]) => { const g = new THREE.PlaneGeometry(3.6, 3.6); g.rotateX(-90 * D); g.translate(x, z > 0 ? 0.01 : 0.01, z + (z > 0 ? -0.86 : 0.86)); return g; });
+    const g = THREE.BufferGeometryUtils.mergeGeometries(pools);
+    addObj(new THREE.Mesh(g, basic({ map: K.glowTex("#ffd9a8"), blending: THREE.AdditiveBlending, opacity: 0.55 })));
+  }
+  // to ekstra lyskilder: varmt fra kiosken, koldt skærmlys ved stoppestedet
+  addObj(Object.assign(new THREE.PointLight("#ffb98a", 7, 9, 1.6), {}), root, `${KS.x - 0.6} 2.2 ${KS.z + 1.6}`);
+  addObj(new THREE.PointLight("#9ab8ff", 5, 7, 1.6), root, `${BS.x} 2.0 ${BS.z + 0.6}`);
+
+  /* ---------- Skærme overalt ---------- */
+  // reklametavle på bygningen til venstre
+  const billTex = K.canvasTexture(512, 256, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, "#2a2a7a"); gr.addColorStop(1, "#b04a7a");
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.fillStyle = "rgba(255,255,255,0.88)"; for (let i = 0; i < 3; i++) { K.roundRect(g, 40 + i * 150, 60, 120, 140, 16); g.fill(); }
+    g.fillStyle = "#2a1f4a"; for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(85 + i * 150, 105); g.lineTo(85 + i * 150, 155); g.lineTo(125 + i * 150, 130); g.closePath(); g.fill(); }
+  });
+  const billboard = quad(3.4, 1.7, basic({ map: billTex })); billboard.position.set(-8.9, 4.9, FZ + 0.08); addObj(billboard);
+  // stuevinduet: malet stue med varmt lys, sofa, tv-skær og to silhuetter
+  const stueTex = K.canvasTexture(512, 360, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#f2b27a"); gr.addColorStop(1, "#9a5a4a"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.fillStyle = "rgba(255,240,210,0.6)"; g.beginPath(); g.arc(70, 120, 60, 0, 7); g.fill();                  // lampe
+    g.fillStyle = "#3a2430"; g.fillRect(64, 120, 10, 200);
+    g.fillStyle = "#7fb0ff"; g.fillRect(360, 110, 120, 76); g.fillStyle = "rgba(127,176,255,0.35)"; g.fillRect(330, 90, 180, 130);   // tv
+    g.fillStyle = "#5b3644"; K.roundRect(g, 120, 230, 260, 90, 18); g.fill();                                   // sofa
+    g.fillStyle = "#2a1824"; for (const [x, s] of [[190, 1], [290, 0.85]]) { g.beginPath(); g.arc(x, 190 + (1 - s) * 40, 26 * s, 0, 7); g.fill(); K.roundRect(g, x - 34 * s, 215 + (1 - s) * 40, 68 * s, 90 * s, 22); g.fill(); }
+    g.fillStyle = "#cfe2ff"; g.fillRect(205, 238, 20, 12);                                                      // telefon i hånden
+    g.strokeStyle = "rgba(60,30,40,0.5)"; g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6);
+  });
+  const stueWin = quad(SW.w, SW.h, basic({ map: stueTex, opacity: 1 })); stueWin.position.set(SW.x, SW.y, FZ + 0.03); addObj(stueWin);
+  // køreplansskærm og stoppestedsskilt
+  const busTex = K.canvasTexture(256, 160, (g, w, h) => {
+    g.fillStyle = "#08100c"; g.fillRect(0, 0, w, h); g.fillStyle = "#9fe3a0"; g.font = '500 30px "JetBrains Mono", monospace';
+    g.fillText("12  2 min", 18, 52); g.fillText("7A  9 min", 18, 98); g.fillText("40  14 min", 18, 142);
+  });
+  const busScreen = quad(0.46, 0.28, basic({ map: busTex })); busScreen.position.set(BS.x + 1.42, 1.85, BS.z - 0.315); addObj(busScreen);
+  const stopSign = quad(0.6, 0.6, basic({ map: K.canvasTexture(200, 200, (g, w, h) => {
+    g.fillStyle = "#e6e9f5"; g.beginPath(); g.arc(100, 100, 96, 0, 7); g.fill(); g.fillStyle = "#2b3b8f"; g.beginPath(); g.arc(100, 100, 84, 0, 7); g.fill();
+    g.fillStyle = "#e6e9f5"; K.roundRect(g, 46, 60, 108, 62, 14); g.fill(); g.fillStyle = "#2b3b8f"; g.fillRect(56, 70, 40, 22); g.fillRect(104, 70, 40, 22);
+    g.fillStyle = "#e6e9f5"; g.beginPath(); g.arc(70, 130, 12, 0, 7); g.arc(130, 130, 12, 0, 7); g.fill();
+  }), side: THREE.DoubleSide }));
+  stopSign.position.set(BS.x - 1.85, 2.75, BS.z - 0.25); addObj(stopSign);
+  // lysreklame i læskurets ende (giver modlys bag personen)
+  const adTex = K.canvasTexture(256, 512, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#ffd0e0"); gr.addColorStop(1, "#8f7bff"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.fillStyle = "rgba(255,255,255,0.75)"; g.beginPath(); g.arc(w / 2, 190, 80, 0, 7); g.fill(); g.fillStyle = "rgba(40,20,60,0.55)"; K.roundRect(g, 40, 360, w - 80, 40, 20); g.fill(); K.roundRect(g, 70, 420, w - 140, 26, 13); g.fill();
+  });
+  const adPanel = quad(1.0, 2.0, basic({ map: adTex })); adPanel.position.set(BS.x - 1.42, 1.25, BS.z + 0.2); adPanel.rotation.y = 90 * D; addObj(adPanel);
+  // glas bag bænken
+  const glass = quad(2.8, 2.0, basic({ color: "#9fb7ff", opacity: 0.12, side: THREE.DoubleSide })); glass.position.set(BS.x, 1.25, BS.z - 0.35); addObj(glass);
+
+  /* ---------- Personen ved busstoppestedet ---------- */
+  const silMat = new THREE.MeshStandardMaterial({ color: "#20233a", roughness: 0.9, flatShading: true, emissive: "#2a1f3a", emissiveIntensity: 0.35 });
+  function capsule(A, B, r) {
+    const a = new THREE.Vector3(...A), b = new THREE.Vector3(...B), d = b.clone().sub(a), len = d.length();
+    const g = new THREE.CapsuleGeometry(r, Math.max(0.001, len), 3, 8);
+    g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()));
+    g.translate((A[0] + B[0]) / 2, (A[1] + B[1]) / 2, (A[2] + B[2]) / 2); return g;
+  }
+  const person = new THREE.Group();
+  {
+    const parts = [
+      capsule([0, 1.02, 0], [0, 1.36, 0.02], 0.17),       // overkrop
+      capsule([0.09, 0.08, 0], [0.09, 0.84, 0], 0.075), capsule([-0.09, 0.08, 0], [-0.09, 0.84, 0], 0.075),
+      capsule([0.21, 1.42, 0], [0.2, 1.12, 0.08], 0.055), capsule([-0.21, 1.42, 0], [-0.2, 1.12, 0.08], 0.055),
+      capsule([0.2, 1.12, 0.08], [0.05, 1.22, 0.3], 0.05), capsule([-0.2, 1.12, 0.08], [-0.05, 1.22, 0.3], 0.05),
+      capsule([0, 1.5, 0.0], [0, 1.58, 0.02], 0.05),     // hals
+      new THREE.CylinderGeometry(0.17, 0.2, 0.5, 10).translate(0, 0.98, 0),   // jakke
+    ].map(g => (g.index ? g.toNonIndexed() : g)).map(g => { for (const k of Object.keys(g.attributes)) if (k !== "position" && k !== "normal") g.deleteAttribute(k); return g; });
+    person.add(new THREE.Mesh(THREE.BufferGeometryUtils.mergeGeometries(parts), silMat));
+  }
+  const head = new THREE.Group(); head.position.set(0, 1.58, 0.02); person.add(head);
+  const headM = new THREE.Mesh(new THREE.SphereGeometry(0.115, 12, 8), silMat); headM.position.set(0, 0.11, 0.02); head.add(headM);
+  const phoneScreenMat = new THREE.MeshBasicMaterial({ color: "#cfe2ff" });
+  const phone = new THREE.Group(); phone.position.set(0, 1.25, 0.32); phone.rotation.x = -55 * D; person.add(phone);
+  phone.add(new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.15, 0.012), new THREE.MeshStandardMaterial({ color: "#111" })));
+  const phoneScreen = quad(0.07, 0.135, phoneScreenMat); phoneScreen.position.z = 0.007; phone.add(phoneScreen);
+  const faceGlow = quad(0.6, 0.6, basic({ map: K.glowTex("#bcd4ff"), blending: THREE.AdditiveBlending, opacity: 0 }));
+  faceGlow.position.set(0, 1.42, 0.25); person.add(faceGlow);
+  person.position.set(BS.x + 1.95, 0, BS.z + 0.75); person.rotation.y = 62 * D;     // vender mod gaden/brugeren i profil
+  addObj(person);
+
+  /* ---------- Lyslinjer: telefon → person, gade og server ---------- */
+  const phoneWorld = () => { const v = new THREE.Vector3(); phone.getWorldPosition(v); return v; };
+  root.object3D.updateMatrixWorld(true);
+  const P0 = phoneWorld();
+  const headW = new THREE.Vector3(); headM.getWorldPosition(headW);
+  const kioskTerm = new THREE.Vector3(0.75, 1.1, 1.12).applyEuler(new THREE.Euler(0, KS.ry * D, 0)).add(new THREE.Vector3(KS.x, 0, KS.z));
+  const targets = [
+    { to: headW.clone().add(new THREE.Vector3(0, 0.02, 0)), lift: 0.12, t: 0.8, d: 0.4, col: "#ffd3e0" },                          // personen
+    { to: new THREE.Vector3(BS.x + 1.42, 1.85, BS.z - 0.3), lift: 0.5, t: 1.1, d: 0.6, col: ROSE },                                     // køreplanen
+    { to: kioskTerm, lift: 1.3, t: 1.3, d: 0.8, col: ROSE },                                                                             // betaling i kiosken
+    { to: new THREE.Vector3(-8.9, 4.9, FZ + 0.1), lift: 2.2, t: 1.5, d: 0.8, col: ROSE },                                              // reklametavlen
+    { to: new THREE.Vector3(SV.x, 9.5, SV.z + 1.1), lift: 7.5, t: 1.7, d: 1.1, col: "#ffb3c9" },                                       // serveren
+  ];
+  const lines = targets.map(tg => {
+    const a = P0.clone(), b = tg.to, m = a.clone().lerp(b, 0.5); m.y += tg.lift;
+    const curve = new THREE.QuadraticBezierCurve3(a, m, b);
+    const seg = 48, geo = new THREE.TubeGeometry(curve, seg, tg === targets[4] ? 0.022 : 0.012, 5, false);
+    const mat = basic({ color: tg.col, opacity: 0.9, blending: THREE.AdditiveBlending, fog: false });
+    const mesh = new THREE.Mesh(geo, mat); geo.setDrawRange(0, 0);
+    addObj(mesh); return { ...tg, curve, mesh, total: geo.index.count, mat };
+  });
+  // lyspulser, der løber langs linjerne (ét Points-objekt)
+  const NP = lines.length * 3;
+  const pulseGeo = new THREE.BufferGeometry(); pulseGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(NP * 3), 3));
+  const pulseMat = new THREE.PointsMaterial({ map: K.glowTex("#ffffff"), color: "#ffd6e4", size: 0.28, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, opacity: 0 });
+  addObj(new THREE.Points(pulseGeo, pulseMat));
+  const endGlows = lines.slice(1).map(l => { const q = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), basic({ map: K.glowTex(ROSE), blending: THREE.AdditiveBlending, opacity: 0, fog: false })); q.position.copy(l.to); addObj(q); return q; });
+
+  /* ---------- Skilte og døre ---------- */
+  // rummets skilt hænger over gaden mellem to wirer
+  const roomSign = ctx.sign(ctx.room.name, { position: "0.4 4.7 -3.9", width: 3.2, sub: ctx.room.sub });
+    kit.link(root, [-1.0, 5.15, -3.9], [-1.6, 4.25, FZ - 0.1], 0.008, K.flat("#555a74"));
+  kit.link(root, [1.8, 5.15, -3.9], [2.4, 6.0, FZ - 0.1], 0.008, K.flat("#555a74"));
+
+  ctx.door("c1", { position: `-2.9 0 ${FZ + 0.14}` });
+  ctx.door("c2", { position: `0.4 0 ${FZ + 0.14}` });
+  ctx.door("c3", { position: `4.9 0 ${FZ + 0.14}` });
+  ctx.door(ctx.room.parent, { position: "-9.4 0 6.6", rotation: "0 70 0" });
+
+  /* ---------- c0-1: station = personen ved busstoppestedet ---------- */
+  const st1 = kit.grp(root, `${BS.x + 1.95} 0 ${BS.z + 0.75}`);
+  const hit1 = kit.box(st1, "0 1.0 0", 0.8, 2.0, 0.8, "opacity: 0; transparent: true; depthWrite: false", { visible: true });
+  ctx.station("c0-1", st1);
+  const s01 = ctx.sign(ctx.step("c0-1").title, { position: `${BS.x + 0.3} 2.95 ${BS.z + 0.85}`, width: 1.7 });
+  ctx.view("c0-1", { position: [1.1, 0, 5.9], lookAt: [0.2, 2.2, -4] });
+
+  /* ---------- c0-2: målpladen ved udgangen ---------- */
+  const goal = kit.grp(root, "-6.6 0 4.6", { rotation: "0 36 0" });
+  const goalG = new THREE.Group();
+  {
+    const B2 = batch();
+    B2.box(0.08, 1.0, 0.08, "#5b6078", [-1.15, 0.5, -0.05]); B2.box(0.08, 1.0, 0.08, "#5b6078", [1.15, 0.5, -0.05]);
+    B2.box(2.6, 1.32, 0.08, "#20233a", [0, 1.62, -0.06]);
+    B2.box(2.66, 0.05, 0.12, ROSE, [0, 2.3, -0.04]);
+    goalG.add(B2.build(litMat));
+  }
+  const cardTex = (word, sub) => K.canvasTexture(512, 400, (g, w, h) => {
+    g.fillStyle = "rgba(11,15,30,0.92)"; K.roundRect(g, 8, 8, w - 16, h - 16, 30); g.fill();
+    g.strokeStyle = ROSE; g.lineWidth = 7; g.stroke();
+    g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillStyle = "#ffffff"; g.font = FONT(700, 66); K.wrap(g, word, w - 60).forEach((l, i, a) => g.fillText(l, w / 2, 130 - (a.length - 1) * 36 + i * 72));
+    g.fillStyle = "#c9cfe8"; g.font = BODY(500, 36); const sl = K.wrap(g, sub, w - 64); sl.forEach((l, i) => g.fillText(l, w / 2, 290 - (sl.length - 1) * 21 + i * 42));
+  });
+  const cardL = quad(1.04, 0.81, basic({ map: cardTex("undersøge", "digitale fænomener i eget hverdagsliv"), color: "#5a5f7a", depthWrite: true }));
+  const cardR = quad(1.04, 0.81, basic({ map: cardTex("tage stilling", "til fænomeners betydning for mennesker eller verden"), color: "#5a5f7a", depthWrite: true }));
+  cardL.position.set(-0.74, 1.6, 0.0); cardR.position.set(0.74, 1.6, 0.0); goalG.add(cardL, cardR);
+  // pilen (vokser fra venstre mod højre)
+  const arrowShape = new THREE.Shape(); arrowShape.moveTo(0, -0.03); arrowShape.lineTo(0.3, -0.03); arrowShape.lineTo(0.3, -0.08); arrowShape.lineTo(0.42, 0); arrowShape.lineTo(0.3, 0.08); arrowShape.lineTo(0.3, 0.03); arrowShape.lineTo(0, 0.03); arrowShape.closePath();
+  const arrowMat = basic({ color: ROSE, opacity: 0.25 });
+  const arrow = new THREE.Mesh(new THREE.ShapeGeometry(arrowShape), arrowMat); arrow.position.set(-0.21, 1.6, 0.02); goalG.add(arrow);
+  const goalGlow = quad(3.6, 2.2, basic({ map: K.glowTex(ROSE), blending: THREE.AdditiveBlending, opacity: 0 })); goalGlow.position.set(0, 1.62, -0.12); goalG.add(goalGlow);
+  goal.setObject3D("mesh", goalG); goalG.traverse(o => { o.el = goal; });
+  ctx.station("c0-2", goal);
+  const s02 = ctx.sign(ctx.step("c0-2").title, { parent: goal, position: "0 2.62 0", width: 1.8 });
+  ctx.view("c0-2", { position: [-5.1, 0, 6.8], lookAt: [-6.6, 1.55, 4.6] });
+
+  /* ---------- Tilstand og animation ---------- */
+  let cur = null, t0 = null, now = 0;
+  const dark = new THREE.Color("#141626"), tmp = new THREE.Color();
+  return {
+    onStep(id) { cur = id; t0 = null; },
+    tick(t) {
+      now = t; if (t0 === null) t0 = t;
+      const e = (t - t0) / 1000, s = t / 1000;
+      const wake = cur === "c0-1" ? e : 99;          // gaden vågner kun i c0-1, ellers er den vågen
+      // vinduer tændes et for et; skærmvinduer flimrer svagt
+      for (const w of windows) {
+        const k = ease((wake - 0.1 - w.delay * 1.4) / 0.35);
+        tmp.copy(dark).lerp(w.lit, k);
+        if (w.screen && k > 0.99) tmp.multiplyScalar(0.82 + 0.18 * Math.sin(s * 3 + w.delay * 20));
+        setRangeColor(w.id, tmp);
+      }
+      gcol.needsUpdate = true;
+      const scr = ease((wake - 0.3) / 0.5);
+      billboard.material.opacity = scr; kioskScreen.material.opacity = scr; busScreen.material.opacity = scr; adPanel.material.opacity = 0.25 + 0.75 * scr;
+      stueWin.material.opacity = 0.35 + 0.65 * ease((wake - 0.6) / 0.6);
+      billboard.material.color.setHSL(0, 0, 0.8 + 0.2 * Math.sin(s * 1.3));
+      ledA.material.opacity = 0.35 + 0.65 * (Math.sin(s * 5.1) > 0 ? 1 : 0.3); ledB.material.opacity = 0.35 + 0.65 * (Math.sin(s * 3.7 + 1) > 0 ? 1 : 0.2);
+      // telefonen og personen
+      const ph = ease((wake - 0.5) / 0.3);
+      phoneScreenMat.color.setRGB(0.1 + 0.7 * ph, 0.12 + 0.75 * ph, 0.18 + 0.82 * ph);
+      faceGlow.material.opacity = 0.55 * ph;
+      head.rotation.x = (8 + 22 * ph) * D + Math.sin(s * 0.8) * 0.02;
+      // linjerne vokser frem
+      const camQ = new THREE.Quaternion(); root.sceneEl.camera.getWorldQuaternion(camQ);
+      const lineAlpha = cur === "c0-1" ? 1 : 0.18;
+      lines.forEach((l, i) => {
+        const k = cur === "c0-1" ? ease((e - l.t) / l.d) : 1;
+        l.mesh.geometry.setDrawRange(0, Math.floor(l.total * k / 3) * 3);
+        l.mat.opacity = lineAlpha * (0.65 + 0.25 * Math.sin(s * 2 + i));
+        if (i > 0) { endGlows[i - 1].material.opacity = (k >= 1 ? 0.8 : 0) * lineAlpha; endGlows[i - 1].quaternion.copy(camQ); }
+      });
+      const pa = pulseGeo.attributes.position;
+      lines.forEach((l, i) => { for (let j = 0; j < 3; j++) { const u = ((s * (0.35 + 0.08 * i)) + j / 3 + i * 0.13) % 1; const p = l.curve.getPoint(i % 2 ? 1 - u : u); pa.setXYZ(i * 3 + j, p.x, p.y, p.z); } });
+      pa.needsUpdate = true; pulseMat.opacity = cur === "c0-1" ? ease((e - 2.0) / 0.5) : 0.15;
+      // målpladen
+      const g = cur === "c0-2" ? e : -1;
+      const lit = ease((g - 0.2) / 0.5), ar = ease((g - 0.7) / 1.2), lit2 = ease((g - 1.8) / 0.5);
+      cardL.material.color.setScalar(0.35 + 0.65 * lit); cardR.material.color.setScalar(0.35 + 0.65 * lit2);
+      arrow.scale.x = cur === "c0-2" ? Math.max(0.02, ar) : 1; arrowMat.opacity = cur === "c0-2" ? 1 : 0.3;
+      goalGlow.material.opacity = (0.3 + 0.08 * Math.sin(s * 2.5)) * lit;
+      // skiltene ved de inaktive stationer dæmpes
+      setSignOpacity(s01, cur === "c0-1" ? 1 : 0.55); setSignOpacity(s02, cur === "c0-2" ? 1 : 0.55);
+    },
+  };
+}
