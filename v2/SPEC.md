@@ -37,6 +37,7 @@ export default function build(ctx) {
 | `ctx.station(stepId, entity)` | gør `entity` til trinnets station: klik vælger trinnet, og rammen lægger en lysende ring på gulvet under den, når trinnet er aktivt |
 | `ctx.view(stepId, {position:[x,y,z], lookAt:[x,y,z], pitch})` | hvor brugeren stilles og kigger hen i trinnet (y ignoreres for position; øjenhøjde er 1,6 m). Uden view bliver brugeren stående. `pitch`: grader op/ned (negativ = ned), eller `true` = sigt mod lookAt's højde. Uden pitch kigger man vandret. Pitch virker kun på skærm; i VR styrer hovedet selv |
 | `ctx.rooms` | alle rum (`name`, `sub`, `color`, `area`) til skilte o.l.; kun til læsning |
+| `ctx.visited`, `ctx.cameFrom` | Set med rum-id'er besøgt i sessionen (inkl. det nuværende) og id på rummet, man kom fra (`null` ved start) |
 | `ctx.onClick(entity, fn)` | gør en entitet klikbar. Klikket stopper her og bobler ikke op til en omgivende station |
 | `ctx.goStep(id)`, `ctx.goRoom(id)` | skift trin i rummet / gå til et andet rum (bruges sjældent; døre og stationer klarer det) |
 | `ctx.env({background, fog})` | baggrundsfarve og evt. tåge (A-Frame fog-streng) for rummet |

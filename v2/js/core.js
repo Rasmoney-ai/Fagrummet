@@ -15,6 +15,8 @@ let curRoom = null;        // aktuelt rum-id
 let api = null;            // det aktuelle rums {onStep, tick, dispose}
 let rctx = null;           // det aktuelle rums ctx-intern tilstand
 let ttsOn = true, daVoice = null, player = null, busy = false;
+const VISITED = new Set();   // rum besøgt i denne session
+let cameFrom = null;         // rummet man kom fra
 
 /* ---------- Fade (virker også i VR: en kugle om kameraet) ---------- */
 const fader = $("fader");
@@ -100,13 +102,14 @@ async function loadRoom(id, stepId, { instant = false } = {}) {
   while (roomsRoot.firstChild) roomsRoot.removeChild(roomsRoot.firstChild);
   api = null; cur = null;
   scene.setAttribute("background", `color: ${C.night}`); scene.removeAttribute("fog");
-  curRoom = id; const room = ROOMS[id];
+  cameFrom = curRoom; curRoom = id; VISITED.add(id); const room = ROOMS[id];
   const root = document.createElement("a-entity"); root.id = `room-${id}`; roomsRoot.appendChild(root);
   const kit = K.makeKit(root);
   rctx = { stations: {}, views: {}, beacon: makeBeacon(kit, room.color) };
   const ctx = {
     THREE, AFRAME, root, room, C, K, kit, el: kit.el,
     rooms: ROOMS,   // opslag af andre rum (navn, sub, farve) — kun til læsning
+    visited: new Set(VISITED), cameFrom,   // besøgte rum (inkl. dette) og rummet man kom fra (null ved start)
     steps: STEPS.filter(s => s.room === id), step: sid => BYID[sid],
     sign: (text, o = {}) => makeSign(kit, text, { color: room.color, parent: root, ...o }),
     door: (to, o = {}) => makeDoor(kit, root, to, o),

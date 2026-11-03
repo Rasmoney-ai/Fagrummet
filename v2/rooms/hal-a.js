@@ -1,7 +1,9 @@
 /* Hal A · Atelieret — Digital kreativitet og design.
    Et højt atelier om natten med savtagstag og ovenlys. To lange arbejdsborde med halvfærdige prototyper i pap,
-   træ og elektronik. Til venstre døren til Værkstedet (processerne), til højre Metodelaboratoriet (metoderne).
-   Ved udgangen hænger målpladen. Trin: a0-1 (prototyperne lyser op én efter én), a0-2 (målpladen). */
+   træ og elektronik. For enden af bordene står en pult med ét fælles oplæg; fra det løber tynde lysbuer ud til
+   otte meget forskellige prototyper (ét oplæg, mange uforudsigelige resultater). Hvert bord fører med en lysstribe
+   til sin dør: Værkstedet (processerne) og Metodelaboratoriet (metoderne). Ved udgangen hænger målpladen.
+   Trin: a0-1 (prototyperne lyser op én efter én), a0-2 (målpladen: fire nøgleord på en løkke). */
 
 export default function build(ctx) {
   const { THREE, kit, C } = ctx;
@@ -53,7 +55,8 @@ export default function build(ctx) {
   /* ---------- Statisk geometri samlet i få meshes ---------- */
   const S = new Batch();         // belyst
   const L = new Batch();         // selvlysende (pærer, LED'er)
-  const LYS = new Batch();       // additivt lys (lyskegler, måneskinsstråler)
+  const LYS = new Batch();       // additivt lys: måneskinsstråler
+  const KEGLE = new Batch();     // additivt lys: pendlernes lyskegler (dæmpes i trinnene)
 
   // panel nederst på væggene (mørkt træ) og fodliste
   for (const [x1, z1, x2, z2] of vaegge) {
@@ -90,13 +93,13 @@ export default function build(ctx) {
   // måneskinsstråler fra ovenlyset (bløde, skrå lysflader)
   for (const zA of [-5, 0]) for (let x = -5.2; x <= 5.2; x += 2.6) {
     if (zA === -5 && Math.abs(x) > 4.5) continue;
-    LYS.slant([x, 6.0, zA + 0.1], [x, 0, zA + 4.2], 1.2, "#18203e", "#000000");
+    LYS.slant([x, 6.0, zA + 0.1], [x, 0, zA + 4.2], 1.2, "#121932", "#000000");
   }
   // lyse pletter på gulvet hvor strålerne rammer
   const pletTex = T.glow("#5d76c4");
   const P = new Batch({ uv: true });
   for (const zA of tagZ) for (let x = -5.2; x <= 5.2; x += 2.6) { if (zA === -5 && Math.abs(x) > 4.5) continue; if (zA === 5) continue; P.plane([x, 0.012, zA + 4.2], [2.2, 1.2], [-90, 0, 0]); }
-  T.mesh(ctx.root, P.merge(), T.hold(new THREE.MeshBasicMaterial({ map: pletTex, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending })));
+  T.mesh(ctx.root, P.merge(), T.hold(new THREE.MeshBasicMaterial({ map: pletTex, transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending })));
 
   // reoler langs sidevæggene med kasser, pap og ruller
   const rr = T.rng(21);
@@ -117,7 +120,7 @@ export default function build(ctx) {
     }
   }
   // papplader og lister lænet op ad bagvæggen ved siden af udgangen
-  for (let i = 0; i < 5; i++) S.box(i % 2 ? "#b48659" : "#9d744b", [-5.6 + i * 0.12, 0.8, 8.3 - i * 0.05], [0.9, 1.6, 0.02], [-8 - i * 2, 0, 0]);
+  for (let i = 0; i < 5; i++) S.box(i % 2 ? "#b48659" : "#9d744b", [-6.0 + i * 0.1, 0.8, 8.3 - i * 0.05], [0.6, 1.6, 0.02], [-8 - i * 2, 0, 0]);
 
   /* ---------- Station a0-1: de to lange arbejdsborde med prototyper ---------- */
   const BORD_Z = -0.8;
@@ -148,28 +151,61 @@ export default function build(ctx) {
     S.box("#11131c", [bx, 4.6, lz + BORD_Z], [0.015, 2.8, 0.015]);
     S.add(T.geo.cyl(14, 0.25), "#2b2420", [bx, 3.08, lz + BORD_Z], null, [0.6, 0.28, 0.6]);
     L.cyl("#ffd9a0", [bx, 2.94, lz + BORD_Z], 0.26, 0.01, null, 14);
-    LYS.cone([bx, 2.93, lz + BORD_Z], 0.26, 0.95, 1.9, "#2a1a07");
+    KEGLE.cone([bx, 2.93, lz + BORD_Z], 0.26, 0.95, 1.9, "#2a1a07");
   }
   T.mesh(bord, BB.merge(), T.lit());
 
   // de otte prototyper
+  // rækkefølgen er bølgens rækkefølge: ned ad venstre bord og op ad højre
   const PROTOS = [
-    { x: -2.5, z: 2.5, f: protoRobot }, { x: -2.5, z: 0.85, f: protoKuglebane }, { x: -2.5, z: -0.85, f: protoBreadboard }, { x: -2.5, z: -2.5, f: protoHus },
-    { x: 2.5, z: -2.5, f: protoLampe }, { x: 2.5, z: -0.85, f: protoBil }, { x: 2.5, z: 0.85, f: protoTekstil }, { x: 2.5, z: 2.5, f: protoLydmaskine },
+    { x: -2.5, z: 2.75, f: protoRobot }, { x: -2.5, z: 1.55, f: protoKuglebane }, { x: -2.5, z: 0.35, f: protoBreadboard }, { x: -2.5, z: -0.85, f: protoHus },
+    { x: 2.5, z: -0.85, f: protoLampe }, { x: 2.5, z: 0.35, f: protoBil }, { x: 2.5, z: 1.55, f: protoTekstil }, { x: 2.5, z: 2.75, f: protoLydmaskine },
   ];
+  const PSK = 1.7;   // prototyperne vises i 1,7 gange størrelse
   const poolTex = T.glow(A);
   const protos = PROTOS.map((p, i) => {
-    const g = kit.grp(bord, `${p.x} 0.935 ${p.z}`, { rotation: `0 ${p.x < 0 ? 90 : -90} 0` });
+    const g = kit.grp(bord, `${p.x} 0.935 ${p.z}`, { rotation: `0 ${p.x < 0 ? 90 : -90} 0`, scale: `${PSK} ${PSK} ${PSK}` });
     const b = new Batch(); p.f(b);
     const m = T.lit({ emissive: new THREE.Color(A), emissiveIntensity: 0 });
     const body = T.mesh(g, b.merge(), m);
     const poolMat = T.hold(new THREE.MeshBasicMaterial({ map: poolTex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
-    const pg = T.hold(new THREE.PlaneGeometry(1.1, 1.1)); pg.rotateX(-Math.PI / 2);
+    const pg = T.hold(new THREE.PlaneGeometry(0.8, 0.8)); pg.rotateX(-Math.PI / 2);
     T.mesh(g, pg, poolMat, "0 0.006 0");
-    return { body, m, poolMat, i };
+    return { body, m, poolMat, i, p };
   });
-  ctx.station("a0-1", bord);
-  ctx.sign(ctx.step("a0-1").title, { position: `0 2.35 ${BORD_Z - 0.2}`, width: 1.9 });
+
+  /* pulten for enden af bordene: ét fælles oplæg til hele klassen (stationen for a0-1) */
+  const PULT_Z = 3.75;
+  const pult = kit.grp(ctx.root, `0 0 ${PULT_Z}`);
+  const PB = new Batch();
+  PB.box("#2b2f40", [0, 0.02, 0], [0.6, 0.04, 0.45]);
+  PB.box("#3a2f2a", [0, 0.5, 0], [0.12, 0.96, 0.12]);
+  PB.box("#8e6c47", [0, 1.02, 0], [0.7, 0.04, 0.5], [-25, 0, 0]);
+  T.mesh(pult, PB.merge(), T.lit());
+  const oplægTex = T.canvas(512, 360, (g, w, h) => {
+    g.fillStyle = "#f3eee2"; T.rr(g, 0, 0, w, h, 20); g.fill();
+    g.fillStyle = A; T.rr(g, 0, 0, w, 70, 20); g.fill(); g.fillRect(0, 40, w, 30);
+    g.fillStyle = "#1a1206"; g.font = '700 38px "Familjen Grotesk", sans-serif'; g.textBaseline = "middle"; g.fillText("OPLÆG", 30, 38);
+    g.fillStyle = "#1f2a4a"; g.font = '600 40px "Source Sans 3", sans-serif';
+    ["Skab noget digitalt,", "der betyder noget", "for dig eller andre."].forEach((l, i) => g.fillText(l, 30, 128 + i * 56));
+    g.fillStyle = "#8a8578"; g.font = 'italic 500 28px "Source Sans 3", sans-serif'; g.fillText("én opgave · mange svar", 30, 320);
+  });
+  const oplægM = T.hold(new THREE.MeshBasicMaterial({ map: oplægTex, color: "#bbb" }));
+  T.mesh(pult, T.hold(new THREE.PlaneGeometry(0.6, 0.42)), oplægM, "0 1.045 0.0", { rotation: "-115 0 0" });
+  const oplægGlød = T.hold(new THREE.MeshBasicMaterial({ map: poolTex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+  T.mesh(pult, T.hold(new THREE.PlaneGeometry(1.3, 1.0)), oplægGlød, "0 1.04 -0.01", { rotation: "-115 0 0" });
+  // lysbuer fra oplægget ud til hver prototype (tegnes frem, når prototypen lyser)
+  const buer = protos.map(pr => {
+    const a = new THREE.Vector3(0, 1.08, PULT_Z - 0.05);
+    const b = new THREE.Vector3(pr.p.x * 0.93, 0.935 + 0.45, pr.p.z + BORD_Z);
+    const mid = a.clone().lerp(b, 0.5); mid.y += 0.9;
+    const geo = T.hold(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(a, mid, b), 28, 0.008, 4, false));
+    const m = T.hold(new THREE.MeshBasicMaterial({ color: A, transparent: true, opacity: 0, depthWrite: false }));
+    T.mesh(ctx.root, geo, m);
+    return { geo, m, n: geo.index ? geo.index.count : geo.attributes.position.count };
+  });
+  ctx.station("a0-1", pult);
+  ctx.sign(ctx.step("a0-1").title, { parent: pult, position: "0 1.72 -0.1", width: 1.5, size: 74 });
 
   /* ---------- Målpladen ved udgangen (station a0-2) ---------- */
   // stationen står på gulvet foran væggen; pladen hænger på væggen bag den
@@ -247,30 +283,51 @@ export default function build(ctx) {
 
   T.mesh(ctx.root, S.merge(), T.lit());
   T.mesh(ctx.root, L.merge(), T.basic());
-  T.mesh(ctx.root, LYS.merge(), T.additive({ opacity: 0.9 }));
+  T.mesh(ctx.root, LYS.merge(), T.additive({ opacity: 0.6 }));
+  const kegleMat = T.additive({ opacity: 0.3 });
+  T.mesh(ctx.root, KEGLE.merge(), kegleMat);
 
   // døre: venstre til processerne, højre til metoderne, udgangen bag én
   const dorL = [-5.5 + 0.22 * 0.707, -5 + 0.22 * 0.707], dorR = [5.5 - 0.22 * 0.707, -5 + 0.22 * 0.707];
   ctx.door("a1", { position: `${dorL[0]} 0 ${dorL[1]}`, rotation: "0 45 0" });
   ctx.door("a2", { position: `${dorR[0]} 0 ${dorR[1]}`, rotation: "0 -45 0" });
-  ctx.door(ctx.room.parent, { position: "-1.7 0 8.28", rotation: "0 180 0" });
+  ctx.door(ctx.room.parent, { position: "-3.9 0 8.28", rotation: "0 180 0" });
   // mørk døråbning bag portalerne og en lysplet på gulvet foran dem
   const DO = new Batch({ uv: true });
   DO.plane([dorL[0] - 0.05, 1.25, dorL[1] - 0.05], [1.6, 2.5], [0, 45, 0]);
   DO.plane([dorR[0] + 0.05, 1.25, dorR[1] - 0.05], [1.6, 2.5], [0, -45, 0]);
-  DO.plane([-1.7, 1.25, 8.36], [1.6, 2.5], [0, 180, 0]);
+  DO.plane([-3.9, 1.25, 8.36], [1.6, 2.5], [0, 180, 0]);
   T.mesh(ctx.root, DO.merge(), T.hold(new THREE.MeshBasicMaterial({ color: "#04050b" })));
-  const DG = new Batch({ uv: true });
-  DG.plane([dorL[0] + 0.7, 0.015, dorL[1] + 0.7], [2.2, 1.6], [-90, 45, 0]);
-  DG.plane([dorR[0] - 0.7, 0.015, dorR[1] + 0.7], [2.2, 1.6], [-90, -45, 0]);
-  T.mesh(ctx.root, DG.merge(), T.hold(new THREE.MeshBasicMaterial({ map: poolTex, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending })));
+  // et symbol på gulvet foran hver dør: Værkstedet = kort → skitse → kasse, Metodelaboratoriet = spiral
+  const symbol = tegn => T.canvas(256, 256, (g, w, h) => {
+    const gr = g.createRadialGradient(128, 128, 30, 128, 128, 128); gr.addColorStop(0, "rgba(242,165,65,0.35)"); gr.addColorStop(1, "rgba(242,165,65,0)");
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.strokeStyle = A; g.lineWidth = 7; g.lineCap = "round"; g.lineJoin = "round";
+    g.beginPath(); g.arc(128, 128, 96, 0, 7); g.stroke(); tegn(g);
+  });
+  const symA1 = symbol(g => { g.strokeRect(52, 104, 34, 46); g.strokeRect(112, 100, 40, 52); g.beginPath(); g.moveTo(120, 140); g.lineTo(144, 112); g.stroke(); g.fillStyle = A; g.fillRect(176, 108, 34, 40);
+    g.beginPath(); g.moveTo(92, 127); g.lineTo(106, 127); g.moveTo(158, 127); g.lineTo(170, 127); g.stroke(); });
+  const symA2 = symbol(g => { g.beginPath(); for (let a = 0; a < Math.PI * 5.2; a += 0.08) { const r = 8 + a * 4.6; const x = 128 + Math.cos(a) * r, y = 128 + Math.sin(a) * r; a ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); });
+  const symM = [symA1, symA2].map(tx => T.hold(new THREE.MeshBasicMaterial({ map: tx, transparent: true, opacity: 0.75, depthWrite: false })));
+  const symGeo = T.hold(new THREE.PlaneGeometry(1.3, 1.3)); symGeo.rotateX(-Math.PI / 2);
+  T.mesh(ctx.root, symGeo, symM[0], `${dorL[0] + 0.85} 0.016 ${dorL[1] + 0.85}`, { rotation: "0 45 0" });
+  T.mesh(ctx.root, symGeo, symM[1], `${dorR[0] - 0.85} 0.016 ${dorR[1] + 0.85}`, { rotation: "0 -45 0" });
+  // lysstriber på gulvet fra hvert bords bagende til dets dør (bordet hører til døren)
+  const striber = [[-2.5, dorL[0] + 0.85, dorL[1] + 0.85], [2.5, dorR[0] - 0.85, dorR[1] + 0.85]].map(([bx, dx, dz]) => {
+    const fra = new THREE.Vector3(bx, 0.014, BORD_Z - 3.5), til = new THREE.Vector3(dx, 0.014, dz);
+    const len = fra.distanceTo(til), g = new THREE.PlaneGeometry(0.09, len);
+    g.rotateX(-Math.PI / 2); g.rotateY(Math.atan2(til.x - fra.x, til.z - fra.z));
+    g.translate((fra.x + til.x) / 2, 0.014, (fra.z + til.z) / 2);
+    const m = T.hold(new THREE.MeshBasicMaterial({ color: A, transparent: true, opacity: 0.25, depthWrite: false }));
+    T.mesh(ctx.root, T.hold(g), m); return m;
+  });
 
   ctx.sign(ctx.room.name, { sub: ctx.room.sub, position: "0 4.7 -6.42", width: 4.2 });
-  const erk = T.erkendeformer(ctx.root, "3.2 4.7 -6.4");
+  const erk = T.erkendeformer(ctx.root, "3.3 4.7 -6.38", "0 0 0", 1.5);
 
   /* ---------- Views ---------- */
-  ctx.view("a0-1", { position: [0, 0, 4.4], lookAt: [0, 1.3, -3] });
-  ctx.view("a0-2", { position: [1.2, 0, 4.6], lookAt: [1.3, 1.8, 8.5] });
+  ctx.view("a0-1", { position: [0, 0, 6.3], lookAt: [0, 1.25, -2.5] });
+  ctx.view("a0-2", { position: [2.0, 0, 3.9], lookAt: [2.05, 2.05, 8.5] });
 
   /* ---------- Trin og animation ---------- */
   let aktiv = null, t0 = null;
