@@ -275,10 +275,10 @@ export default function build(ctx) {
   QUEST.forEach(Q => {
     Q.mark = quad(0.2, 0.2, basic({ map: qmTex, opacity: 0, side: THREE.DoubleSide })); layerObjs[Q.layer].grp.add(Q.mark); Q.mark.position.set(Q.at[0], Q.at[1], 0.03);
     const tx = K.canvasTexture(1000, 150, (g, w, h) => { g.fillStyle = "rgba(255,255,255,0.96)"; K.roundRect(g, 4, 4, w - 40, h - 40, 30); g.fill(); g.beginPath(); g.moveTo(w - 60, 30); g.lineTo(w - 2, (h - 36) / 2); g.lineTo(w - 60, h - 70); g.fill(); g.strokeStyle = C.c; g.lineWidth = 5; K.roundRect(g, 4, 4, w - 40, h - 40, 30); g.stroke(); g.fillStyle = "#2b2230"; g.font = BODY(600, 50); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(Q.q, (w - 36) / 2, (h - 36) / 2 + 4); });
-    Q.bubble = quad(1.05, 0.158, basic({ map: tx, opacity: 0, side: THREE.DoubleSide, depthTest: false })); Q.bubble.renderOrder = 20; addObj(Q.bubble);
+    Q.bubble = quad(1.25, 0.19, basic({ map: tx, opacity: 0, side: THREE.DoubleSide, depthTest: false })); Q.bubble.renderOrder = 20; addObj(Q.bubble);
   });
   let pointed = -1, pointedAt = 0;   // hvis brugeren klikker på et lag, peger luppen dér
-  const st1 = kit.grp(root, `${TBL.x + 0.6} 0 ${TBL.z + 0.4}`);
+  const st1 = kit.grp(root, `${TBL.x} 0 ${TBL.z + 0.4}`);
   kit.box(st1, "0 1.5 0", 0.4, 0.4, 0.4, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c2-1", st1);
   const s21 = ctx.sign(ctx.step("c2-1").title, { position: `${TBL.x} 2.95 ${TBL.z - 0.28}`, width: 2.1 });
@@ -537,9 +537,9 @@ export default function build(ctx) {
         const seen = L1 && i < visited;
         Q.mark.material.opacity = L1 ? (on ? 1 : seen ? 0.7 : 0.3) : 0;
         Q.mark.scale.setScalar(on ? 1 + 0.12 * Math.sin(s * 6) : 0.8);
-        const bo = Q.bubble.material.opacity; Q.bubble.material.opacity = lerp(bo, on ? 1 : seen ? 0.6 : 0, kf);
+        const bo = Q.bubble.material.opacity; Q.bubble.material.opacity = lerp(bo, on ? 1 : seen ? 0.8 : 0, kf);
         // boblen står ud for laget, til venstre for stakken (fri af lagene og mærkerne)
-        const lp = layerObjs[Q.layer].grp.position; Q.bubble.position.set(TBL.x - LW / 2 - 0.62, lp.y + 0.05, lp.z + 0.1);
+        const lp = layerObjs[Q.layer].grp.position; Q.bubble.position.set(TBL.x - LW / 2 - 0.72, lp.y + 0.05, lp.z + 0.1);
         Q.bubble.quaternion.copy(root.sceneEl.camera.getWorldQuaternion(tmpQ));
         Q.bubble.scale.setScalar(on ? 1.08 : 0.92);
       });
@@ -604,7 +604,7 @@ export default function build(ctx) {
 
       // skilte: aktive tydelige, øvrige dæmpede
       // dæmpningsregime: kun det aktive trins skilt er synligt; de andre er næsten skjult, så de ikke konkurrerer
-      [[s20, "c2-0"], [s21, "c2-1"], [s22, "c2-2"], [s23, "c2-3"], [s24, "c2-4"]].forEach(([sg, id]) => { setSignOpacity(sg, cur === id ? 1 : 0.12); });
+      [[s20, "c2-0"], [s21, "c2-1"], [s22, "c2-2"], [s23, "c2-3"], [s24, "c2-4"]].forEach(([sg, id]) => { setSignOpacity(sg, cur === id ? 1 : 0.12); sg.object3D.visible = cur === id || !((id === "c2-0" && cur === "c2-1") || (id === "c2-1" && cur === "c2-0")); });
       setSignOpacity(roomSign, cur === "c2-0" ? 1 : 0.35);
     },
   };
