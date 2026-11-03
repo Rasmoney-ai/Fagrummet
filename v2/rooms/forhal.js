@@ -50,9 +50,9 @@ export default function build(ctx) {
     f1: { phi: 0, vr: 5.4, pitch: 6 },
     f2: { phi: 222, vr: 4.6, pitch: 12 },
     f3: { phi: 138, vr: 4.7, pitch: 6 },
-    f4: { phi: 265, vr: 4.5, pitch: 13 },
+    f4: { phi: 300, vr: 4.5, pitch: 13 },
     f5: { phi: 95, vr: 4.6, pitch: 14 },
-    f6: { phi: 180, vr: 1.75, pitch: 6, out: true, plq: 167, plqR: 4.1 },
+    f6: { phi: 180, vr: 1.75, pitch: 6, out: true, plq: 180, plqR: 3.6 },
   };
   const PLQ_R = 2.15;
 
@@ -285,28 +285,25 @@ export default function build(ctx) {
     return m;
   });
 
-  /* ---------- Stationer: små plader i en ring om podiet. Kun den aktive rejser sig ---------- */
-  const plqPost = keep(new THREE.BoxGeometry(0.06, 1, 0.06)); plqPost.translate(0, 0.5, 0);
-  const plqBase = keep(new THREE.CylinderGeometry(0.16, 0.19, 0.04, 12)); plqBase.translate(0, 0.02, 0);
-  const plqBack = keep(new THREE.BoxGeometry(0.92, 0.21, 0.025)); plqBack.translate(0, 0, -0.014);
+  /* ---------- Stationer: titlerne sidder på podiets kant (kernens sokkel), hver vendt mod sit trins plads.
+     Kun den aktive rejser sig og lyser; de andre ligger fladt og dæmpet i podiets kant. Ingen stænger. ---------- */
+  const plqBack = keep(new THREE.BoxGeometry(0.98, 0.23, 0.03)); plqBack.translate(0, 0, -0.016);
   const plqMat = std("#262d55", { roughness: 0.45, metalness: 0.35 });
   const plaques = {};
   for (const s of ctx.steps) {
     const cfg = ST[s.id]; if (!cfg) continue;
     const pphi = cfg.plq ?? cfg.phi;
-    const [x, z] = polar(pphi, cfg.plqR ?? PLQ_R);
+    const [x, z] = polar(pphi, cfg.plqR ?? 1.66);
     const [ux, uz] = polar(cfg.phi, cfg.vr), face = Math.atan2(ux - x, uz - z) / D2R;   // pladen vender mod brugeren
-    const g = kit.grp(root, `${r3(x)} 0 ${r3(z)}`, { rotation: `0 ${r3(face)} 0` });
-    const post = new THREE.Mesh(plqPost, plqMat), base = new THREE.Mesh(plqBase, plqMat);
-    g.object3D.add(post, base);
-    const head = kit.grp(g, "0 0.5 0");
+    const g = kit.grp(root, `${r3(x)} 0.13 ${r3(z)}`, { rotation: `0 ${r3(face)} 0` });
+    const head = kit.grp(g, "0 0 0");
     head.object3D.add(new THREE.Mesh(plqBack, plqMat));
-    const sign = ctx.sign(s.title, { parent: head, position: "0 0 0.002", width: 0.9, color: C.core, size: 74 });
+    const sign = ctx.sign(s.title, { parent: head, position: "0 0 0.002", width: 0.96, color: C.core, size: 74 });
     ctx.station(s.id, g);
     const [vx, vz] = polar(cfg.phi, cfg.vr);
     const look = cfg.out ? [0, 1.8, -8] : [0, CORE_Y, 0];
     ctx.view(s.id, { position: [r3(vx), 0, r3(vz)], lookAt: look, pitch: cfg.pitch });
-    plaques[s.id] = { post, head: head.object3D, sign, k: 0 };
+    plaques[s.id] = { head: head.object3D, sign, k: 0 };
   }
   // rummets navn hænger over kernen og drejer sig mod den besøgende
   const roomSign = ctx.sign(ctx.room.name, { sub: ctx.room.sub, position: `0 ${CORE_Y + 1.35} 0`, width: 2.3, color: C.core });
@@ -370,7 +367,7 @@ export default function build(ctx) {
     // navn over rodens fod i ca. 1 m højde, vendt mod F3-stationen, med en tynd lodlinje ned
     // navnet står i en ordnet række i F3-blikket, med en tynd streg ned til rodens fod
     const foot = new THREE.Vector3(Math.sin(a0) * 2.55, 0.03, Math.cos(a0) * 2.55);
-    const lbl = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.0, 0.215)), label(keep(K.labelTex(name, col, { w: 1024, h: 220, size: 70, bg: true }))));
+    const lbl = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.3, 0.28)), label(keep(K.labelTex(name, col, { w: 1024, h: 220, size: 72, bg: true }))));
     lbl.renderOrder = 15; add(lbl);
     const stemMat = basic(col, { transparent: true, opacity: 0 });
     const stem = new THREE.Mesh(keep(new THREE.CylinderGeometry(0.005, 0.005, 1, 3, 1, true)), stemMat); add(stem);
@@ -380,10 +377,11 @@ export default function build(ctx) {
     const fwd = new THREE.Vector3(-f3x, 0, -f3z).normalize(), rt = new THREE.Vector3(-fwd.z, 0, fwd.x);
     const eye = new THREE.Vector3(f3x, 0, f3z);
     const byX = roots.slice().sort((a, b) => a.foot.clone().sub(eye).dot(rt) / a.foot.clone().sub(eye).dot(fwd) - b.foot.clone().sub(eye).dot(rt) / b.foot.clone().sub(eye).dot(fwd));
-    const XS = [-1.75, -0.9, 0, 0.9, 1.75], YS = [0.62, 1.02, 1.28, 1.02, 0.62];
+    // en bue bag kernen, i øjenhøjde og over: langt fra kameraet og fri af stationen
+    const XS = [-2.5, -1.45, 0, 1.45, 2.5], YS = [1.25, 1.8, 2.05, 1.8, 1.25];
     byX.forEach((r, k) => {
-      const p = eye.clone().add(fwd.clone().multiplyScalar(2.35)).add(rt.clone().multiplyScalar(XS[k])); p.y = YS[k];
-      if (k === 2) p.y = 0.25;                      // midterste (bag kernen): lavt, under stationsskiltet
+      const p = eye.clone().add(fwd.clone().multiplyScalar(k === 2 ? 5.6 : 5.0)).add(rt.clone().multiplyScalar(XS[k])); p.y = YS[k];
+      if (k === 2) p.y = 1.15;                      // midterste: bag stammen, under kernen
       r.lbl.position.copy(p); r.lbl.lookAt(f3x, EYE, f3z);
       const a = p.clone().add(new THREE.Vector3(0, -0.11, 0)), b = r.foot, d = b.clone().sub(a);
       r.stem.position.copy(a).add(b).multiplyScalar(0.5); r.stem.scale.y = d.length();
@@ -529,7 +527,7 @@ export default function build(ctx) {
     const gpMat = additive(keep(K.glowTex(col)), "#ffffff", 0);
     const gp = new THREE.Mesh(keep(new THREE.PlaneGeometry(3.6, 2.6)), gpMat); gp.rotation.x = -Math.PI / 2; gp.position.set(0, 0.02, 0.9); g.add(gp);
     // områdets navn (det, fortælleren siger) stort over buen; rammens dørskilt med rummets navn står under
-    const areaSign = ctx.sign(ctx.rooms[to].sub, { position: `${r3(x * 0.985)} 4.72 ${r3(z * 0.985)}`, rotation: `0 ${r3(phi + 180)} 0`, width: 2.7, color: col, size: 84 });
+    const areaSign = ctx.sign(ctx.rooms[to].sub, { position: `${r3(x * 0.985)} 4.72 ${r3(z * 0.985)}`, rotation: `0 ${r3(phi + 180)} 0`, width: 3.0, color: col, size: 88 });
     if (seen(to)) {
       const b = new THREE.Mesh(keep(new THREE.PlaneGeometry(0.72, 0.18)), label(badgeTex(col), { opacity: 0.95 }));
       b.position.set(0, 0.42, 0.42); b.renderOrder = 16; g.add(b);
@@ -560,7 +558,7 @@ export default function build(ctx) {
     });
     const sky = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.6, 2.5)), keep(new THREE.MeshBasicMaterial({ map: skyTex, toneMapped: false })));
     const [bx, bz] = polar(phi, RW - 0.32); sky.position.set(bx, LAND + 1.25, bz); sky.rotation.y = ry; add(sky);
-    ctx.door("udsigt", { position: `${r3(dx)} ${LAND} ${r3(dz)}`, rotation: `0 ${r3(phi + 180)} 0` });
+    ctx.door("udsigt", { position: `${r3(dx)} ${LAND} ${r3(dz)}`, rotation: `0 ${r3(phi + 180)} 0`, glow: 0.08, quiet: true });
     const [sx, sz] = polar(phi, RW - 0.45);
     ctx.sign("Til sidst", { position: `${r3(sx)} ${LAND + 3.6} ${r3(sz)}`, rotation: `0 ${r3(phi + 180)} 0`, width: 1.5, color: C.core, size: 80, sub: "når du har set de tre områder" });
     if (ctx.visited.has("udsigt")) {
@@ -620,9 +618,8 @@ export default function build(ctx) {
     // stationspladerne: kun den aktive står fremme; de andre ligger lavt og fladt
     for (const [id, p] of Object.entries(plaques)) {
       p.k = approach(p.k, id === step ? 1 : 0, dt, 5); const e = ease(p.k);
-      p.post.scale.y = 0.18 + 0.82 * e; p.head.position.y = 0.18 + 0.82 * e + 0.02;
-      p.head.rotation.x = (-80 + 58 * e) * D2R;
-      const m = signMat(p.sign); if (m) m.opacity = 0.35 + 0.65 * e;
+      p.head.position.y = 0.06 + 0.2 * e; p.head.rotation.x = (-90 + 55 * e) * D2R;
+      const m = signMat(p.sign); if (m) m.opacity = 0.25 + 0.75 * e;
     }
     // F2: ordene
     words.forEach(m => { m.material.opacity = S.words; m.visible = S.words > 0.01; });
