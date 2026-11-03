@@ -234,8 +234,8 @@ export default function build(ctx) {
   });
   QUEST.forEach(Q => {
     Q.mark = quad(0.2, 0.2, basic({ map: qmTex, opacity: 0, side: THREE.DoubleSide })); layerObjs[Q.layer].grp.add(Q.mark); Q.mark.position.set(Q.at[0], Q.at[1], 0.03);
-    const tx = K.canvasTexture(900, 150, (g, w, h) => { g.fillStyle = "rgba(255,255,255,0.96)"; K.roundRect(g, 4, 4, w - 8, h - 40, 30); g.fill(); g.beginPath(); g.moveTo(w / 2 - 24, h - 37); g.lineTo(w / 2, h - 4); g.lineTo(w / 2 + 24, h - 37); g.fill(); g.strokeStyle = C.c; g.lineWidth = 5; K.roundRect(g, 4, 4, w - 8, h - 40, 30); g.stroke(); g.fillStyle = "#2b2230"; g.font = BODY(600, 52); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(Q.q, w / 2, (h - 36) / 2 + 4); });
-    Q.bubble = quad(0.9, 0.15, basic({ map: tx, opacity: 0, side: THREE.DoubleSide, depthTest: false })); Q.bubble.renderOrder = 20; addObj(Q.bubble);
+    const tx = K.canvasTexture(1000, 150, (g, w, h) => { g.fillStyle = "rgba(255,255,255,0.96)"; K.roundRect(g, 4, 4, w - 8, h - 40, 30); g.fill(); g.beginPath(); g.moveTo(w / 2 - 24, h - 37); g.lineTo(w / 2, h - 4); g.lineTo(w / 2 + 24, h - 37); g.fill(); g.strokeStyle = C.c; g.lineWidth = 5; K.roundRect(g, 4, 4, w - 8, h - 40, 30); g.stroke(); g.fillStyle = "#2b2230"; g.font = BODY(600, 50); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(Q.q, w / 2, (h - 36) / 2 + 4); });
+    Q.bubble = quad(1.0, 0.15, basic({ map: tx, opacity: 0, side: THREE.DoubleSide, depthTest: false })); Q.bubble.renderOrder = 20; addObj(Q.bubble);
   });
   let pointed = -1, pointedAt = 0;   // hvis brugeren klikker på et lag, peger luppen dér
   const st1 = kit.grp(root, `${TBL.x + 0.6} 0 ${TBL.z + 0.4}`);
