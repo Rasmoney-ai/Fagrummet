@@ -89,14 +89,15 @@ export default function build(ctx) {
   S.box(0.18, 0.04, 0.12, "#d8d2c4", [TBL.x - 1.2, TBL.y + 0.02, TBL.z + 0.45]);
   S.box(0.16, 0.012, 0.1, "#8e9aa8", [TBL.x - 1.2, TBL.y + 0.046, TBL.z + 0.45]);
   // bordlampe med arm
-  S.cyl(0.1, 0.12, 0.03, "#2f3a48", [TBL.x - 1.3, TBL.y + 0.015, TBL.z - 0.5], [0, 0, 0], 12);
-  S.box(0.025, 0.6, 0.025, "#2f3a48", [TBL.x - 1.3, TBL.y + 0.3, TBL.z - 0.5], [0, 0, -18]);
-  S.box(0.025, 0.5, 0.025, "#2f3a48", [TBL.x - 1.1, TBL.y + 0.68, TBL.z - 0.5], [0, 0, 55]);
-  S.cyl(0.04, 0.12, 0.14, "#2f3a48", [TBL.x - 0.88, TBL.y + 0.72, TBL.z - 0.5], [0, 0, 30], 12);
+  // (flyttet til bordets højre bagkant, så armen ikke skærer spørgsmålsboblerne til venstre for lagene)
+  S.cyl(0.1, 0.12, 0.03, "#2f3a48", [TBL.x + 1.35, TBL.y + 0.015, TBL.z - 0.55], [0, 0, 0], 12);
+  S.box(0.025, 0.6, 0.025, "#2f3a48", [TBL.x + 1.35, TBL.y + 0.3, TBL.z - 0.55], [0, 0, 18]);
+  S.box(0.025, 0.5, 0.025, "#2f3a48", [TBL.x + 1.15, TBL.y + 0.68, TBL.z - 0.55], [0, 0, -55]);
+  S.cyl(0.04, 0.12, 0.14, "#2f3a48", [TBL.x + 0.93, TBL.y + 0.72, TBL.z - 0.55], [0, 0, -30], 12);
 
   /* hulplade med værktøj på bagvæggen (her hænger Hjorths fem spørgsmål) */
   const PEG = { x: -3.6, y: 1.75 };
-  S.box(2.2, 1.3, 0.04, "#d1ae80", [PEG.x, PEG.y, ZB + 0.03]);
+  S.box(3.0, 1.6, 0.04, "#d1ae80", [PEG.x, PEG.y, ZB + 0.03]);
   // reoler med kasser langs venstre væg (forrest), planter og en arbejdsbænk ved højre væg (forrest)
   for (const z of [4.6, 6.2]) {
     S.box(0.45, 2.2, 1.4, "#b48a63", [-W + 0.25, 1.1, z]);
@@ -129,14 +130,14 @@ export default function build(ctx) {
     g.strokeStyle = "#59626e"; g.lineWidth = 12; g.beginPath(); g.arc(860, 140, 60, 0.3, Math.PI * 1.7); g.stroke();
     g.fillStyle = "#59626e"; K.roundRect(g, 760, 60, 18, 170, 8); g.fill();
   });
-  const pegFace = quad(2.2, 1.3, new THREE.MeshBasicMaterial({ map: pegTex, color: "#e0e0e0" })); pegFace.position.set(PEG.x, PEG.y, ZB + 0.055); addObj(pegFace);
+  const pegFace = quad(3.0, 1.6, new THREE.MeshBasicMaterial({ map: pegTex, color: "#e0e0e0" })); pegFace.position.set(PEG.x, PEG.y, ZB + 0.055); addObj(pegFace);
   const qCards = QWORDS.map((wd, i) => {
     const tx = K.canvasTexture(400, 120, (g, w, h) => {
       g.fillStyle = "#fbf7ef"; K.roundRect(g, 4, 4, w - 8, h - 8, 16); g.fill(); g.strokeStyle = C.c; g.lineWidth = 5; g.stroke();
       g.fillStyle = "#2b2230"; g.font = FONT(700, 54); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(wd, w / 2, h / 2 + 2);
     });
-    const q = quad(0.62, 0.186, basic({ map: tx, depthWrite: true })); q.position.set(PEG.x - 0.72 + (i % 3) * 0.72, PEG.y - 0.12 - Math.floor(i / 3) * 0.3 + (i >= 3 ? 0 : 0), ZB + 0.07);
-    if (i >= 3) q.position.x = PEG.x - 0.36 + (i - 3) * 0.72;
+    const q = quad(0.92, 0.276, basic({ map: tx, depthWrite: true })); q.position.set(PEG.x - 0.98 + (i % 3) * 0.98, PEG.y + 0.2 - Math.floor(i / 3) * 0.42, ZB + 0.07);
+    if (i >= 3) q.position.x = PEG.x - 0.49 + (i - 3) * 0.98;
     q.rotation.z = ((i * 37) % 7 - 3) * D; addObj(q); return q;
   });
 
@@ -219,8 +220,8 @@ export default function build(ctx) {
     const face = quad(LW, LH, basic({ map: tex, side: THREE.DoubleSide, opacity: 0.95, depthWrite: i === 3 })); grp.add(face);
     const edge = new THREE.Mesh(roundBox(LW, LH, 0.012, 0.05), new THREE.MeshStandardMaterial({ color: L.c, transparent: true, opacity: 0.35, depthWrite: false })); edge.position.z = -0.008; grp.add(edge);
     // mærket: en lille fane over laget
-    const tagTex = K.canvasTexture(320, 96, (g, w, h) => { g.fillStyle = L.c; K.roundRect(g, 3, 3, w - 6, h - 6, 22); g.fill(); g.fillStyle = "#1a1424"; g.font = FONT(700, 50); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(L.name, w / 2, h / 2 + 2); });
-    const tag = quad(0.5, 0.15, basic({ map: tagTex, side: THREE.DoubleSide })); tag.position.set(LW / 2 + 0.32, 0, 0.01); grp.add(tag);
+    const tagTex = K.canvasTexture(320, 96, (g, w, h) => { g.fillStyle = "#1a1424"; K.roundRect(g, 3, 3, w - 6, h - 6, 22); g.fill(); g.strokeStyle = L.c; g.lineWidth = 8; g.stroke(); g.fillStyle = "#ffffff"; g.font = FONT(700, 50); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(L.name, w / 2, h / 2 + 2); });
+    const tag = quad(0.5, 0.15, basic({ map: tagTex, side: THREE.DoubleSide, depthTest: false })); tag.renderOrder = 15; tag.position.set(LW / 2 + 0.32, -0.1, 0.01); grp.add(tag);
     return { grp, face, edge, tag };
   });
   // et tyndt bundstykke (telefonens ramme), som ligger tilbage på bordet
@@ -232,7 +233,7 @@ export default function build(ctx) {
   // lagenes to tilstande: samlet (fladt på bordet) og foldet ud (diagonalt i luften)
   const compactPose = i => ({ p: [TBL.x, TBL.y + 0.035 + (3 - i) * 0.012, TBL.z], r: [-90, 0, 0] });
   // foldet ud: en stak lige over telefonen, hvert lag lidt højere og vippet mod beskueren, så man ser dem lag på lag
-  const explodedPose = i => ({ p: [TBL.x, TBL.y + 0.32 + (3 - i) * 0.34, TBL.z + 0.05 * (3 - i)], r: [-62, 0, 0] });
+  const explodedPose = i => ({ p: [TBL.x, TBL.y + 0.3 + (3 - i) * 0.3, TBL.z + 0.05 * (3 - i)], r: [-62, 0, 0] });
   function setLayers(k) {
     layerObjs.forEach((o, i) => {
       const a = compactPose(i), b = explodedPose(i);

@@ -164,6 +164,8 @@ export default function build(ctx) {
   // net: en lille antennemast på datacentret med signalringe
   const netRings = [0, 1, 2].map(() => { const m = basic(B, { transparent: true, opacity: 0, depthWrite: false }); return { m, e: mesh(new T.TorusGeometry(0.4, 0.03, 4, 20), m, [DC[0] + 4.2, DC[1] + 5.55, DC[2] - 0.6], sys, [90, 0, 0]) }; });
   const netLbl = label("Net", [DC[0] + 4.2, DC[1] + 6.6, DC[2] - 0.6], sys, 0.8);
+  // etiketterne ude i landskabet tegnes oven på vinduessprosserne, så de aldrig skæres over
+  [oreLbl, pwLbl, dcLabel, netLbl].forEach(l => { const m = l.getObject3D("mesh"); m.renderOrder = 10; m.material.depthTest = false; });
 
   /* ---------- arbejdsbænk under vinduet (ramme, ikke station) ---------- */
   {
@@ -199,6 +201,9 @@ export default function build(ctx) {
   ctx.sign(ctx.room.name, { position: `-5.05 2.75 ${-W + 0.13}`, width: 2.4, sub: ctx.room.sub });
   const sg0 = ctx.sign(ctx.step("b1-0").title, { position: `-2.55 3.73 ${-W + 0.13}`, width: 1.7 });
   ctx.door(ctx.room.parent, { position: `${W - 0.15} 0 -3.7`, rotation: "0 -90 0" });
+  // pil ved vinduet, der viser vej til døren tilbage (ses fra intro-viewet)
+  const doorArrow = group([3.2, 2.3, -W + 0.13]);
+  label("Døren tilbage →", [0, 0, 0], doorArrow, 0.22);
   // vinduet er b1-0's station (et usynligt klikfelt dækker hele ruden)
   const winHit = mesh(new T.PlaneGeometry(WIN.x1 - WIN.x0, WIN.y1 - WIN.y0), basic("#000", { transparent: true, opacity: 0, depthWrite: false }), [(WIN.x0 + WIN.x1) / 2, (WIN.y0 + WIN.y1) / 2, -W + 0.4]);
   ctx.station("b1-0", group([-1.0, 0, -5.2]));
@@ -418,13 +423,13 @@ export default function build(ctx) {
   label("Tal", [-0.55, 1.78, 0], ST, 0.13);
   label("Bits", [0.55, 1.52, 0], ST, 0.14);
   label("Lager", [1.55, 1.83, 0.02], ST, 0.13);
-  ctx.sign(ctx.step("b1-3").title, { parent: ST, position: "-0.4 2.55 -0.1", width: 2.1 });
+  const sg3 = ctx.sign(ctx.step("b1-3").title, { parent: ST, position: "-0.4 2.55 -0.1", width: 2.1 });
   ctx.station("b1-3", group([0, 0, 0.75], ST));
 
   /* ---------- views ---------- */
   ctx.view("b1-0", { position: [-1.0, 0, -1.9], lookAt: [-1.0, 0, -6.5] });
   ctx.view("b1-1", { position: [-1.9, 0, 2.6], lookAt: [-3.0, 0, 0.4] });
-  ctx.view("b1-2", { position: [2.6, 0, 2.0], lookAt: [6.4, 0, 2.0] });
+  ctx.view("b1-2", { position: [2.9, 0, 2.2], lookAt: [6.4, 0, 2.0] });
   ctx.view("b1-3", { position: [2.6, 0, -1.7], lookAt: [2.6, 0, -4.7] });
 
   /* ---------- tilstand og animation ---------- */
@@ -450,7 +455,8 @@ export default function build(ctx) {
 
   return {
     onStep(id) { mode = id; fresh = true;
-      Object.entries(stationEls).forEach(([k, els]) => els.forEach(e => dim(e, k === id ? 1 : 0.3))); },
+      Object.entries(stationEls).forEach(([k, els]) => els.forEach(e => dim(e, k === id ? 1 : 0.3)));
+      sg3.object3D.visible = id !== "b1-0"; doorArrow.object3D.visible = id === "b1-0"; },
     tick(t, dt) {
       if (fresh) { t0 = t; fresh = false; lastNum = 0; }
       // testkrog: window.__roomS låser animationstiden (bruges kun af skærmbilledværktøjet)

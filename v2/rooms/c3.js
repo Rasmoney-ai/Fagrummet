@@ -260,7 +260,7 @@ export default function build(ctx) {
   kit.box(st0, "0 1.2 0", 2.6, 2.4, 0.8, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c3-0", st0);
   const s30 = ctx.sign(ctx.step("c3-0").title, { position: "0 3.85 0", width: 1.7 });
-  view("c3-0", { position: [0, 0, 6.6], lookAt: [0, 1.5, -4], pitch: -6 });
+  view("c3-0", { position: [0, 0, 3.6], lookAt: [0, 1.6, -4], pitch: 7, back: { side: 0.75, fwd: 1.3, dy: 0.2 } });
 
   /* ---------- nichernes stationer ---------- */
   const N1 = NICHES[0], N2 = NICHES[1], N3 = NICHES[2];
@@ -269,8 +269,8 @@ export default function build(ctx) {
     const st = kit.grp(root, `${sp[0]} 0 ${sp[2]}`);
     kit.box(st, "0 1.4 0", 2.6, 2.8, 0.4, "opacity: 0; transparent: true; depthWrite: false", { rotation: `0 ${yawDeg(n.a)} 0` });
     ctx.station(n.id, st);
-    const sg = polar(n.a, R - 0.45, NH + 0.5);
-    n.sign = ctx.sign(ctx.step(n.id).title, { position: sg.join(" "), rotation: `0 ${yawDeg(n.a)} 0`, width: 2.3, size: 64 });
+    const sg = polar(n.a, R - 0.45, NH + (n.a === 0 ? 1.45 : 0.95));   // den midterste hænger højere, fri af vægtens knude
+    n.sign = ctx.sign(ctx.step(n.id).title, { position: sg.join(" "), rotation: `0 ${yawDeg(n.a)} 0`, width: 3.0, size: 70 });
     const vp = polar(n.a, R - 2.75), la = polar(n.a, R + 0.6, 1.7);
     view(n.id, { position: vp, lookAt: la, pitch: 6 });
   });
@@ -314,9 +314,9 @@ export default function build(ctx) {
   const mine = quad(1.25, 0.488, basic({ map: quoteTex("Hvad viser vores egen undersøgelse?", 0, "#ffe2ec", true), side: THREE.DoubleSide })); N1.content.add(mine);
   mine.position.set(0, 1.45, 1.05);
   // tråde fra elevernes boble ud til begge sider
-  const threads = SIDES.map(() => { const l = new THREE.Mesh(new THREE.BufferGeometry(), basic({ color: "#ff4f86", opacity: 0, depthTest: false })); l.renderOrder = 8; N1.content.add(l); return l; });
+  const threads = SIDES.map(() => { const l = new THREE.Mesh(new THREE.BufferGeometry(), basic({ color: "#ff4f86", opacity: 0 })); l.renderOrder = 2; N1.content.add(l); return l; });
   function setThread(l, a, b) {
-    const c = new THREE.QuadraticBezierCurve3(a, a.clone().lerp(b, 0.5).add(new THREE.Vector3(0, 0.15, 0.1)), b);
+    const c = new THREE.QuadraticBezierCurve3(a, a.clone().lerp(b, 0.5).add(new THREE.Vector3(0, 0.1, -0.05)), b);
     l.geometry.dispose(); l.geometry = new THREE.TubeGeometry(c, 16, 0.014, 5, false);
   }
   // elevernes argument: en lille døgnurskive ved siden af boblen
@@ -484,7 +484,7 @@ export default function build(ctx) {
       argDisc.material.opacity = A1 ? ease((e - 5.0) / 0.5) : 0; argDisc.rotation.z = s * 0.4;
       threads.forEach((l, i) => {
         const k = A1 ? ease((e - 5.4 - i * 0.25) / 0.5) : 0;
-        if (k > 0) { const a = mine.position.clone().add(new THREE.Vector3(Math.sign(SIDES[i].x) * 0.5, 0, 0)); const b = quotes[i].position.clone().add(new THREE.Vector3(-Math.sign(SIDES[i].x) * 0.42, 0, 0)); setThread(l, a, a.clone().lerp(b, k)); }
+        if (k > 0) { const sx = Math.sign(SIDES[i].x); const a = mine.position.clone().add(new THREE.Vector3(sx * 0.64, (i % 2 ? -0.12 : 0.12), -0.05)); const b = quotes[i].position.clone().add(new THREE.Vector3(-sx * 0.46, 0, -0.02)); setThread(l, a, a.clone().lerp(b, k)); }
         l.material.opacity = 0.85 * k; l.visible = k > 0;
       });
 

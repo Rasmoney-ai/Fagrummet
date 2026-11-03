@@ -139,7 +139,7 @@ export default function build(ctx) {
   // ét samlet skilt for det, modellen mangler; det står over den, der springer over
   const miss = label("Ikke med i modellen: at springe over", [0.3, 1.62, 0.34], MT, 0.13, { edge: WARN });
   const missQ = label("Springer over", [0, CY + 2.4, 0], root, 0.5, { edge: WARN });
-  ctx.sign(ctx.step("b3-0").title, { parent: MT, position: "-0.2 2.3 -0.3", width: 2.0 });
+  ctx.sign(ctx.step("b3-0").title, { parent: MT, position: "-0.3 2.75 -0.3", width: 2.0 });
   ctx.station("b3-0", MT);
 
   /* ---------- diagramvæggen (venstre væg): rutediagram og tilstandsdiagram ---------- */
@@ -318,7 +318,7 @@ export default function build(ctx) {
   const PAIR_A = [[0, 4], [3, 1], [2, 5]];
   const PAIR_B = [[0, 3], [4, 5], [2, 1]];   // Asta+Dina, Eik+Fie, Cem+Bo
   const MISS_A = "Asta og Eik er uvenner";      // rammer par 0 i model A
-  const MISS_B = "Asta og Dina hjælper ingen";   // rammer par 0 i model B
+  const MISS_B = "To fagligt stærke sammen";   // rammer par 0 i model B
   const MISS_PAIR = [0, 0];
   const boardW = 2.0, boardH = 1.6;
   const boards = [-1.15, 1.15].map((x, k) => {
@@ -340,7 +340,7 @@ export default function build(ctx) {
     g.fillStyle = INK; g.font = '700 54px "Familjen Grotesk", sans-serif'; g.textAlign = "center"; g.textBaseline = "middle";
     g.fillText(k ? "Model B: venskaber" : "Model A: fagligt niveau", w / 2, 56);
     g.fillStyle = "#6b7590"; g.font = '600 38px "Source Sans 3", sans-serif';
-    g.fillText(k ? "Par bedste venner sammen" : "Par en stærk med en svag", w / 2, 112);
+    g.fillText(k ? "Par bedste venner sammen" : "Bland fagligt niveau i hvert par", w / 2, 112);
     // tabel/diagram: elever som cirkler i en kolonne til venstre, makkerkanter tegnes
     // model B ordner eleverne, så vennerne står ved siden af hinanden (ingen krydsende streger)
     const orderB = [0, 3, 4, 5, 2, 1];
@@ -371,7 +371,7 @@ export default function build(ctx) {
     g.strokeStyle = "#d8d3c6"; g.lineWidth = 3; g.beginPath(); g.moveTo(610, 160); g.lineTo(610, 760); g.stroke();
     if (showMiss) {
       g.fillStyle = "rgba(232,106,79,0.14)"; g.fillRect(0, h - 110, w, 110);
-      g.fillStyle = WARN; g.font = '700 42px "Familjen Grotesk", sans-serif'; g.font = '700 40px "Familjen Grotesk", sans-serif'; g.fillText("Tog ikke højde for: " + (k ? MISS_B : MISS_A), w / 2, h - 55);
+      g.fillStyle = WARN; g.font = '700 34px "Familjen Grotesk", sans-serif'; g.fillText("Tog ikke højde for: " + (k ? MISS_B : MISS_A), w / 2, h - 55);
     }
     b.cv.tex.needsUpdate = true;
   }

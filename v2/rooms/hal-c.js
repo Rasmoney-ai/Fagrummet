@@ -423,7 +423,7 @@ export default function build(ctx) {
   const st1 = kit.grp(root, `${PERSON.x} 0 ${PERSON.z}`);
   kit.box(st1, "0 1.0 0", 0.8, 2.0, 0.8, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c0-1", st1);
-  const s01 = ctx.sign(ctx.step("c0-1").title, { position: `${BS.x - 0.5} 3.05 ${BS.z + 0.4}`, width: 1.5 });
+  const s01 = ctx.sign(ctx.step("c0-1").title, { position: `${BS.x - 0.9} 2.35 ${BS.z + 1.3}`, width: 1.4 });
   view("c0-1", { position: [1.9, 0, 7.6], lookAt: [0.9, 2.0, -4], pitch: 9 });
 
   /* ---------- c0-2: målpladen ved udgangen ---------- */

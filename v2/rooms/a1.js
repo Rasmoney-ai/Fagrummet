@@ -453,7 +453,7 @@ export default function build(ctx) {
     });
     T.mesh(g, T.hold(new THREE.PlaneGeometry(BW - 0.08, 0.4)), T.hold(new THREE.MeshStandardMaterial({ map: lågTex, roughness: 0.9 })), `0 ${Y + 0.25} ${-BD / 2 - 0.045}`, { rotation: "-18 0 0" });
 
-    const DEMO = [0, Y + 0.3, 0.14];   // hvor den valgte komponent løftes hen
+    const DEMO = [0, Y + 0.24, 0.14];   // hvor den valgte komponent løftes hen
     const lb = T.lit();
     const add = (m) => T.hold(m);
     const glowM = c => add(new THREE.MeshBasicMaterial({ map: T.glow(c), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
@@ -483,17 +483,20 @@ export default function build(ctx) {
           const RG = add(new THREE.RingGeometry(0.02, 0.027, 20)); RG.rotateX(-Math.PI / 2);
           const bølger = [0, 1, 2, 3].map(() => { const m = fladM("#7fd0ff"); return { m, e: T.mesh(p, RG, m, "-0.04 0.06 0") }; });
           // rækkevidden: en stiplet grænse over sensoren. Inden for den måles afstanden; uden for den: intet signal
-          const MAX = 0.17, grænseM = fladM("#e8638c");
-          const GB = new Batch({ uv: true }); for (let k = 0; k < 7; k++) GB.plane([-0.09 + k * 0.03, MAX + 0.055, 0], [0.018, 0.004]);
+          const MAX = 0.09, grænseM = fladM("#ff6a9a");
+          const GB = new Batch({ uv: true }); for (let k = 0; k < 8; k++) GB.plane([-0.105 + k * 0.03, MAX + 0.055, 0.03], [0.02, 0.008]);
           T.mesh(p, GB.merge(), grænseM);
+          const grænseTekst = T.canvas(256, 64, c => { c.fillStyle = "#ff6a9a"; c.font = '700 40px "Familjen Grotesk", sans-serif'; c.textBaseline = "middle"; c.fillText("rækkevidde", 8, 34); });
+          const gtM = fladM("#ffffff"); gtM.map = grænseTekst;
+          T.mesh(p, add(new THREE.PlaneGeometry(0.1, 0.025)), gtM, `-0.17 ${MAX + 0.055} 0.03`);
           const tal = fladM(A);
           const bar = T.mesh(p, add(new THREE.PlaneGeometry(0.018, 0.2).translate(0, 0.1, 0)), tal, "0.12 0.02 0");
           const krydsM = fladM("#e8638c"); const KB = new Batch({ uv: true }); KB.plane([0, 0, 0], [0.05, 0.008], [0, 0, 45]); KB.plane([0, 0, 0], [0.05, 0.008], [0, 0, -45]);
           T.mesh(p, KB.merge(), krydsM, "0.12 0.05 0.001");
-          return (t, on) => { const hy = 0.12 + 0.13 * (0.5 + 0.5 * Math.sin(t * 1.1)); hånd.object3D.position.y = hy; hm.opacity = on ? 1 : 0;
+          return (t, on) => { const hy = 0.09 + 0.12 * (0.5 + 0.5 * Math.sin(t * 1.1 - 1.2)); hånd.object3D.position.y = hy; hm.opacity = on ? 1 : 0;
             const inde = hy - 0.055 < MAX, dist = Math.min(hy - 0.07, MAX);
             bølger.forEach((b, k) => { const f = (t * 1.2 + k / 4) % 1, top = inde ? hy - 0.07 : MAX; b.e.object3D.position.set(k % 2 ? 0.04 : -0.04, 0.055 + f * top, 0); b.e.object3D.scale.setScalar(1 + f * 1.4); b.m.opacity = on ? (1 - f) * (inde ? 0.9 : 0.9 * (1 - f) * (1 - f)) : 0; });
-            grænseM.opacity = on ? (inde ? 0.35 : 0.95) : 0;
+            grænseM.opacity = on ? (inde ? 0.55 : 1) : 0; gtM.opacity = on ? 0.95 : 0;
             tal.opacity = on && inde ? 0.9 : 0; bar.object3D.scale.y = Math.max(0.05, dist / 0.2); krydsM.opacity = on && !inde ? 1 : 0; }; } },
       { navn: "ledende tråd", pos: [0, -0.11], tilt: 55, sk: 1.5,
         byg(b) { b.box("#b0413e", [0, 0.006, 0], [0.24, 0.012, 0.16]); b.cyl("#c9cdd8", [-0.12, 0.02, 0.06], 0.022, 0.03, null, 12); b.cyl("#fff1c9", [0.1, 0.018, -0.05], 0.012, 0.012, null, 8); },
@@ -525,7 +528,7 @@ export default function build(ctx) {
       const home = [f.pos[0], Y + 0.022, f.pos[1]];
       return { e, inner, anim, home, tilt: f.tilt, sk: f.sk };
     });
-    const navn = fakt.map(f => { const tp = kit.textPlane(g, `0 ${Y + 0.72} 0.1`, f.navn, A, { width: 0.62, aspect: 0.22, size: 110, bg: true, ink: "#eef1ff" }); tp.object3D.visible = false; return tp; });
+    const navn = fakt.map(f => { const tp = kit.textPlane(g, `0 ${Y + 0.86} 0.1`, f.navn, A, { width: 0.62, aspect: 0.22, size: 110, bg: true, ink: "#eef1ff" }); tp.object3D.visible = false; return tp; });
     // et lille hint: "klik på en komponent"
     const hint = kit.textPlane(g, `0 ${Y + 0.05} ${BD / 2 + 0.16}`, "klik på en komponent", A, { width: 0.8, aspect: 0.11, size: 84, bg: true, ink: "#eef1ff", rotation: "-45 0 0" });
     let valgt = -1, tValgt = -1e9;

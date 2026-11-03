@@ -570,7 +570,7 @@ export default function build(ctx) {
 
       /* flowdiagrammet kører altid; i b2-0 er det tydeligst */
       const fOn = mode === "b2-0" ? 1 : 0;
-      flowMat.opacity = 0.12 + 0.88 * fOn;
+      flowMat.opacity = 0.05 + 0.95 * fOn;
       token.object3D.visible = mode === "b2-0";
       // én gennemkørsel tager 16 s; tokenet holder 2 s ved "Slut", før det starter forfra
       const fc = (t / 1000) % 18;
