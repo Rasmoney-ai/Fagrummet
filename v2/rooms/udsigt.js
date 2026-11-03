@@ -235,7 +235,7 @@ export default function build(ctx) {
   const glass = new THREE.Mesh(keep(new THREE.CylinderGeometry(PR - 0.06, PR - 0.06, 0.85, 72, 1, true)),
     keep(new THREE.MeshBasicMaterial({ color: "#9fb0ff", transparent: true, opacity: 0.07, side: THREE.DoubleSide, depthWrite: false })));
   glass.position.set(PLAT.x, 0.55, PLAT.z); add(glass);
-  const railMat = basic(C.core, { transparent: true, opacity: 0.85 });
+  const railMat = basic("#5a6394", { transparent: true, opacity: 0.55 });   // dæmpet: må ikke skære lyst gennem modellerne
   const rail = new THREE.Mesh(keep(new THREE.TorusGeometry(PR - 0.06, 0.022, 4, 96)), railMat);
   rail.rotation.x = Math.PI / 2; rail.position.set(PLAT.x, 0.98, PLAT.z); add(rail);
   { const posts = []; for (let i = 0; i < 36; i++) { const a = i / 36 * Math.PI * 2; posts.push(boxAt(0.03, 0.92, 0.03, PLAT.x + Math.sin(a) * (PR - 0.06), 0.5, PLAT.z + Math.cos(a) * (PR - 0.06))); }
@@ -245,11 +245,11 @@ export default function build(ctx) {
   const edgeGlow = new THREE.Mesh(keep(new THREE.TorusGeometry(PR - 0.3, 0.012, 3, 96)), edgeGlowMat);
   edgeGlow.rotation.x = Math.PI / 2; edgeGlow.position.set(PLAT.x, 0.006, PLAT.z); add(edgeGlow);
 
-  let exitGlowMat, exitFloorMat, roomSign, DOOR_POS;
+  let exitGlowMat, exitFloorMat, roomSign, DOOR_POS, exitDoor;
   // trappehus med døren tilbage til forhallen
   {
     // trappehuset står forrest til venstre på terrassen, med døren vendt ind mod terrassens midte
-    const DOOR_PSI = -40, dr = PR - 0.5;
+    const DOOR_PSI = -50, dr = PR - 0.5;
     const kx = PLAT.x + Math.sin(DOOR_PSI * D2R) * dr, kz = PLAT.z - Math.cos(DOOR_PSI * D2R) * dr;
     const kr = Math.atan2(PLAT.x - kx, PLAT.z - kz) / D2R;
     const kg = kit.grp(root, `${kx} 0 ${kz}`, { rotation: `0 ${kr} 0` });
@@ -257,12 +257,12 @@ export default function build(ctx) {
     const shellMat = std("#2a3058", { roughness: 0.6 }); darkMats.push([shellMat, "#2a3058"]);
     kg.object3D.add(new THREE.Mesh(shell, shellMat));
     // lyset fra trappen ned til forhallen: en lavendel glød i døråbningen, som står tilbage, når platformen er mørk
-    exitGlowMat = additive(keep(K.glowTex(C.core)), 0.35);
+    exitGlowMat = additive(keep(K.glowTex(C.core)), 0.15);
     const eg = new THREE.Mesh(keep(new THREE.PlaneGeometry(2.6, 3.2)), exitGlowMat); eg.position.set(0, 1.3, -0.9); kg.object3D.add(eg);
-    exitFloorMat = additive(keep(K.glowTex(C.core)), 0.3);
+    exitFloorMat = additive(keep(K.glowTex(C.core)), 0.1);
     const ef = new THREE.Mesh(keep(new THREE.PlaneGeometry(2.4, 2.4)), exitFloorMat); ef.rotation.x = -Math.PI / 2; ef.position.set(0, 0.01, 0.6); kg.object3D.add(ef);
     DOOR_POS = new THREE.Vector3(kx, 1.3, kz);
-    ctx.door(ctx.room.parent, { position: `${r3(kx)} 0 ${r3(kz)}`, rotation: `0 ${kr} 0`, width: 1.5, height: 2.4 });
+    exitDoor = ctx.door(ctx.room.parent, { position: `${r3(kx)} 0 ${r3(kz)}`, rotation: `0 ${r3(kr)} 0`, width: 1.5, height: 2.4, glow: 0.1, quiet: true });
     // rummets navn hænger ude over pladsen, bag tårnet
     roomSign = ctx.sign(ctx.room.name, { sub: ctx.room.sub, position: "-3.2 6.0 -14", width: 3.4, color: C.core });
   }
@@ -300,10 +300,10 @@ export default function build(ctx) {
   /* ---------- Stationer og views: brugeren står ved rækværket; stationen er en lille plade på håndlisten ---------- */
   // psi: retning fra terrassens centrum (0 = lige ud mod pladsen, + = mod højre); look: hvor blikket går hen
   const VIEWS = {
-    s1: { psi: 0, look: [0.2, 0, -10], pitch: -9 },
-    s2: { psi: -10, look: [CORE.x, CORE.y, CORE.z], pitch: 3 },
-    s3: { psi: 10, look: [0.2, 0, -10], pitch: -9 },
-    s4: { psi: 0, ur: 0.25, look: [0.1, 1.75, -5.6], pitch: true },
+    s1: { psi: 0, ur: PR - 0.7, look: [0.2, 0, -10], pitch: -15 },
+    s2: { psi: 6, look: [CORE.x, CORE.y, CORE.z], pitch: 3 },
+    s3: { psi: 10, ur: PR - 0.7, look: [0.2, 0, -10], pitch: -15 },
+    s4: { psi: 4, ur: PR - 1.15, look: [0.55, 1.7, -5.6], pitch: true },
   };
   const plaqueGeo = keep(new THREE.BoxGeometry(0.66, 0.17, 0.03));
   const plaqueMat = std("#2a3160", { roughness: 0.45, metalness: 0.4 });
@@ -473,8 +473,17 @@ export default function build(ctx) {
   const headMat = keep(new THREE.SpriteMaterial({ map: keep(K.glowTex("#ffffff")), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
   const head = new THREE.Sprite(headMat); head.scale.set(0.9, 0.9, 1); add(head);
   // hvor stien passerer erkendeformernes tegn: på strækningerne MELLEM fløjene (tegnene hører ikke til et område)
-  const ICON_T = [0.2, 0.62, 0.84];
-  const iconPathPos = ICON_T.map(t => { const p = pathCurve.getPointAt(t); return p.add(new THREE.Vector3(0, 0.55, 0.25)); });
+  // skabe: ved Tårnet (de bygger algoritmen) · omskabe/modvirke: på vej fra Tårnet mod Atelieret · nytænke: ved Atelieret (et alternativ)
+  // Ved Gaden (kortlægning) står intet tegn.
+  const nearestT = target => { let bt = 0, bd = 1e9; for (let k = 0; k <= 400; k++) { const t = k / 400, d = pathCurve.getPointAt(t).distanceTo(target); if (d < bd) { bd = d; bt = t; } } return bt; };
+  const tTowerTop = nearestT(tw.grp.position.clone().add(new THREE.Vector3(0, 3.6, 0)));
+  const tAtelier = nearestT(ta.top.clone());
+  const ICON_T = [nearestT(tw.grp.position.clone().add(new THREE.Vector3(0, 2.0, 0))), (tTowerTop + tAtelier) / 2, tAtelier];
+  const iconPathPos = [
+    tw.grp.position.clone().add(new THREE.Vector3(-1.55, 2.3, 0.6)),                           // til venstre for tårnet, fri af mærket
+    pathCurve.getPointAt(ICON_T[1]).add(new THREE.Vector3(0, 0.75, 0.3)),                         // over buen mod atelieret
+    ta.top.clone().add(new THREE.Vector3(0.9, 1.25, 0.4)),                                         // over atelieret
+  ];
   // trinmærker ved hver fløj
   const s3View = VIEWS_POS("s3");
   const pathLabels = PATH_STEPS.map(([k, txt], i) => {
@@ -485,7 +494,7 @@ export default function build(ctx) {
     const lw = 2.5 * p.distanceTo(s3View) / 8.5;
     const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(lw, lw * 220 / 1024)), labelMat(keep(K.labelTex(txt, w.color, { w: 1024, h: 220, size: txt.length > 30 ? 56 : 66, ink: "#eef1ff" }))));
     m.position.copy(p); m.lookAt(s3View.x, p.y, s3View.z); m.renderOrder = 20; add(m);
-    return { m, t: [0.04, 0.5, 0.93][i] };
+    return { m, t: [0.04, 0.42, 0.88][i] };
   });
 
   /* ---------- S4: det åbne felt ---------- */
@@ -513,14 +522,14 @@ export default function build(ctx) {
     g.strokeStyle = C.core; g.globalAlpha = 0.6; g.lineWidth = 6; g.setLineDash([18, 18]);
     K.roundRect(g, 120, 650, W - 240, 160, 26); g.stroke(); g.globalAlpha = 1; g.setLineDash([]);
   });
-  const FW = 3.3;
+  const FW = 3.9;
   const field = new THREE.Mesh(keep(new THREE.PlaneGeometry(FW, FW * 900 / 1600)), labelMat(dashTex, { side: THREE.DoubleSide }));
-  field.position.copy(CORE).add(new THREE.Vector3(2.45, -0.1, 0.3)); field.lookAt(s4View); field.renderOrder = 20; add(field);
+  field.position.copy(CORE).add(new THREE.Vector3(1.85, -0.25, 1.0)); field.lookAt(s4View); field.renderOrder = 20; add(field);
 
   // S4: tegnene i en bue over kernen, vendt mod S4-blikket
   const satPos = (() => {
     const o = new THREE.Object3D(); o.position.copy(CORE); o.lookAt(VIEWS_POS("s4")); o.updateMatrixWorld();
-    return [[-0.95, 0.15], [0, 0.85], [0.95, 0.15]].map(([x, y]) => new THREE.Vector3(x, y, 0.15).applyMatrix4(o.matrixWorld));
+    return [[-1.25, -0.15], [-1.05, 0.7], [-0.3, 1.05]].map(([x, y]) => new THREE.Vector3(x, y, 0.15).applyMatrix4(o.matrixWorld));
   })();
 
   /* ---------- Tilstand pr. trin ---------- */
@@ -530,7 +539,7 @@ export default function build(ctx) {
   const T = { ...S };
   function onStep(id) {
     step = id; stepAt = now();
-    T.core = id === "s4" ? 0.12 : 1;
+    T.core = id === "s4" ? 0.03 : 1;
     T.dark = id === "s4" ? 1 : 0;
     T.plates = id === "s2" ? 1 : 0;
     T.path = id === "s3" ? 1 : 0;
@@ -556,7 +565,7 @@ export default function build(ctx) {
     deckMat.color.setScalar(1 - 0.88 * dark);
     groundMat.color.setScalar(1 - 0.92 * dark);
     farMat.color.set("#0b0d1f").multiplyScalar(1 - 0.6 * dark);
-    railMat.opacity = 0.85 * (1 - 0.85 * dark); edgeGlowMat.opacity = 0.35 * (1 - 0.9 * dark);
+    railMat.opacity = 0.55 * (1 - 0.85 * dark); edgeGlowMat.opacity = 0.35 * (1 - 0.9 * dark);
     darkMats.forEach(([m, c]) => m.color.set(c).multiplyScalar(1 - 0.85 * dark));
     drumMat.emissiveIntensity = 0.3 * (1 - 0.9 * dark); drumMat.color.set("#252b50").multiplyScalar(1 - 0.8 * dark);
 
@@ -596,8 +605,8 @@ export default function build(ctx) {
     coreRig.position.y = CORE.y + Math.sin(t * 0.0012) * 0.035;
     const cg = S.core;
     coreMat.emissiveIntensity = 0.05 + 0.45 * cg; coreMat.color.set(C.core).multiplyScalar(0.3 + 0.7 * cg);
-    coreEdgeMat.opacity = 0.1 + 0.55 * cg;
-    haloMat.opacity = 0.08 + 0.5 * cg; coreLight.intensity = 3 * cg;
+    coreEdgeMat.opacity = 0.06 + 0.59 * cg;
+    haloMat.opacity = 0.02 + 0.56 * cg; coreLight.intensity = 3 * cg;
     plazaGlowMat.opacity = 0.5 * cg; tetherMat.opacity = 0.25 * cg;
 
     // S2: målpladerne
@@ -641,7 +650,8 @@ export default function build(ctx) {
     const fv = ease((S.field - 0.05) / 0.95);
     field.material.opacity = fv * (0.9 + 0.1 * Math.sin(t * 0.003)); field.visible = fv > 0.01;
     // udgangen: gløden står tilbage, når platformen bliver mørk
-    exitGlowMat.opacity = 0.3 + 0.5 * dark; exitFloorMat.opacity = 0.25 + 0.5 * dark;
+    exitGlowMat.opacity = 0.12 + 0.1 * dark; exitFloorMat.opacity = 0.08 + 0.06 * dark;     // udgangen ses, men er aldrig klarere end feltet
+    { const pm = exitDoor && exitDoor.portal && exitDoor.portal.getObject3D("mesh"); if (pm) pm.material.opacity = 0.1 + 0.08 * dark; }
     const rsm = roomSign.getObject3D("mesh"); if (rsm) { const o = step === "s2" || step === "s4" ? 0 : 1; rsm.material.opacity = approach(rsm.material.opacity, o, dt, 4); roomSign.object3D.visible = rsm.material.opacity > 0.02; }
   }
 

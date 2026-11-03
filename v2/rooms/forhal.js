@@ -619,7 +619,7 @@ export default function build(ctx) {
     for (const [id, p] of Object.entries(plaques)) {
       p.k = approach(p.k, id === step ? 1 : 0, dt, 5); const e = ease(p.k);
       p.head.position.y = 0.06 + 0.2 * e; p.head.rotation.x = (-90 + 55 * e) * D2R;
-      const m = signMat(p.sign); if (m) m.opacity = 0.25 + 0.75 * e;
+      const m = signMat(p.sign); if (m) m.opacity = 0.1 + 0.9 * e;
     }
     // F2: ordene
     words.forEach(m => { m.material.opacity = S.words; m.visible = S.words > 0.01; });
