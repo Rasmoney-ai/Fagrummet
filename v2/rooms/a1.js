@@ -468,7 +468,8 @@ export default function build(ctx) {
       const anim = f.fx(inner);
       // klikflade: usynlig, men stor nok til at være let at ramme
       const hit = kit.box(e, "0 0.05 0", 0.34, 0.14, 0.2, "shader: flat; visible: false");
-      ctx.onClick(hit, () => { valgt = i; tValgt = tNu; if (aktiv !== "a1-3") ctx.goStep("a1-3"); });
+      // klikket bobler op til stationen, som selv skifter til trinnet
+      ctx.onClick(hit, () => { valgt = i; tValgt = tNu; });
       const home = [f.pos[0], Y + 0.022, f.pos[1]];
       return { e, inner, anim, home, tilt: f.tilt, sk: f.sk };
     });
@@ -477,7 +478,7 @@ export default function build(ctx) {
     const hint = kit.textPlane(g, `0 ${Y + 0.03} ${BD / 2 + 0.09}`, "klik på en komponent", "#a9b0d6", { width: 0.6, aspect: 0.14, size: 90, bg: false, ink: "#d6dbf5", rotation: "-70 0 0" });
     let valgt = -1, tValgt = 0;
     return {
-      nulstil() { valgt = -1; },
+      nulstil() { if (tNu - tValgt > 300) valgt = -1; },   // et klik, der selv skiftede trin, bevares
       tick(s) {
         hint.object3D.visible = s >= 0;
         // hvilken komponent vises? Den klikkede i 7 s, ellers kører de på skift

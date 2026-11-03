@@ -184,7 +184,9 @@ export default function build(ctx) {
     sg.object3D.add(new THREE.Mesh(backGeo, steleMat));      // bagplade, så skiltet ikke ses spejlvendt bagfra
     ctx.station(s.id, g);
     const look = cfg.out ? [polar(cfg.phi, 8)[0], 1.6, polar(cfg.phi, 8)[1]] : [0, CORE_Y, 0];
-    ctx.view(s.id, { position: [vx, 0, vz], lookAt: look });
+    // afrund: rammen skriver tallene ind i en animationsstreng, og fx 1e-16 bliver læst som 1
+    const r3 = v => Math.round(v * 1000) / 1000;
+    ctx.view(s.id, { position: [r3(vx), 0, r3(vz)], lookAt: look.map(r3) });
     viewPos[s.id] = [vx, vz];
   }
   // rummets navn hænger over kernen og drejer sig altid mod den besøgende

@@ -215,16 +215,16 @@ export default function build(ctx) {
   const fam = [
     { who: "Mor", use: "beskeder, bank og kalender", kind: "phone", h: 1.7,
       from: [DOOR.x, ZB + 0.2, 0, false], at: [DOOR.x - 0.7, ZB + 1.6, 30, false], home: null, label: [DOOR.x - 0.7, 2.3, ZB + 1.6],
-      off: [TB.x + 0.75, TB.z + 0.2, -100, false] },
+      off: [SOF.x + 0.05, SOF.z - 0.6, 90, true] },
     { who: "Far", use: "opskrifter og nyheder", kind: "tablet", h: 1.82,
       from: [W - 1.2, ZB + 1.0, -90, false], at: [ISL.x, ISL.z - 0.75, 0, false], home: [ISL.x + 0.25, 0.98, ISL.z - 0.1, -90, 0], label: [ISL.x, 2.45, ISL.z - 0.75],
-      off: [ISL.x - 1.3, ISL.z - 0.4, -80, false] },
+      off: [TB.x + 0.85, TB.z + 0.1, -90, false] },
     { who: "Storesøster", use: "klassechat og video", kind: "phone", h: 1.6,
       from: [-2.2, 1.6, -120, false], at: [SOF.x + 0.05, SOF.z + 0.6, 90, true], home: [TB.x + 0.1, 0.44, TB.z + 0.3, -90, 0], label: [SOF.x + 0.1, 1.95, SOF.z + 0.6],
       off: [SOF.x + 0.05, SOF.z + 0.6, 90, true] },
     { who: "Lillebror", use: "spil med venner", kind: "pad", h: 1.25,
       from: [-2.0, -1.4, -120, false], at: [BEAN.x, BEAN.z, 160, true], home: [SB.x - 0.25, 0.66, SB.z + 0.05, -90, 0], label: [BEAN.x, 1.6, BEAN.z + 0.1],
-      off: [BEAN.x, BEAN.z, 30, true] },
+      off: [BEAN.x, BEAN.z, 5, true] },
   ];
   const fieldTex = (who, use) => K.canvasTexture(640, 170, (g, w, h) => {
     g.fillStyle = "rgba(24,14,22,0.9)"; K.roundRect(g, 4, 4, w - 8, h - 8, 28); g.fill(); g.strokeStyle = "rgba(232,99,140,0.9)"; g.lineWidth = 5; g.stroke();
@@ -455,10 +455,10 @@ export default function build(ctx) {
         if (cur === "c1-3") {
           if (m.who === "Storesøster") {
             // hun rejser sig, går rundt om skænken, lægger telefonen i skuffen og går tilbage til sofaen
-            const path = [[ax, az], [SOF.x + 0.75, SOF.z + 1.1], [-3.3, SOF.z + 1.1], [SB_DRAWER.x, -2.6], [SB_DRAWER.x, SB.z + 0.75]];
-            const out = walkPath(path, e - 0.3, 1.1); out.end = 0.3 + out.dur;   // ud til skuffen
+            const path = [[ax, az], [-4.95, -0.45], [-3.7, -0.45], [SB_DRAWER.x, -2.6], [SB_DRAWER.x, SB.z + 0.75]];
+            const out = walkPath(path, e - 0.3, 1.5); out.end = 0.3 + out.dur;   // ud til skuffen
             const put = ease((e - out.end - 0.2) / 1.0);
-            const home = walkPath(path.slice().reverse(), e - out.end - 1.5, 1.1); home.end = out.end + 1.5 + home.dur;
+            const home = walkPath(path.slice().reverse(), e - out.end - 1.5, 1.5); home.end = out.end + 1.5 + home.dur;
             const p = home.t > 0 ? home : out;
             const moving = p.moving;
             const seated = e < 0.3 || home.done;
@@ -477,10 +477,11 @@ export default function build(ctx) {
             return;
           }
           // de andre ændrer langsomt adfærd: kigger op, lægger tingen fra sig, vender sig mod hinanden
-          const k = ease((e - 4.4 - i * 0.8) / 2.8);
+          const k = ease((e - 4.8 - i * 0.8) / 2.8);
           const [ox, oz, oy, osit] = m.off;
           const moving = (ox !== ax || oz !== az) && k > 0 && k < 1;
-          pose(m, lerp(ax, ox, k), lerp(az, oz, k), angLerp(ay * D, oy * D, k) / D, k < 0.5 ? asit : osit, lerp(28, 4, k), k < 0.35, 1 - ease(k / 0.4), moving ? Math.abs(Math.sin(e * 7)) * 0.025 : 0);
+          const sitNow = (ox === ax && oz === az) ? asit : k <= 0 ? asit : k >= 1 ? osit : false;
+          pose(m, lerp(ax, ox, k), lerp(az, oz, k), angLerp(ay * D, oy * D, k) / D, sitNow, lerp(28, 4, k), k < 0.35, 1 - ease(k / 0.4), moving ? Math.abs(Math.sin(e * 7)) * 0.025 : 0);
           const dk = 1 - ease((k - 0.2) / 0.4);
           if (m.home) devTo(m, dk); else { devTo(m, dk > 0.5 ? 1 : 0); }
           devOn(m, k < 0.3);
