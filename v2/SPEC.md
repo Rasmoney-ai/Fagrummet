@@ -35,7 +35,8 @@ export default function build(ctx) {
 | `ctx.sign(text, {position, rotation, width, color, sub, bg, size, parent})` | overskriftsskilt (canvas-tekstur, æøå virker). `sub` = lille undertekst |
 | `ctx.door(toRoomId, {position, rotation, label})` | dør/portal til et andet rum med skilt. Rammen tegner den i målrummets farve og står for skiftet |
 | `ctx.station(stepId, entity)` | gør `entity` til trinnets station: klik vælger trinnet, og rammen lægger en lysende ring på gulvet under den, når trinnet er aktivt |
-| `ctx.view(stepId, {position:[x,y,z], lookAt:[x,y,z]})` | hvor brugeren stilles og kigger hen i trinnet (y ignoreres for position; øjenhøjde er 1,6 m). Uden view bliver brugeren stående |
+| `ctx.view(stepId, {position:[x,y,z], lookAt:[x,y,z], pitch})` | hvor brugeren stilles og kigger hen i trinnet (y ignoreres for position; øjenhøjde er 1,6 m). Uden view bliver brugeren stående. `pitch`: grader op/ned (negativ = ned), eller `true` = sigt mod lookAt's højde. Uden pitch kigger man vandret. Pitch virker kun på skærm; i VR styrer hovedet selv |
+| `ctx.rooms` | alle rum (`name`, `sub`, `color`, `area`) til skilte o.l.; kun til læsning |
 | `ctx.onClick(entity, fn)` | gør en entitet klikbar. Klikket stopper her og bobler ikke op til en omgivende station |
 | `ctx.goStep(id)`, `ctx.goRoom(id)` | skift trin i rummet / gå til et andet rum (bruges sjældent; døre og stationer klarer det) |
 | `ctx.env({background, fog})` | baggrundsfarve og evt. tåge (A-Frame fog-streng) for rummet |

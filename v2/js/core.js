@@ -29,17 +29,17 @@ function fade(to, dur = 280) {
 /* ---------- Rig: placering og blik ---------- */
 const R2D = 180 / Math.PI;
 function yawTo(from, to) { return Math.atan2(-(to[0] - from[0]), -(to[2] - from[2])) * R2D; }
-function resetHead() {
+function resetHead(pitch = 0) {
   const lc = cam.components["look-controls"];
-  if (lc && !scene.is("vr-mode")) { lc.pitchObject.rotation.x = 0; lc.yawObject.rotation.y = 0; }
+  if (lc && !scene.is("vr-mode")) { lc.pitchObject.rotation.x = pitch / R2D; lc.yawObject.rotation.y = 0; }
 }
-function placeRig(x, z, yaw, animate) {
+function placeRig(x, z, yaw, animate, pitch = 0) {
   rig.removeAttribute("animation__p"); rig.removeAttribute("animation__r");
-  if (!animate) { rig.object3D.position.set(x, 0, z); rig.object3D.rotation.set(0, yaw / R2D, 0); resetHead(); return; }
+  if (!animate) { rig.object3D.position.set(x, 0, z); rig.object3D.rotation.set(0, yaw / R2D, 0); resetHead(pitch); return; }
   rig.setAttribute("animation__p", `property: position; to: ${(+x).toFixed(3)} 0 ${(+z).toFixed(3)}; dur: 1400; easing: easeInOutCubic`);
   const ry = rig.object3D.rotation.y * R2D; let to = yaw; while (to - ry > 180) to -= 360; while (to - ry < -180) to += 360;
   rig.setAttribute("animation__r", `property: rotation; to: 0 ${(+to).toFixed(2)} 0; dur: 1400; easing: easeInOutCubic`);
-  resetHead();
+  resetHead(pitch);
 }
 
 /* ---------- Fortælling ---------- */
@@ -106,6 +106,7 @@ async function loadRoom(id, stepId, { instant = false } = {}) {
   rctx = { stations: {}, views: {}, beacon: makeBeacon(kit, room.color) };
   const ctx = {
     THREE, AFRAME, root, room, C, K, kit, el: kit.el,
+    rooms: ROOMS,   // opslag af andre rum (navn, sub, farve) — kun til læsning
     steps: STEPS.filter(s => s.room === id), step: sid => BYID[sid],
     sign: (text, o = {}) => makeSign(kit, text, { color: room.color, parent: root, ...o }),
     door: (to, o = {}) => makeDoor(kit, root, to, o),
@@ -114,7 +115,7 @@ async function loadRoom(id, stepId, { instant = false } = {}) {
       entity.addEventListener("click", ev => { ev.stopPropagation && ev.stopPropagation(); if (cur !== sid) setStep(sid); });
       return entity;
     },
-    view(sid, { position, lookAt }) { rctx.views[sid] = { position, lookAt }; },
+    view(sid, { position, lookAt, pitch }) { rctx.views[sid] = { position, lookAt, pitch }; },
     onClick(entity, fn) { entity.classList.add("klik"); entity.addEventListener("click", ev => { ev.stopPropagation(); fn(ev); }); return entity; },
     env({ background, fog } = {}) { if (background) scene.setAttribute("background", `color: ${background}`); if (fog) scene.setAttribute("fog", fog); },
     goStep: sid => setStep(sid), goRoom,
@@ -156,7 +157,15 @@ function setStep(id, { fromLoad = false } = {}) {
   else b.setAttribute("visible", false);
   // blik/placering for trinnet
   const vw = rctx.views[id];
-  if (vw) { const p = vw.position; const yaw = vw.lookAt ? yawTo(p, vw.lookAt) : rig.object3D.rotation.y * R2D; placeRig(p[0], p[2] ?? p[1], yaw, !fromLoad); }
+  if (vw) {
+    const p = vw.position, px = p[0], pz = p[2] ?? p[1], la = vw.lookAt;
+    const yaw = la ? yawTo([px, 0, pz], la) : rig.object3D.rotation.y * R2D;
+    // pitch: tal i grader, eller true = beregn ud fra lookAt's højde (øjenhøjde 1,6 m). Uden pitch kigger man vandret.
+    let pitch = 0;
+    if (typeof vw.pitch === "number") pitch = vw.pitch;
+    else if (vw.pitch === true && la && la.length === 3) pitch = Math.atan2(la[1] - 1.6, Math.hypot(la[0] - px, la[2] - pz)) * R2D;
+    placeRig(px, pz, yaw, !fromLoad, pitch);
+  }
   if (api && api.onStep) { try { api.onStep(id); } catch (e) { console.warn(e); } }
   updateUi(); speak(s);
 }
