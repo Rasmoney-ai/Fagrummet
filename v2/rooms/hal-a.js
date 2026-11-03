@@ -213,26 +213,39 @@ export default function build(ctx) {
   const pladeSt = kit.grp(ctx.root, `${PL.x} 0 7.45`, { rotation: "0 180 0" });
   const plade = kit.grp(pladeSt, `0 ${PL.y} ${-(PL.z - 7.45)}`);
   const PW = 3.3, PH = 2.16, CW = 1040, CH = 680;
-  // nøgleordene og deres placering på pladen (canvas-pixels)
+  // fire nøgleord på en løkke (arbejdet går rundt), og en pil ud til et produkt, der stadig er stiplet/ufærdigt
+  const LCX = 400, LCY = 420, LRX = 250, LRY = 150;
   const ORD = [
-    { t: "iterativt", row: 0, x: 250, w: 250 },
-    { t: "intentioner", row: 1, x: 430, w: 300 },
-    { t: "metoder", row: 2, x: 80, w: 230 },
-    { t: "argumentation", row: 3, x: 300, w: 360 },
-  ];
-  const ROWY = [270, 370, 470, 570], CHIP_H = 74;
-  const linjer = [[[80, 230], [520, 960]], [[80, 410], [750, 960]], [[330, 960]], [[80, 280], [680, 880]]];
+    { t: "iterativt", a: -90 }, { t: "intentioner", a: 0 }, { t: "metoder", a: 90 }, { t: "argumentation", a: 180 },
+  ].map(o => ({ ...o, x: LCX + Math.cos(o.a * Math.PI / 180) * LRX, y: LCY + Math.sin(o.a * Math.PI / 180) * LRY, w: o.t.length * 23 + 50 }));
+  const CHIP_H = 70;
+  const tegnChip = (g, o, lys) => {
+    g.fillStyle = lys ? A : "#222a48"; T.rr(g, o.x - o.w / 2, o.y - CHIP_H / 2, o.w, CHIP_H, 35); g.fill();
+    if (!lys) { g.strokeStyle = "#3a4472"; g.lineWidth = 3; g.stroke(); }
+    g.fillStyle = lys ? "#1a1206" : "#8a92bb"; g.font = '700 40px "Familjen Grotesk", sans-serif'; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(o.t, o.x, o.y + 2); g.textAlign = "left";
+  };
   const pladeTex = T.canvas(CW, CH, (g, w, h) => {
     g.fillStyle = "#151a2e"; T.rr(g, 0, 0, w, h, 26); g.fill();
     g.strokeStyle = A; g.globalAlpha = 0.55; g.lineWidth = 4; T.rr(g, 14, 14, w - 28, h - 28, 18); g.stroke(); g.globalAlpha = 1;
     g.fillStyle = A; g.font = '600 40px "JetBrains Mono", monospace'; g.textBaseline = "middle";
-    g.fillText("OMRÅDETS MÅL", 80, 105);
-    g.fillStyle = "#c3c8e6"; g.font = '500 38px "Source Sans 3", sans-serif';
-    g.fillText(ctx.room.sub, 80, 160);
-    g.fillStyle = "#2c3456";
-    linjer.forEach((row, i) => row.forEach(([a, b]) => { T.rr(g, a, ROWY[i] - 13, b - a, 26, 13); g.fill(); }));
-    ORD.forEach(o => { g.fillStyle = "#222a48"; T.rr(g, o.x, ROWY[o.row] - CHIP_H / 2, o.w, CHIP_H, 37); g.fill();
-      g.fillStyle = "#6b7299"; g.font = '700 42px "Familjen Grotesk", sans-serif'; g.textAlign = "center"; g.fillText(o.t, o.x + o.w / 2, ROWY[o.row] + 2); g.textAlign = "left"; });
+    g.fillText("OMRÅDETS MÅL", 60, 80);
+    g.fillStyle = "#c3c8e6"; g.font = '500 36px "Source Sans 3", sans-serif';
+    g.fillText(ctx.room.sub, 60, 128);
+    // løkken med pilespidser i urets retning
+    g.strokeStyle = "#5a628f"; g.lineWidth = 6; g.beginPath(); g.ellipse(LCX, LCY, LRX, LRY, 0, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = "#5a628f";
+    for (const a of [-45, 45, 135, 225]) {
+      const r = a * Math.PI / 180, x = LCX + Math.cos(r) * LRX, y = LCY + Math.sin(r) * LRY;
+      const tx = -Math.sin(r) * LRX, ty = Math.cos(r) * LRY, tl = Math.hypot(tx, ty), ux = tx / tl, uy = ty / tl;
+      g.beginPath(); g.moveTo(x + ux * 16, y + uy * 16); g.lineTo(x - ux * 10 - uy * 12, y - uy * 10 + ux * 12); g.lineTo(x - ux * 10 + uy * 12, y - uy * 10 - ux * 12); g.fill();
+    }
+    // pil fra løkken ud mod produktet
+    g.strokeStyle = "#5a628f"; g.setLineDash([14, 12]); g.beginPath(); g.moveTo(LCX + LRX + 110, LCY); g.lineTo(820, LCY); g.stroke(); g.setLineDash([]);
+    g.beginPath(); g.moveTo(838, LCY); g.lineTo(816, LCY - 14); g.lineTo(816, LCY + 14); g.fill();
+    // det ufærdige produkt: stiplet omrids af en kasse
+    g.strokeStyle = "#8a92bb"; g.lineWidth = 5; g.setLineDash([12, 10]); T.rr(g, 858, LCY - 70, 130, 140, 16); g.stroke(); g.setLineDash([]);
+    g.fillStyle = "#8a92bb"; g.font = 'italic 500 26px "Source Sans 3", sans-serif'; g.textAlign = "center"; g.fillText("produktet", 923, LCY + 102); g.textAlign = "left";
+    ORD.forEach(o => tegnChip(g, o, false));
   });
   const pladeB = new Batch();
   pladeB.box("#2a2230", [0, 0, -0.02], [PW + 0.08, PH + 0.08, 0.05]);
@@ -243,16 +256,16 @@ export default function build(ctx) {
   const pladeMat = T.hold(new THREE.MeshBasicMaterial({ map: pladeTex, transparent: true, color: "#777" }));
   T.mesh(plade, T.hold(new THREE.PlaneGeometry(PW, PH)), pladeMat, "0 0 0.012");
   const ordFelter = ORD.map((o, i) => {
-    const tex = T.canvas(o.w + 40, CHIP_H + 40, (g, w, h) => {
-      g.shadowColor = A; g.shadowBlur = 18; g.fillStyle = A; T.rr(g, 20, 20, o.w, CHIP_H, 37); g.fill(); g.shadowBlur = 0;
-      g.fillStyle = "#1a1206"; g.font = '700 42px "Familjen Grotesk", sans-serif'; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(o.t, w / 2, h / 2 + 2);
-    });
+    const pad = 24, tw = o.w + pad * 2, th = CHIP_H + pad * 2;
+    const tex = T.canvas(tw, th, (g, w, h) => { g.shadowColor = A; g.shadowBlur = 20; tegnChip(g, { ...o, x: w / 2, y: h / 2 }, true); });
     const m = T.hold(new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false }));
-    const pw = (o.w + 40) / CW * PW, ph = (CHIP_H + 40) / CH * PH;
-    const cx = (o.x + o.w / 2 - CW / 2) / CW * PW, cy = (CH / 2 - ROWY[o.row]) / CH * PH;
-    const e = T.mesh(plade, T.hold(new THREE.PlaneGeometry(pw, ph)), m, `${cx} ${cy} ${0.02 + i * 0.001}`);
+    const cx = (o.x - CW / 2) / CW * PW, cy = (CH / 2 - o.y) / CH * PH;
+    const e = T.mesh(plade, T.hold(new THREE.PlaneGeometry(tw / CW * PW, th / CH * PH)), m, `${cx} ${cy} ${0.02 + i * 0.001}`);
     return { m, e };
   });
+  // en lysprik, der løber rundt på løkken, når ordene er tændt
+  const prikM = T.hold(new THREE.MeshBasicMaterial({ map: T.glow("#ffe0a8"), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+  const prik = T.mesh(plade, T.hold(new THREE.PlaneGeometry(0.22, 0.22)), prikM, "0 0 0.03");
   // opslagstavle med skitser og post-its ved siden af målpladen (ét plan)
   const tavleTex = T.canvas(512, 384, (g, w, h) => {
     const r = T.rng(17);
@@ -273,7 +286,8 @@ export default function build(ctx) {
       g.restore();
     });
   });
-  T.mesh(ctx.root, T.hold(new THREE.PlaneGeometry(2.2, 1.65)), T.hold(new THREE.MeshStandardMaterial({ map: tavleTex, roughness: 0.9 })), "4.95 2.15 8.44", { rotation: "0 180 0" });
+  const tavleM = T.hold(new THREE.MeshStandardMaterial({ map: tavleTex, roughness: 0.9 }));
+  T.mesh(ctx.root, T.hold(new THREE.PlaneGeometry(1.8, 1.35)), tavleM, "5.55 2.05 8.44", { rotation: "0 180 0" });
   ctx.station("a0-2", pladeSt);
   ctx.sign(ctx.step("a0-2").title, { position: `${PL.x} ${PL.y + PH / 2 + 0.42} ${PL.z - 0.05}`, rotation: "0 180 0", width: 2.1 });
 
@@ -339,7 +353,7 @@ export default function build(ctx) {
       const s = (t - t0) / 1000;
       erk.tick(dt);
       // a0-1: prototyperne lyser op én efter én i en bølge rundt om bordene
-      const N = protos.length, trin = 0.55, periode = N * trin + 1.6;
+      const N = protos.length, trin = 0.6, periode = N * trin + 2.2;
       protos.forEach(p => {
         let v = 0;
         if (aktiv === "a0-1") {
@@ -347,21 +361,33 @@ export default function build(ctx) {
           const lok = ((s - p.i * trin) % periode + periode) % periode, slut = (N - p.i) * trin + 0.8;
           if (s - p.i * trin >= 0) v = lok < 0.5 ? lok / 0.5 : lok < slut ? 0.3 + 0.7 * Math.exp(-(lok - 0.5) * 3) : Math.max(0, 0.3 * (1 - (lok - slut) / 0.6));
         }
-        p.m.emissiveIntensity = 0.55 * v;
-        p.poolMat.opacity = 0.95 * v;
-        const sk = 1 + 0.07 * v; p.body.object3D.scale.set(sk, sk, sk);
+        p.m.emissiveIntensity = 0.75 * v;
+        p.poolMat.opacity = 0.9 * v;
+        const sk = 1 + 0.08 * v; p.body.object3D.scale.set(sk, sk, sk);
+        // buen fra oplægget tegnes frem, når prototypen tændes, og bliver stående svagt
+        const bu = buer[p.i], lok = aktiv === "a0-1" ? s - p.i * trin : -1;
+        const fr = aktiv === "a0-1" ? Math.min(1, Math.max(0, (((lok % periode) + periode) % periode) / 0.45)) : 0;
+        bu.geo.setDrawRange(0, Math.floor(fr * bu.n / 3) * 3);
+        bu.m.opacity = aktiv === "a0-1" && lok >= 0 ? 0.25 + 0.65 * v : 0;
       });
+      const intro = aktiv === "a0-1";
+      oplægM.color.setScalar(intro ? 1 : 0.6);
+      oplægGlød.opacity = intro ? 0.35 + 0.15 * Math.sin(s * 2) : 0;
+      kegleMat.opacity = intro ? 0.12 : 0.22;
       // a0-2: pladen tændes, og nøgleordene fremhæves ét ad gangen
       const on = aktiv === "a0-2";
       const k = on ? Math.min(s / 0.8, 1) : 0;
       const c = lerp(0.42, 1, k); pladeMat.color.setRGB(c, c, c);
       haloMat.opacity = on ? 0.55 * k + 0.08 * Math.sin(s * 2.2) * k : 0;
       T.lys(lysPlade, on ? 1.6 * k : 0);
-      T.lys(lysBord, on ? 1.0 : 2.2);
+      T.lys(lysBord, on ? 0.7 : intro ? 1.5 : 2.0);
+      tavleM.color.setScalar(on ? 0.35 : 1);
+      prikM.opacity = on && s > 2.6 ? 0.9 : 0;
+      { const a = s * 1.1 - Math.PI / 2; prik.object3D.position.set(Math.cos(a) * LRX / CW * PW + (LCX - CW / 2) / CW * PW, (CH / 2 - LCY - Math.sin(a) * LRY) / CH * PH, 0.03); }
       ordFelter.forEach((o, i) => {
         const ki = on ? Math.max(0, Math.min((s - 0.6 - i * 0.45) / 0.3, 1)) : 0;
         o.m.opacity = ki;
-        const pop = 1 + 0.25 * Math.sin(Math.PI * ki) ; o.e.object3D.scale.set(pop, pop, 1);
+        const pop = 1 + 0.2 * Math.sin(Math.PI * ki); o.e.object3D.scale.set(pop, pop, 1);
       });
       T.syncVis();
     },
@@ -547,7 +573,7 @@ function vaerktoej(ctx) {
 
   /* Erkendeformernes tre små lavendelfarvede tegn, der kredser langsomt (en hånd der bygger,
      en hånd der vender noget om, og et stiplet omrids af noget, der endnu ikke findes). */
-  function erkendeformer(parent, pos, rot = "0 0 0") {
+  function erkendeformer(parent, pos, rot = "0 0 0", sk = 1) {
     const L = ctx.C.core;
     const tegn = [
       g => { // hånd der bygger: klodser + hånd ovenfra
@@ -567,14 +593,21 @@ function vaerktoej(ctx) {
         g.globalAlpha = 0.5; g.beginPath(); g.arc(128, 128, 10, 0, 7); g.fill(); g.globalAlpha = 1;
       },
     ];
-    const grp = ctx.kit.grp(parent, pos, { rotation: rot });
+    // samlet på én lille mørk, rund plade med etiket, så de læses som ét tegn og ikke som løse symboler
+    const grp = ctx.kit.grp(parent, pos, { rotation: rot, scale: `${sk} ${sk} ${sk}` });
+    const pladeTex = canvas(256, 300, g => {
+      g.fillStyle = "rgba(14,18,36,0.9)"; g.beginPath(); g.arc(128, 128, 124, 0, 7); g.fill();
+      g.strokeStyle = L; g.globalAlpha = 0.5; g.lineWidth = 3; g.beginPath(); g.arc(128, 128, 120, 0, 7); g.stroke(); g.globalAlpha = 1;
+      g.fillStyle = L; g.font = '600 24px "JetBrains Mono", monospace'; g.textAlign = "center"; g.fillText("ERKENDEFORMER", 128, 290);
+    });
+    mesh(grp, geo.plane(), hold(new THREE.MeshBasicMaterial({ map: pladeTex, transparent: true, depthWrite: false })), "0 -0.06 -0.005", { scale: "1.0 1.17 1" });
     const items = tegn.map((f, i) => {
-      const tex = canvas(256, 256, g => { g.strokeStyle = L; g.fillStyle = L; g.lineWidth = 10; g.lineCap = "round"; g.lineJoin = "round"; f(g); });
-      const m = hold(new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.8, depthWrite: false }));
-      return mesh(grp, geo.plane(), m, "0 0 0", { scale: "0.34 0.34 0.34" });
+      const tex = canvas(256, 256, g => { g.strokeStyle = L; g.fillStyle = L; g.lineWidth = 12; g.lineCap = "round"; g.lineJoin = "round"; f(g); });
+      const m = hold(new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.95, depthWrite: false }));
+      return mesh(grp, geo.plane(), m, "0 0 0", { scale: "0.3 0.3 0.3" });
     });
     let a = 0;
-    return { tick(dt) { a += (dt || 16) * 0.00025; items.forEach((it, i) => { const v = a + i * 2.094; it.object3D.position.set(Math.cos(v) * 0.36, Math.sin(v) * 0.36, 0); }); } };
+    return { tick(dt) { a += (dt || 16) * 0.00025; items.forEach((it, i) => { const v = a + i * 2.094; it.object3D.position.set(Math.cos(v) * 0.27, Math.sin(v) * 0.27, 0); }); } };
   }
   /* sæt et lys' styrke direkte (billigere end setAttribute hver frame) */
   function lys(el, v) { const l = el.getObject3D("light"); if (l) l.intensity = v; }

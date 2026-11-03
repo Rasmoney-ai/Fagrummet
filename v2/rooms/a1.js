@@ -672,7 +672,7 @@ function vaerktoej(ctx) {
 
   /* Erkendeformernes tre små lavendelfarvede tegn, der kredser langsomt (en hånd der bygger,
      en hånd der vender noget om, og et stiplet omrids af noget, der endnu ikke findes). */
-  function erkendeformer(parent, pos, rot = "0 0 0") {
+  function erkendeformer(parent, pos, rot = "0 0 0", sk = 1) {
     const L = ctx.C.core;
     const tegn = [
       g => { // hånd der bygger: klodser + hånd ovenfra
@@ -692,14 +692,21 @@ function vaerktoej(ctx) {
         g.globalAlpha = 0.5; g.beginPath(); g.arc(128, 128, 10, 0, 7); g.fill(); g.globalAlpha = 1;
       },
     ];
-    const grp = ctx.kit.grp(parent, pos, { rotation: rot });
+    // samlet på én lille mørk, rund plade med etiket, så de læses som ét tegn og ikke som løse symboler
+    const grp = ctx.kit.grp(parent, pos, { rotation: rot, scale: `${sk} ${sk} ${sk}` });
+    const pladeTex = canvas(256, 300, g => {
+      g.fillStyle = "rgba(14,18,36,0.9)"; g.beginPath(); g.arc(128, 128, 124, 0, 7); g.fill();
+      g.strokeStyle = L; g.globalAlpha = 0.5; g.lineWidth = 3; g.beginPath(); g.arc(128, 128, 120, 0, 7); g.stroke(); g.globalAlpha = 1;
+      g.fillStyle = L; g.font = '600 24px "JetBrains Mono", monospace'; g.textAlign = "center"; g.fillText("ERKENDEFORMER", 128, 290);
+    });
+    mesh(grp, geo.plane(), hold(new THREE.MeshBasicMaterial({ map: pladeTex, transparent: true, depthWrite: false })), "0 -0.06 -0.005", { scale: "1.0 1.17 1" });
     const items = tegn.map((f, i) => {
-      const tex = canvas(256, 256, g => { g.strokeStyle = L; g.fillStyle = L; g.lineWidth = 10; g.lineCap = "round"; g.lineJoin = "round"; f(g); });
-      const m = hold(new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.8, depthWrite: false }));
-      return mesh(grp, geo.plane(), m, "0 0 0", { scale: "0.34 0.34 0.34" });
+      const tex = canvas(256, 256, g => { g.strokeStyle = L; g.fillStyle = L; g.lineWidth = 12; g.lineCap = "round"; g.lineJoin = "round"; f(g); });
+      const m = hold(new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.95, depthWrite: false }));
+      return mesh(grp, geo.plane(), m, "0 0 0", { scale: "0.3 0.3 0.3" });
     });
     let a = 0;
-    return { tick(dt) { a += (dt || 16) * 0.00025; items.forEach((it, i) => { const v = a + i * 2.094; it.object3D.position.set(Math.cos(v) * 0.36, Math.sin(v) * 0.36, 0); }); } };
+    return { tick(dt) { a += (dt || 16) * 0.00025; items.forEach((it, i) => { const v = a + i * 2.094; it.object3D.position.set(Math.cos(v) * 0.27, Math.sin(v) * 0.27, 0); }); } };
   }
   /* sæt et lys' styrke direkte (billigere end setAttribute hver frame) */
   function lys(el, v) { const l = el.getObject3D("light"); if (l) l.intensity = v; }
