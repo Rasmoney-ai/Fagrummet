@@ -81,7 +81,7 @@ function makeDoor(kit, root, to, { position = "0 0 -4", rotation = "0 0 0", labe
   if (!quiet) portal.setAttribute("animation__o", "property: components.material.material.opacity; from: 0.14; to: 0.32; dir: alternate; loop: true; dur: 1600; easing: easeInOutSine");
   g.portal = portal;   // rummet kan selv dæmpe/fremhæve portalen
   const name = label || (up ? `Tilbage: ${r.name}` : r.name);
-  makeSign(kit, name, { parent: g, position: `0 ${height + 0.55} 0`, width: 1.9, color: col, sub: up ? null : (r.sub !== r.name ? r.sub : null) });
+  g.sign = makeSign(kit, name, { parent: g, position: `0 ${height + 0.55} 0`, width: 1.9, color: col, sub: up ? null : (r.sub !== r.name ? r.sub : null) });
   portal.addEventListener("click", () => goRoom(to));
   if (rctx) rctx.doors.push({ to, portal });
   return g;

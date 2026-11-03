@@ -307,7 +307,7 @@ export default function build(ctx) {
   const dørA2 = ctx.door("a2", { position: `${dorR[0]} 0 ${dorR[1]}`, rotation: "0 -45 0" });
   // dørenes egne skilte (rammens, med navn og undertitel) gøres større og drejes mod spawn, så de kan læses derfra
   for (const [dør, d] of [[dørA1, dorL], [dørA2, dorR]]) {
-    const skilt = dør.lastElementChild;   // rammen lægger navneskiltet sidst i dørgruppen
+    const skilt = dør.sign || dør.lastElementChild;   // rammen giver dørens navneskilt som .sign
     const yaw = Math.atan2(0 - d[0], 5 - d[1]) * 180 / Math.PI - (d === dorL ? 45 : -45);
     skilt.setAttribute("scale", "1.45 1.45 1.45"); skilt.setAttribute("rotation", `0 ${yaw} 0`);
     skilt.object3D.position.y += 0.35;

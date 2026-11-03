@@ -269,7 +269,7 @@ export default function build(ctx) {
     const st = kit.grp(root, `${sp[0]} 0 ${sp[2]}`);
     kit.box(st, "0 1.4 0", 2.6, 2.8, 0.4, "opacity: 0; transparent: true; depthWrite: false", { rotation: `0 ${yawDeg(n.a)} 0` });
     ctx.station(n.id, st);
-    const sg = polar(n.a, R - 0.45, NH + (n.a === 0 ? 1.45 : 0.95));   // den midterste hænger højere, fri af vægtens knude
+    const sg = polar(n.a, R - 0.45, NH + (n.a === 0 ? 1.85 : 0.95));   // den midterste hænger højere, fri af vægtens knude
     n.sign = ctx.sign(ctx.step(n.id).title, { position: sg.join(" "), rotation: `0 ${yawDeg(n.a)} 0`, width: 3.0, size: 70 });
     const vp = polar(n.a, R - 2.75), la = polar(n.a, R + 0.6, 1.7);
     view(n.id, { position: vp, lookAt: la, pitch: 6 });

@@ -33,7 +33,7 @@ export default function build(ctx) {
 | `ctx.K` | alt fra `kit.js`: `mat`, `glow`, `flat`, `glass`, `spin`, `bob`, `pulse`, `sc`, `canvasTexture`, `applyTexture`, `labelTex`, `glowTex`, `wrap`, `roundRect` |
 | `ctx.kit` | primitiver med `ctx.root` som standardforælder: `el`, `grp`, `box`, `cyl`, `sph`, `cone`, `plane`, `torus`, `link`, `mesh` (egen THREE-geometri), `textPlane` |
 | `ctx.sign(text, {position, rotation, width, color, sub, bg, size, parent})` | overskriftsskilt (canvas-tekstur, æøå virker). `sub` = lille undertekst |
-| `ctx.door(toRoomId, {position, rotation, label, glow, quiet})` | dør/portal til et andet rum med skilt. Rammen tegner den i målrummets farve og står for skiftet. `glow` (0–1) styrer rammens lys; `quiet: true` fjerner pulsen og gør portalen svag. Returnerer gruppen; `.portal` er portalfladen |
+| `ctx.door(toRoomId, {position, rotation, label, glow, quiet})` | dør/portal til et andet rum med skilt. Rammen tegner den i målrummets farve og står for skiftet. `glow` (0–1) styrer rammens lys; `quiet: true` fjerner pulsen og gør portalen svag. Returnerer gruppen; `.portal` er portalfladen, `.sign` er navneskiltet |
 | `ctx.station(stepId, entity)` | gør `entity` til trinnets station: klik vælger trinnet, og rammen lægger en lysende ring på gulvet under den, når trinnet er aktivt |
 | `ctx.view(stepId, {position:[x,y,z], lookAt:[x,y,z], pitch})` | hvor brugeren stilles og kigger hen i trinnet (y ignoreres for position; øjenhøjde er 1,6 m). Uden view bliver brugeren stående. `pitch`: grader op/ned (negativ = ned), eller `true` = sigt mod lookAt's højde. Uden pitch kigger man vandret. Pitch virker kun på skærm; i VR styrer hovedet selv |
 | `ctx.rooms` | alle rum (`name`, `sub`, `color`, `area`) til skilte o.l.; kun til læsning |
