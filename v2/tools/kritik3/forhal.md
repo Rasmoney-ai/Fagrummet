@@ -1,0 +1,6 @@
+# Kritik runde 3: forhal — billeder /tmp/claude-0/kritik3/forhal/ — "Ikke klar" (små rettelser)
+1. F1–F6 · Stationspultens stang står lige foran kameraet, ned gennem billedets midte og ind over stationsskiltet (i F3 dækker den "mange rødder"); i VR en stang tæt på ansigtet → skjul/sænk den aktive pult, eller view lidt til siden så skiltet står frit.
+2. F3 · Fem etiketter i en ring tæt om kameraet; "humanvidenskab" lige foran beskueren oven i stangen; to andre klemmer titlen → etiketterne ud til rodspidserne længere væk eller i en bue bag/over kernen; den midterste bagud.
+3. Hele rummet · Seks små pulte står stadig rundt og vender forskellige veje (nodestativer); deres skilte skæres af i forgrunden ("Grundantagelsen" i f2, "Fagets formål" i f4) → vis kun den aktive station, eller saml titlerne på kernens sokkel.
+4. F4 · "intentioner" ligger oven i Udsigtens portal og skilte → etiketter inde ved facetterne foran rolig væg, eller drej klyngen.
+5. F1 · Udsigtens ramme er det klareste i salen; portskilte for små fra spawn → RAMMEN ER NU RETTET: kernens lavendel-døre lyser svagere som standard (glow 0,12). Brug evt. ctx.door(..., {glow, quiet:true}) og dørens .portal til selv at dæmpe. Gør portskiltene større.

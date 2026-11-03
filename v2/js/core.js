@@ -68,15 +68,18 @@ function makeSign(kit, text, { position = "0 2.6 0", rotation = "0 0 0", width =
   K.applyTexture(pl, K.labelTex(text, color, { w: 1024, h: Math.round(1024 * aspect), size, bg, sub, ink: "#eef1ff" }));
   return pl;
 }
-function makeDoor(kit, root, to, { position = "0 0 -4", rotation = "0 0 0", label, width = 1.6, height = 2.5 } = {}) {
+function makeDoor(kit, root, to, { position = "0 0 -4", rotation = "0 0 0", label, width = 1.6, height = 2.5, glow, quiet = false } = {}) {
   const r = ROOMS[to]; const col = r.color;
+  // Kernens lavendel er næsten hvid; den lyser derfor svagere som standard. glow (0-1) og quiet (ingen puls, svag portal) kan sættes af rummet.
+  const gi = glow ?? (r.area === "core" ? 0.12 : 0.35);
   const g = kit.grp(root, position, { rotation });
   const up = to === ROOMS[curRoom].parent;
-  kit.box(g, `${-width / 2 - 0.08} ${height / 2} 0`, 0.16, height, 0.22, K.glow(col, 0.35));
-  kit.box(g, `${width / 2 + 0.08} ${height / 2} 0`, 0.16, height, 0.22, K.glow(col, 0.35));
-  kit.box(g, `0 ${height + 0.08} 0`, width + 0.32, 0.16, 0.22, K.glow(col, 0.35));
-  const portal = kit.plane(g, `0 ${height / 2} 0`, width, height, `shader: flat; color: ${col}; opacity: 0.22; transparent: true; side: double; depthWrite: false`, { class: "klik" });
-  portal.setAttribute("animation__o", "property: components.material.material.opacity; from: 0.14; to: 0.32; dir: alternate; loop: true; dur: 1600; easing: easeInOutSine");
+  kit.box(g, `${-width / 2 - 0.08} ${height / 2} 0`, 0.16, height, 0.22, K.glow(col, gi));
+  kit.box(g, `${width / 2 + 0.08} ${height / 2} 0`, 0.16, height, 0.22, K.glow(col, gi));
+  kit.box(g, `0 ${height + 0.08} 0`, width + 0.32, 0.16, 0.22, K.glow(col, gi));
+  const portal = kit.plane(g, `0 ${height / 2} 0`, width, height, `shader: flat; color: ${col}; opacity: ${quiet ? 0.08 : 0.22}; transparent: true; side: double; depthWrite: false`, { class: "klik" });
+  if (!quiet) portal.setAttribute("animation__o", "property: components.material.material.opacity; from: 0.14; to: 0.32; dir: alternate; loop: true; dur: 1600; easing: easeInOutSine");
+  g.portal = portal;   // rummet kan selv dæmpe/fremhæve portalen
   const name = label || (up ? `Tilbage: ${r.name}` : r.name);
   makeSign(kit, name, { parent: g, position: `0 ${height + 0.55} 0`, width: 1.9, color: col, sub: up ? null : (r.sub !== r.name ? r.sub : null) });
   portal.addEventListener("click", () => goRoom(to));
