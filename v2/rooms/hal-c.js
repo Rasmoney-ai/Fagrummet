@@ -190,11 +190,12 @@ export default function build(ctx) {
   kioskScreen.position.set(-1.215, 1.35, 0.1); kioskScreen.rotation.y = -90 * D; kiosk.add(kioskScreen);
 
   /* datacenter i det fjerne: en lav, bred hal med køleaggregater på taget og en kabelmast, der fører ned mod gaden */
-  const SV = { x: 0.6, z: -15 };
-  S.box(9.0, 5.2, 4.0, "#1b1e2e", [SV.x, 2.6, SV.z - 0.8]);
-  S.box(9.2, 0.15, 4.2, "#2b3046", [SV.x, 5.25, SV.z - 0.8]);
-  for (let i = 0; i < 5; i++) { S.box(1.2, 0.7, 1.4, "#2f3550", [SV.x - 3.6 + i * 1.8, 5.65, SV.z - 0.8]); S.cyl(0.42, 0.42, 0.06, "#4a5272", [SV.x - 3.6 + i * 1.8, 6.03, SV.z - 0.8], [0, 0, 0], 12); }
-  for (let y = 0.9; y < 5.0; y += 0.55) S.box(8.0, 0.04, 0.04, "#2b3046", [SV.x, y, SV.z + 1.22]);
+  const SV = { x: 0.6, z: -11 };
+  // datacentret rager op bag værkstedet: høj, bred hal med køleaggregater og blinkende rack-fronter øverst
+  S.box(7.0, 8.6, 3.6, "#1b1e2e", [SV.x, 4.3, SV.z - 0.6]);
+  S.box(7.2, 0.15, 3.8, "#2b3046", [SV.x, 8.65, SV.z - 0.6]);
+  for (let i = 0; i < 4; i++) { S.box(1.2, 0.7, 1.4, "#2f3550", [SV.x - 2.7 + i * 1.8, 9.05, SV.z - 0.6]); S.cyl(0.42, 0.42, 0.06, "#4a5272", [SV.x - 2.7 + i * 1.8, 9.43, SV.z - 0.6], [0, 0, 0], 12); }
+  for (let y = 4.6; y < 8.4; y += 0.5) S.box(6.4, 0.04, 0.04, "#2b3046", [SV.x, y, SV.z + 1.22]);
   // kabelmast på taget af værkstedet (Bag skærmen), med kabler hen til datacentret
   S.box(0.12, 3.0, 0.12, "#3b4058", [SV.x - 0.2, 5.7, -7.0]);
   S.box(0.9, 0.08, 0.08, "#3b4058", [SV.x - 0.2, 7.1, -7.0]);
@@ -204,10 +205,11 @@ export default function build(ctx) {
       const r = Math.random(); if (r < (on ? 0.45 : 0.3)) { g.fillStyle = r < 0.06 ? "#ff7aa2" : r < 0.2 ? "#9fe3a0" : "#86b4ff"; g.fillRect(x, y, 7, 4); }
     }
   });
-  const ledA = quad(8.0, 4.4, basic({ map: ledTex(true), blending: THREE.AdditiveBlending, fog: false })), ledB = quad(8.0, 4.4, basic({ map: ledTex(false), blending: THREE.AdditiveBlending, fog: false }));
-  ledA.position.set(SV.x, 2.7, SV.z + 1.22); ledB.position.set(SV.x, 2.7, SV.z + 1.225);
+  const ledA = quad(6.4, 3.6, basic({ map: ledTex(true), blending: THREE.AdditiveBlending, fog: false })), ledB = quad(6.4, 3.6, basic({ map: ledTex(false), blending: THREE.AdditiveBlending, fog: false }));
+  ledA.position.set(SV.x, 6.5, SV.z + 1.22); ledB.position.set(SV.x, 6.5, SV.z + 1.225);
   const serverG = new THREE.Group(); serverG.add(ledA, ledB); addObj(serverG);
   G.sph(0.12, ROSE, [SV.x - 0.2, 7.25, -7.0], 8);
+  { const dl = quad(2.2, 0.42, basic({ map: K.canvasTexture(520, 100, (g, w, h) => { g.fillStyle = "rgba(14,12,26,0.85)"; K.roundRect(g, 3, 3, w - 6, h - 6, 30); g.fill(); g.fillStyle = "#c9d1ff"; g.font = '600 54px "Source Sans 3", sans-serif'; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("datacenter", w / 2, h / 2 + 2); }), fog: false })); dl.position.set(SV.x - 1.6, 8.0, SV.z + 1.3); addObj(dl); }
 
   const statics = S.build(litMat); addObj(statics);
   const glowMesh = G.build(glowMat); addObj(glowMesh);
@@ -316,7 +318,7 @@ export default function build(ctx) {
     { to: new THREE.Vector3(BS.x + 1.42, 1.85, BS.z - 0.3), lift: 0.5, t: 1.1, d: 0.6, col: ROSE },                                     // køreplanen
     { to: kioskTerm, lift: 0.9, t: 1.3, d: 0.8, col: ROSE },                                                                             // betaling i kiosken
     { to: new THREE.Vector3(-8.9, 4.9, FZ + 0.1), lift: 1.6, t: 1.5, d: 0.8, col: ROSE },                                              // reklametavlen
-    { to: new THREE.Vector3(SV.x - 0.2, 7.1, -7.0), lift: 1.8, t: 1.7, d: 1.0, col: "#ffb3c9", tail: new THREE.Vector3(SV.x, 4.6, SV.z + 1.2) },   // kabelmasten → datacentret
+    { to: new THREE.Vector3(SV.x - 0.2, 7.1, -7.0), lift: 1.8, t: 1.7, d: 1.0, col: "#ffb3c9", tail: new THREE.Vector3(SV.x + 1.5, 7.6, SV.z + 1.25) },   // kabelmasten → datacentret
   ];
   const lines = targets.map(tg => {
     const a = P0.clone(), b = tg.to, m = a.clone().lerp(b, 0.5); m.y += tg.lift;
@@ -364,8 +366,9 @@ export default function build(ctx) {
         const fx = la[0] - p[0], fz = la[2] - p[2], fl = Math.hypot(fx, fz) || 1, ux = fx / fl, uz = fz / fl;
         // nede til venstre i synsfeltet, vippet op mod øjet
         const pitch = typeof v.pitch === "number" ? v.pitch : 0;
-        const px = p[0] + ux * 1.3 + uz * 0.95, pz = p[2] + uz * 1.3 - ux * 0.95;
-        g.position.set(px, 1.6 + Math.tan(pitch * D) * 1.3 - 0.8, pz);
+        const bo = v.back || {}, side = bo.side ?? 0.95, fwd = bo.fwd ?? 1.3, dy = bo.dy ?? 0;
+        const px = p[0] + ux * fwd + uz * side, pz = p[2] + uz * fwd - ux * side;
+        g.position.set(px, 1.6 + Math.tan(pitch * D) * fwd - 0.8 + dy, pz);
         g.rotation.set(0, Math.atan2(-ux, -uz), 0, "YXZ"); g.rotateX((pitch - 22) * D);
         // pilens retning: vinkel fra blikretningen til døren (positiv = til venstre)
         const dx = doorPos[0] - p[0], dz = doorPos[2] - p[2];
@@ -376,9 +379,9 @@ export default function build(ctx) {
 
   /* ---------- Skilte og døre ---------- */
   // rummets skilt hænger over gaden mellem to wirer
-  const roomSign = ctx.sign(ctx.room.name, { position: "0.4 5.6 -1.2", width: 3.0, sub: ctx.room.sub });
-  kit.link(root, [-1.0, 6.05, -1.2], [-6.2, 4.2, 1.25], 0.008, K.flat("#555a74"));
-  kit.link(root, [1.8, 6.05, -1.2], [9.0, 4.2, 1.25], 0.008, K.flat("#555a74"));
+  const roomSign = ctx.sign(ctx.room.name, { position: "6.2 5.0 -0.8", width: 2.6, sub: ctx.room.sub, rotation: "0 -12 0" });
+  kit.link(root, [5.0, 5.4, -0.55], [2.4, 6.9, FZ - 0.1], 0.008, K.flat("#555a74"));
+  kit.link(root, [7.4, 5.4, -1.05], [9.0, 4.2, 1.25], 0.008, K.flat("#555a74"));
 
   // tre døre ind i facaderne; bag hver dør et kig ind i rummet (et oplyst "indre"), og en stor husnummerplade
   const DOORS = [
@@ -391,9 +394,10 @@ export default function build(ctx) {
         g.fillStyle = "#a0707a"; for (let i = 0; i < 3; i++) g.fillRect(0, h * (0.78 + i * 0.07), w, 8); } },
   ];
   // facadeskilt (som et butiksskilt) med rummets navn i stor skrift; rammens dørskilt under det bærer undertitlen
-  const doorLabelTex = (r) => K.canvasTexture(800, 200, (g, w, h) => {
+  const doorLabelTex = (r) => K.canvasTexture(1000, 200, (g, w, h) => {
     g.fillStyle = "rgba(14,12,26,0.94)"; K.roundRect(g, 4, 4, w - 8, h - 8, 34); g.fill(); g.strokeStyle = r.color; g.lineWidth = 8; g.stroke();
-    g.shadowColor = r.color; g.shadowBlur = 20; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#fff"; g.font = FONT(700, 104); g.fillText(r.name, w / 2, h / 2 + 4);
+    g.shadowColor = r.color; g.shadowBlur = 20; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#fff"; g.font = FONT(700, 92);
+    let fs = 92; while (g.measureText(r.name).width > w - 80 && fs > 50) { fs -= 4; g.font = FONT(700, fs); } g.fillText(r.name, w / 2, h / 2 + 4);
   });
   const doorPeeks = [];
   DOORS.forEach(d => {
@@ -401,7 +405,7 @@ export default function build(ctx) {
     const peek = quad(1.5, 2.4, new THREE.MeshBasicMaterial({ map: K.canvasTexture(200, 320, d.inner), fog: false }));
     peek.position.set(d.x, 1.25, FZ + 0.06); addObj(peek); doorPeeks.push(peek);
     // stor plade over døren (læses fra spawn)
-    const lab = quad(2.5, 0.625, basic({ map: doorLabelTex(ctx.rooms[d.id]), fog: false })); lab.position.set(d.x, 4.05, FZ + 0.12); addObj(lab);
+    const lab = quad(d.id === "c3" ? 2.9 : 2.4, (d.id === "c3" ? 2.9 : 2.4) * 0.2, basic({ map: doorLabelTex(ctx.rooms[d.id]), fog: false })); lab.position.set(d.x, 3.9, FZ + 0.12); addObj(lab);
   });
   // stuevinduet hører til Stuen: en rosa lysstribe forbinder vinduet med Stuen-døren
   { const B = batch(); B.box(Math.abs(SW.x - (-2.9)) + 0.3, 0.04, 0.04, ROSE, [(SW.x + -2.9) / 2 + 0.1, SW.y + SW.h / 2 + 0.16, FZ + 0.1]); addObj(B.build(glowMat)); }
@@ -419,8 +423,8 @@ export default function build(ctx) {
   const st1 = kit.grp(root, `${PERSON.x} 0 ${PERSON.z}`);
   kit.box(st1, "0 1.0 0", 0.8, 2.0, 0.8, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c0-1", st1);
-  const s01 = ctx.sign(ctx.step("c0-1").title, { position: `${PERSON.x + 0.25} 2.3 ${PERSON.z + 0.55}`, width: 1.3 });
-  view("c0-1", { position: [1.2, 0, 6.6], lookAt: [-0.5, 2.0, -4], pitch: 8 });
+  const s01 = ctx.sign(ctx.step("c0-1").title, { position: `${BS.x - 0.5} 3.05 ${BS.z + 0.4}`, width: 1.5 });
+  view("c0-1", { position: [1.9, 0, 7.6], lookAt: [0.9, 2.0, -4], pitch: 9 });
 
   /* ---------- c0-2: målpladen ved udgangen ---------- */
   const goal = kit.grp(root, "-6.4 0 5.0", { rotation: "0 40 0" });

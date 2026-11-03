@@ -712,8 +712,8 @@ function vaerktoej(ctx) {
     // samlet på én lille mørk, rund plade med etiket, så de læses som ét tegn og ikke som løse symboler
     const grp = ctx.kit.grp(parent, pos, { rotation: rot, scale: `${sk} ${sk} ${sk}` });
     const pladeTex = canvas(256, 300, g => {
-      g.fillStyle = "rgba(14,18,36,0.9)"; g.beginPath(); g.arc(128, 128, 124, 0, 7); g.fill();
-      g.strokeStyle = L; g.globalAlpha = 0.5; g.lineWidth = 3; g.beginPath(); g.arc(128, 128, 120, 0, 7); g.stroke(); g.globalAlpha = 1;
+      g.fillStyle = "rgba(42,48,92,0.92)"; g.beginPath(); g.arc(128, 128, 124, 0, 7); g.fill();
+      g.strokeStyle = L; g.globalAlpha = 0.9; g.lineWidth = 5; g.beginPath(); g.arc(128, 128, 119, 0, 7); g.stroke(); g.globalAlpha = 1;
       g.fillStyle = L; g.font = '600 24px "JetBrains Mono", monospace'; g.textAlign = "center"; g.fillText("ERKENDEFORMER", 128, 290);
     });
     const pladeM = hold(new THREE.MeshBasicMaterial({ map: pladeTex, transparent: true, depthWrite: false }));

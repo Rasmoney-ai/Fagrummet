@@ -275,7 +275,7 @@ export default function build(ctx) {
       c.fillStyle = "#d14b3c"; c.beginPath(); c.arc(185, 175, 14, 0, 7); c.fill();
       c.beginPath(); c.moveTo(270, 110); c.quadraticCurveTo(320, 80, 350, 120); c.stroke(); c.beginPath(); c.moveTo(340, 106); c.lineTo(352, 122); c.lineTo(334, 126); c.stroke();
       c.beginPath(); c.moveTo(60, 60); c.lineTo(100, 60); c.moveTo(56, 80); c.lineTo(92, 80); c.stroke();
-      c.font = 'italic 600 26px "Source Sans 3", sans-serif'; c.fillStyle = "#2c3456"; c.fillText("ledig / optaget", 270, 210);
+      c.font = 'italic 600 26px "Source Sans 3", sans-serif'; c.fillStyle = "#2c3456"; c.fillText("ledig?", 270, 210);
     });
     const B = new Batch();
     const STF = [[-0.52, 0.31, 0.43], [0.0, 0.43, 0.31]];
@@ -312,7 +312,8 @@ export default function build(ctx) {
     for (const x of [-0.06, 0.06]) F.cyl("#2b2f40", [x, 0.2, 0], 0.045, 0.4, null, 8);   // ben
     F.sph("#c9a27e", [0, 1.0, 0], 0.12); F.sph("#3b2a1c", [0, 1.05, -0.02], 0.125, [1, 0.75, 1]);
     F.cyl("#3a76c4", [0.13, 0.7, 0], 0.035, 0.3, [0, 0, -8], 6);
-    const figur = kit.grp(g, `0.98 0 -0.5`, { rotation: "0 -35 0", scale: "1.2 1.2 1.2" });
+    // barnet står ved bordets højre kortende, ved siden af kassen, og vender ind mod den
+    const figur = kit.grp(g, `1.05 0 0.02`, { rotation: "0 -90 0", scale: "1.15 1.15 1.15" });
     T.mesh(figur, F.merge(), T.lit());
     const arm = kit.grp(figur, "-0.12 0.82 0");
     T.mesh(arm, T.hold(new THREE.CylinderGeometry(0.035, 0.035, 0.34, 6).translate(0, -0.17, 0)), T.hold(new THREE.MeshStandardMaterial({ color: "#3a76c4", flatShading: true })));
@@ -321,6 +322,7 @@ export default function build(ctx) {
       tick(s) {
         // rækken bygges op én gang og bliver stående: kort → pil → skitse → pil → prototype → brugeren prøver den
         const p = s < 0 ? 99 : s;
+        figur.object3D.visible = s >= 0;   // kun i a1-1, så det ikke står tæt på kameraet ved nabostationen
         const basis = [1, 1, 1.9];
         elementer.forEach((e, i) => { const k = clamp((p - i * 0.8) / 0.35); e.object3D.scale.setScalar(basis[i] * (0.15 + 0.85 * ease(k))); });
         pile.forEach((m, i) => { m.opacity = s < 0 ? 0.5 : 0.1 + 0.9 * clamp((p - 0.45 - i * 0.8) / 0.3); });
@@ -535,7 +537,11 @@ export default function build(ctx) {
         let i = -1, ls = 0;
         if (s >= 0) {
           if (valgt >= 0 && (tNu - tValgt) / 1000 < 7) { i = valgt; ls = (tNu - tValgt) / 1000; }
-          else { i = Math.floor(s / 3.4) % fakt.length; ls = s % 3.4; }
+          else {
+            const ORDEN = [3, 0, 1, 2, 4, 5], VAR = [6, 3, 3, 3, 3.4, 3.4];   // afstandssensoren først og længst
+            let t = s % VAR.reduce((a, b) => a + b, 0), k = 0; while (t > VAR[k]) { t -= VAR[k]; k++; }
+            i = ORDEN[k]; ls = t;
+          }
         }
         komp.forEach((k, j) => {
           const op = j === i ? ease(clamp(ls / 0.45)) : 0;
@@ -594,7 +600,7 @@ export default function build(ctx) {
     const mål = T.mesh(g, T.hold(new THREE.PlaneGeometry(0.05, 0.3).translate(0, 0.15, 0)), målM, `0 ${Y + 0.05} 0.012`);
     const RB2 = new Batch({ uv: true }); for (let k = 0; k <= 6; k++) RB2.plane([0.034, 0.05 + k * 0.05, 0], [0.012, 0.004]);
     T.mesh(g, RB2.merge(), T.hold(new THREE.MeshBasicMaterial({ color: "#a9b0d6" })), `0 ${Y} 0.012`);
-    const målTekst = kit.textPlane(g, `0 ${Y + 0.45} 0.012`, "skærmtid", A, { width: 0.3, aspect: 0.25, size: 150, bg: true, ink: "#eef1ff" });
+    const målTekst = kit.textPlane(g, `0 ${Y + 0.47} 0.03`, "skærmtid", A, { width: 0.3, aspect: 0.25, size: 150, bg: true, ink: "#eef1ff" });
     // skærmtid flyder fra telefonen til måleren og videre til lampens sensor som små lysprikker
     const prikM = T.hold(new THREE.MeshBasicMaterial({ color: "#9fb6ff", transparent: true, opacity: 0 }));
     const prikker = [0, 1, 2, 3, 4, 5].map(() => T.mesh(g, T.hold(new THREE.SphereGeometry(0.012, 6, 4)), prikM));
@@ -790,8 +796,8 @@ function vaerktoej(ctx) {
     // samlet på én lille mørk, rund plade med etiket, så de læses som ét tegn og ikke som løse symboler
     const grp = ctx.kit.grp(parent, pos, { rotation: rot, scale: `${sk} ${sk} ${sk}` });
     const pladeTex = canvas(256, 300, g => {
-      g.fillStyle = "rgba(14,18,36,0.9)"; g.beginPath(); g.arc(128, 128, 124, 0, 7); g.fill();
-      g.strokeStyle = L; g.globalAlpha = 0.5; g.lineWidth = 3; g.beginPath(); g.arc(128, 128, 120, 0, 7); g.stroke(); g.globalAlpha = 1;
+      g.fillStyle = "rgba(42,48,92,0.92)"; g.beginPath(); g.arc(128, 128, 124, 0, 7); g.fill();
+      g.strokeStyle = L; g.globalAlpha = 0.9; g.lineWidth = 5; g.beginPath(); g.arc(128, 128, 119, 0, 7); g.stroke(); g.globalAlpha = 1;
       g.fillStyle = L; g.font = '600 24px "JetBrains Mono", monospace'; g.textAlign = "center"; g.fillText("ERKENDEFORMER", 128, 290);
     });
     const pladeM = hold(new THREE.MeshBasicMaterial({ map: pladeTex, transparent: true, depthWrite: false }));

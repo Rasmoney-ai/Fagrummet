@@ -118,37 +118,50 @@ export default function build(ctx) {
   /* ================= flowdiagrammet under loftet ================= */
   // knuder i lærredskoordinater (2048 × 880); diagrammet læses fra venstre mod højre
   const FD = { w: 2048, h: 880 };
+  // Samme program som i b2-1 og b2-3: dage = 0; gentag 10 gange: mål regn, hvis regner: dage + 1; vis dage.
+  // Løkken har en slutbetingelse ("10 dage gået?"), og "Vis dage" sker først, når løkken er færdig.
   const NODES = [
-    { id: "start", t: "Start", x: 170, y: 440, k: "pill" },
-    { id: "las", t: "Læs måling", x: 560, y: 440, k: "box" },
-    { id: "hvis", t: "Regner det?", x: 1010, y: 440, k: "dia" },
-    { id: "ja", t: "dage + 1", x: 1470, y: 220, k: "box" },
-    { id: "nej", t: "Vent", x: 1470, y: 660, k: "box" },
-    { id: "vis", t: "Vis dage", x: 1860, y: 440, k: "box" },
+    { id: "start", t: "Start", x: 170, y: 180, k: "pill" },
+    { id: "nul", t: "dage = 0", x: 510, y: 180, k: "box" },
+    { id: "slut?", t: "10 dage gået?", x: 900, y: 180, k: "dia" },
+    { id: "vis", t: "Vis dage", x: 1320, y: 180, k: "box" },
+    { id: "slut", t: "Slut", x: 1740, y: 180, k: "pill" },
+    { id: "mal", t: "Mål regn", x: 900, y: 520, k: "box" },
+    { id: "hvis", t: "Regner det?", x: 1320, y: 520, k: "dia" },
+    { id: "ja", t: "dage + 1", x: 1740, y: 520, k: "box" },
   ];
-  const N = Object.fromEntries(NODES.map(n => [n.id, n]));
-  // tokenets rute (polylinje i lærredskoordinater) og hvilke knuder den passerer
-  const routeYes = [[170, 440], [560, 440], [1010, 440], [1010, 220], [1470, 220], [1860, 220], [1860, 440]];
-  const routeNo = [[1860, 440], [1860, 660], [1470, 660], [1010, 660], [300, 660], [300, 440], [560, 440], [1010, 440]];
-  const fdc = liveCanvas(FD.w, FD.h);
+  const DH = 110, DW2 = 170, BW2 = 165, BH2 = 60;   // rombens og kassernes halve mål
+  const EDGES = [
+    [[170, 180], [900 - DW2, 180]],                          // start → dage = 0 → løkkens test
+    [[900 + DW2, 180], [1740 - BW2, 180]],                   // ja: løkken er færdig → vis dage → slut
+    [[900, 180 + DH], [900, 520 - BH2]],                     // nej: mål regn
+    [[900 + BW2, 520], [1320 - DW2, 520]],                   // → regner det?
+    [[1320 + DW2, 520], [1740 - BW2, 520]],                  // ja: dage + 1
+    [[1740, 520 + BH2], [1740, 800], [600, 800], [600, 180]],// tilbage til løkkens test
+    [[1320, 520 + DH], [1320, 800]],                         // nej: direkte tilbage
+  ];
+  const HEADS = [[345, 180, 0], [900 - DW2, 180, 0], [1320 - BW2, 180, 0], [1740 - BW2, 180, 0], [900, 520 - BH2, 90], [1320 - DW2, 520, 0], [1740 - BW2, 520, 0], [600, 330, -90], [1320, 790, 90]];
+  // tokenets rute gennem tre dage (regn, ingen regn) og ud af løkken
+  const ROUTE = [[170, 180], [900, 180], [900, 520], [1320, 520], [1740, 520], [1740, 800], [600, 800], [600, 180], [900, 180], [900, 520], [1320, 520], [1320, 800], [600, 800], [600, 180], [900, 180], [1740, 180]];
+  const fdc = liveCanvas(FD.w, FD.h); fdc.key = "init";   // så første tegning (uden aktiv knude) ikke springes over
   function drawFlow(active) {
     if (fdc.key === active) return; fdc.key = active;
     const g = fdc.g; g.clearRect(0, 0, FD.w, FD.h);
     g.fillStyle = "rgba(10,30,40,0.35)"; K.roundRect(g, 8, 8, FD.w - 16, FD.h - 16, 40); g.fill();
     g.strokeStyle = "rgba(79,209,197,0.5)"; g.lineWidth = 6; g.stroke();
-    // kanter
-    g.strokeStyle = "rgba(160,240,232,0.75)"; g.lineWidth = 10; g.lineJoin = "round";
-    const line = pts => { g.beginPath(); g.moveTo(...pts[0]); pts.slice(1).forEach(p => g.lineTo(...p)); g.stroke(); };
-    line(routeYes); line(routeNo.slice(0, 7));
-    g.fillStyle = "#cfe9ff"; g.font = '700 46px "Familjen Grotesk", sans-serif'; g.textAlign = "center"; g.textBaseline = "middle";
-    g.fillText("ja", 960, 300); g.fillText("nej", 960, 580);
+    // kanter og pilespidser
+    g.strokeStyle = "rgba(160,240,232,0.8)"; g.fillStyle = "rgba(160,240,232,0.95)"; g.lineWidth = 9; g.lineJoin = "round";
+    EDGES.forEach(pts => { g.beginPath(); g.moveTo(...pts[0]); pts.slice(1).forEach(p => g.lineTo(...p)); g.stroke(); });
+    HEADS.forEach(([x, y, a]) => { g.save(); g.translate(x, y); g.rotate(a * Math.PI / 180); g.beginPath(); g.moveTo(0, 0); g.lineTo(-30, -17); g.lineTo(-30, 17); g.closePath(); g.fill(); g.restore(); });
+    g.fillStyle = "#cfe9ff"; g.font = '700 44px "Familjen Grotesk", sans-serif'; g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillText("ja", 1110, 145); g.fillText("nej", 945, 380); g.fillText("ja", 1530, 485); g.fillText("nej", 1370, 715);
     // knuder
     for (const n of NODES) {
       const on = n.id === active;
-      g.fillStyle = on ? "#4fd1c5" : "rgba(14,34,48,0.92)"; g.strokeStyle = on ? "#eafffb" : "#4fd1c5"; g.lineWidth = 8;
-      if (n.k === "dia") { g.beginPath(); g.moveTo(n.x, n.y - 140); g.lineTo(n.x + 210, n.y); g.lineTo(n.x, n.y + 140); g.lineTo(n.x - 210, n.y); g.closePath(); g.fill(); g.stroke(); }
-      else { K.roundRect(g, n.x - 175, n.y - 70, 350, 140, n.k === "pill" ? 70 : 18); g.fill(); g.stroke(); }
-      g.fillStyle = on ? "#05201e" : "#eef1ff"; g.font = '700 54px "Familjen Grotesk", sans-serif'; g.fillText(n.t, n.x, n.y + 2);
+      g.fillStyle = on ? "#4fd1c5" : "rgba(14,34,48,0.95)"; g.strokeStyle = on ? "#eafffb" : "#4fd1c5"; g.lineWidth = 8;
+      if (n.k === "dia") { g.beginPath(); g.moveTo(n.x, n.y - DH); g.lineTo(n.x + DW2, n.y); g.lineTo(n.x, n.y + DH); g.lineTo(n.x - DW2, n.y); g.closePath(); g.fill(); g.stroke(); }
+      else { K.roundRect(g, n.x - BW2, n.y - BH2, BW2 * 2, BH2 * 2, n.k === "pill" ? BH2 : 16); g.fill(); g.stroke(); }
+      g.fillStyle = on ? "#05201e" : "#eef1ff"; g.font = `700 ${n.k === "dia" ? 40 : 50}px "Familjen Grotesk", sans-serif`; g.fillText(n.t, n.x, n.y + 2);
     }
     fdc.tex.needsUpdate = true;
   }
@@ -170,7 +183,7 @@ export default function build(ctx) {
     let d = clamp01(u) * tot; for (let i = 0; i < L.length; i++) { if (d <= L[i]) { const f = d / L[i]; return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * f, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * f]; } d -= L[i]; }
     return pts[pts.length - 1];
   }
-  const nearNode = ([x, y]) => { for (const n of NODES) if (Math.abs(n.x - x) < 120 && Math.abs(n.y - y) < 90) return n.id; return null; };
+  const nearNode = ([x, y]) => { for (const n of NODES) if (Math.abs(n.x - x) < 100 && Math.abs(n.y - y) < 60) return n.id; return null; };
 
   /* ================= B2.1 · Programmeringsbegreber ================= */
   const S1 = ST["b2-1"].g;
@@ -532,7 +545,7 @@ export default function build(ctx) {
   ctx.station("b2-5", S5);
 
   /* ---------- views ---------- */
-  ctx.view("b2-0", { position: [0, 0, 4.6], lookAt: [0, 0, -3] });
+  ctx.view("b2-0", { position: [0, 0, 6.2], lookAt: [-0.6, 0, -3] });
   // b2-5: kig mod midten af indholdet (lidt til højre for stationens origo)
   { const r = ST["b2-5"].ry * D2R; ST["b2-5"].look = [ST["b2-5"].p[0] - Math.cos(r) * 0.0 + Math.cos(r) * 0.9, ST["b2-5"].p[1] + Math.sin(r) * 0.9]; }
   stationIds.forEach(id => { const L = ST[id].look || ST[id].p; ctx.view(id, { position: [ST[id].view[0], 0, ST[id].view[1]], lookAt: [L[0], 0, L[1]] }); });
@@ -557,17 +570,17 @@ export default function build(ctx) {
 
       /* flowdiagrammet kører altid; i b2-0 er det tydeligst */
       const fOn = mode === "b2-0" ? 1 : 0;
-      flowMat.opacity = 0.3 + 0.7 * fOn;
+      flowMat.opacity = 0.12 + 0.88 * fOn;
       token.object3D.visible = mode === "b2-0";
-      const fc = (t / 1000) % 12, yes = Math.floor(t / 12000) % 2 === 0;
-      const route = fc < 6 ? (yes ? routeYes : routeYes.slice(0, 3).concat([[1010, 660], [1470, 660], [1860, 660], [1860, 440]])) : routeNo;
-      const pt = polyAt(route, fc < 6 ? fc / 6 : (fc - 6) / 6);
+      // én gennemkørsel tager 16 s; tokenet holder 2 s ved "Slut", før det starter forfra
+      const fc = (t / 1000) % 18;
+      const pt = polyAt(ROUTE, fc / 16);
       const [lx, ly] = cv2loc(pt);
       // tokenet løber på kanterne; ved en knude glider det ud til knudens kant i stedet for at dække teksten
       const nn = nearNode(pt), nd = nn ? NODES.find(n => n.id === nn) : null;
-      const [ox, oy] = nd ? cv2loc([nd.x, nd.y - (nd.k === "dia" ? 150 : 85)]) : [lx, ly];
+      const [ox, oy] = nd ? cv2loc([nd.x, nd.y - (nd.k === "dia" ? DH + 18 : BH2 + 18)]) : [lx, ly];
       token.object3D.position.set(nd ? ox : lx, nd ? oy : ly, 0.06);
-      drawFlow(nearNode(pt));
+      drawFlow(mode === "b2-0" ? nearNode(pt) : null);
 
       /* stationernes lamper: i b2-0 tænder de én efter én; ellers kun den aktive */
       stationIds.forEach((id, i) => {
@@ -586,7 +599,7 @@ export default function build(ctx) {
       const r1 = a1 && s > 3.2; run1.object3D.visible = r1;
       if (r1) {   // rundt i løkkens klamme: ned langs venstre side, hen over bunden og tilbage
         const u = ((s - 3.2) / 1.6) % 1, L = parts1[3].b;
-        const pts = [[-0.72, 0.42], [-0.72, -0.42], [0.3, -0.42], [-0.72, -0.42], [-0.72, 0.42]];
+        const pts = [[-0.72, 0.42], [-0.72, -0.42], [-0.25, -0.42], [-0.72, -0.42], [-0.72, 0.42]];
         const q = polyAt(pts, u); run1.object3D.position.set(L[0] + q[0], L[1] + q[1], L[2] + 0.1);
         brMat.emissive = brMat.emissive || new T.Color(); brMat.emissive.set(B); brMat.emissiveIntensity = Math.abs(u - 0.45) < 0.1 ? 0.9 : 0.1;
       } else { brMat.emissiveIntensity = 0; }

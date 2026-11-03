@@ -381,7 +381,7 @@ export default function build(ctx) {
     const XS = [-2.5, -1.45, 0, 1.45, 2.5], YS = [1.25, 1.8, 2.05, 1.8, 1.25];
     byX.forEach((r, k) => {
       const p = eye.clone().add(fwd.clone().multiplyScalar(k === 2 ? 5.6 : 5.0)).add(rt.clone().multiplyScalar(XS[k])); p.y = YS[k];
-      if (k === 2) p.y = 1.15;                      // midterste: bag stammen, under kernen
+      if (k === 2) { p.y = 3.95; }                  // midterste: over kernen, fri af stammen
       r.lbl.position.copy(p); r.lbl.lookAt(f3x, EYE, f3z);
       const a = p.clone().add(new THREE.Vector3(0, -0.11, 0)), b = r.foot, d = b.clone().sub(a);
       r.stem.position.copy(a).add(b).multiplyScalar(0.5); r.stem.scale.y = d.length();

@@ -205,7 +205,7 @@ export default function build(ctx) {
     return { geo, m, n: geo.index ? geo.index.count : geo.attributes.position.count };
   });
   ctx.station("a0-1", pult);
-  ctx.sign(ctx.step("a0-1").title, { parent: pult, position: "0 1.72 -0.1", width: 1.5, size: 74 });
+  ctx.sign(ctx.step("a0-1").title, { parent: pult, position: "0 1.38 -0.2", width: 1.3, size: 74 });
 
   /* ---------- Målpladen ved udgangen (station a0-2) ---------- */
   // stationen står på gulvet foran væggen; pladen hænger på væggen bag den
@@ -303,8 +303,15 @@ export default function build(ctx) {
 
   // døre: venstre til processerne, højre til metoderne, udgangen bag én
   const dorL = [-5.5 + 0.22 * 0.707, -5 + 0.22 * 0.707], dorR = [5.5 - 0.22 * 0.707, -5 + 0.22 * 0.707];
-  ctx.door("a1", { position: `${dorL[0]} 0 ${dorL[1]}`, rotation: "0 45 0" });
-  ctx.door("a2", { position: `${dorR[0]} 0 ${dorR[1]}`, rotation: "0 -45 0" });
+  const dørA1 = ctx.door("a1", { position: `${dorL[0]} 0 ${dorL[1]}`, rotation: "0 45 0" });
+  const dørA2 = ctx.door("a2", { position: `${dorR[0]} 0 ${dorR[1]}`, rotation: "0 -45 0" });
+  // dørenes egne skilte (rammens, med navn og undertitel) gøres større og drejes mod spawn, så de kan læses derfra
+  for (const [dør, d] of [[dørA1, dorL], [dørA2, dorR]]) {
+    const skilt = dør.lastElementChild;   // rammen lægger navneskiltet sidst i dørgruppen
+    const yaw = Math.atan2(0 - d[0], 5 - d[1]) * 180 / Math.PI - (d === dorL ? 45 : -45);
+    skilt.setAttribute("scale", "1.45 1.45 1.45"); skilt.setAttribute("rotation", `0 ${yaw} 0`);
+    skilt.object3D.position.y += 0.35;
+  }
   ctx.door(ctx.room.parent, { position: "-5.0 0 8.28", rotation: "0 180 0" });
   // mørk døråbning bag portalerne og en lysplet på gulvet foran dem
   const DO = new Batch({ uv: true });
@@ -337,11 +344,11 @@ export default function build(ctx) {
   });
 
   ctx.sign(ctx.room.name, { sub: ctx.room.sub, position: "0 4.7 -6.42", width: 4.2 });
-  const erk = T.erkendeformer(ctx.root, "3.3 4.7 -6.38", "0 0 0", 1.5);
+  const erk = T.erkendeformer(ctx.root, "-3.0 4.7 -6.38", "0 0 0", 1.8);
 
   /* ---------- Views ---------- */
   ctx.view("a0-1", { position: [0, 0, 6.6], lookAt: [0, 1.35, -2.5] });
-  ctx.view("a0-2", { position: [1.7, 0, 4.2], lookAt: [1.85, 1.9, 8.5] });
+  ctx.view("a0-2", { position: [1.75, 0, 4.4], lookAt: [1.85, 2.2, 8.5], pitch: 9 });
 
   /* ---------- Trin og animation ---------- */
   let aktiv = null, t0 = null;
@@ -596,8 +603,8 @@ function vaerktoej(ctx) {
     // samlet på én lille mørk, rund plade med etiket, så de læses som ét tegn og ikke som løse symboler
     const grp = ctx.kit.grp(parent, pos, { rotation: rot, scale: `${sk} ${sk} ${sk}` });
     const pladeTex = canvas(256, 300, g => {
-      g.fillStyle = "rgba(14,18,36,0.9)"; g.beginPath(); g.arc(128, 128, 124, 0, 7); g.fill();
-      g.strokeStyle = L; g.globalAlpha = 0.5; g.lineWidth = 3; g.beginPath(); g.arc(128, 128, 120, 0, 7); g.stroke(); g.globalAlpha = 1;
+      g.fillStyle = "rgba(42,48,92,0.92)"; g.beginPath(); g.arc(128, 128, 124, 0, 7); g.fill();
+      g.strokeStyle = L; g.globalAlpha = 0.9; g.lineWidth = 5; g.beginPath(); g.arc(128, 128, 119, 0, 7); g.stroke(); g.globalAlpha = 1;
       g.fillStyle = L; g.font = '600 24px "JetBrains Mono", monospace'; g.textAlign = "center"; g.fillText("ERKENDEFORMER", 128, 290);
     });
     const pladeM = hold(new THREE.MeshBasicMaterial({ map: pladeTex, transparent: true, depthWrite: false }));

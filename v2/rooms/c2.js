@@ -166,8 +166,9 @@ export default function build(ctx) {
         const fx = la[0] - p[0], fz = la[2] - p[2], fl = Math.hypot(fx, fz) || 1, ux = fx / fl, uz = fz / fl;
         // nede til venstre i synsfeltet, vippet op mod øjet
         const pitch = typeof v.pitch === "number" ? v.pitch : 0;
-        const px = p[0] + ux * 1.3 + uz * 0.95, pz = p[2] + uz * 1.3 - ux * 0.95;
-        g.position.set(px, 1.6 + Math.tan(pitch * D) * 1.3 - 0.8, pz);
+        const bo = v.back || {}, side = bo.side ?? 0.95, fwd = bo.fwd ?? 1.3, dy = bo.dy ?? 0;
+        const px = p[0] + ux * fwd + uz * side, pz = p[2] + uz * fwd - ux * side;
+        g.position.set(px, 1.6 + Math.tan(pitch * D) * fwd - 0.8 + dy, pz);
         g.rotation.set(0, Math.atan2(-ux, -uz), 0, "YXZ"); g.rotateX((pitch - 22) * D);
         // pilens retning: vinkel fra blikretningen til døren (positiv = til venstre)
         const dx = doorPos[0] - p[0], dz = doorPos[2] - p[2];

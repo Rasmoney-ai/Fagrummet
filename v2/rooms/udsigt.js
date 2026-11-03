@@ -249,7 +249,7 @@ export default function build(ctx) {
   // trappehus med døren tilbage til forhallen
   {
     // trappehuset står forrest til venstre på terrassen, med døren vendt ind mod terrassens midte
-    const DOOR_PSI = -50, dr = PR - 0.5;
+    const DOOR_PSI = -34, dr = PR - 0.4;
     const kx = PLAT.x + Math.sin(DOOR_PSI * D2R) * dr, kz = PLAT.z - Math.cos(DOOR_PSI * D2R) * dr;
     const kr = Math.atan2(PLAT.x - kx, PLAT.z - kz) / D2R;
     const kg = kit.grp(root, `${kx} 0 ${kz}`, { rotation: `0 ${kr} 0` });
@@ -303,7 +303,7 @@ export default function build(ctx) {
     s1: { psi: 0, ur: PR - 0.7, look: [0.2, 0, -10], pitch: -15 },
     s2: { psi: 6, look: [CORE.x, CORE.y, CORE.z], pitch: 3 },
     s3: { psi: 10, ur: PR - 0.7, look: [0.2, 0, -10], pitch: -15 },
-    s4: { psi: 4, ur: PR - 1.15, look: [0.55, 1.7, -5.6], pitch: true },
+    s4: { psi: 8, ur: PR - 2.0, look: [0.7, 1.6, -5.6], pitch: true },
   };
   const plaqueGeo = keep(new THREE.BoxGeometry(0.66, 0.17, 0.03));
   const plaqueMat = std("#2a3160", { roughness: 0.45, metalness: 0.4 });
@@ -522,9 +522,9 @@ export default function build(ctx) {
     g.strokeStyle = C.core; g.globalAlpha = 0.6; g.lineWidth = 6; g.setLineDash([18, 18]);
     K.roundRect(g, 120, 650, W - 240, 160, 26); g.stroke(); g.globalAlpha = 1; g.setLineDash([]);
   });
-  const FW = 3.9;
+  const FW = 4.3;
   const field = new THREE.Mesh(keep(new THREE.PlaneGeometry(FW, FW * 900 / 1600)), labelMat(dashTex, { side: THREE.DoubleSide }));
-  field.position.copy(CORE).add(new THREE.Vector3(1.85, -0.25, 1.0)); field.lookAt(s4View); field.renderOrder = 20; add(field);
+  field.position.copy(CORE).add(new THREE.Vector3(2.2, -0.3, 1.1)); field.lookAt(s4View); field.renderOrder = 20; add(field);
 
   // S4: tegnene i en bue over kernen, vendt mod S4-blikket
   const satPos = (() => {

@@ -115,8 +115,8 @@ export default function build(ctx) {
   S.box(2.06, 0.04, 0.52, "#6d523c", [SB.x, 0.62, SB.z]);
   for (const dx of [-0.5, 0.5]) { S.box(0.94, 0.26, 0.02, "#7a5c44", [SB.x + dx, 0.17, SB.z + 0.245]); S.box(0.14, 0.025, 0.03, "#d6c3a6", [SB.x + dx, 0.17, SB.z + 0.265]); }
   S.box(1.8, 1.02, 0.06, "#0d0d12", [SB.x, 1.55, ZB + 0.04]);                          // tv
-  S.box(0.36, 0.07, 0.3, "#16161c", [SB.x - 0.55, 0.675, SB.z]);                        // spillekonsol
-  G.box(0.06, 0.012, 0.01, "#9fe3a0", [SB.x - 0.55, 0.675, SB.z + 0.155]);
+  S.box(0.5, 0.1, 0.36, "#16161c", [SB.x - 0.55, 0.69, SB.z]);                        // spillekonsol
+  G.box(0.14, 0.02, 0.01, "#9fe3a0", [SB.x - 0.55, 0.69, SB.z + 0.185]);
   const SPK = { x: SB.x + 0.75, y: 0.64, z: SB.z };
   const SB_DRAWER = { x: SB.x + 0.5, y: 0.47, z: SB.z + 0.24 };                         // den øverste skuffe til højre
   S.box(0.94, 0.2, 0.02, "#7a5c44", [SB.x - 0.5, 0.45, SB.z + 0.245]); S.box(0.14, 0.025, 0.03, "#d6c3a6", [SB.x - 0.5, 0.45, SB.z + 0.265]);
@@ -176,7 +176,7 @@ export default function build(ctx) {
     let scr = null;
     if (kind === "phone") { B.rbox(0.08, 0.16, 0.012, 0.012, "#16161c", [0, 0, 0]); scr = quad(0.068, 0.14, scrMat("#a9c6ff")); scr.position.z = 0.0075; }
     if (kind === "tablet") { B.rbox(0.28, 0.2, 0.012, 0.016, "#202028", [0, 0, 0]); scr = quad(0.255, 0.175, scrMat("#ffd9a0")); scr.position.z = 0.0075; }
-    if (kind === "speaker") { B.cyl(0.12, 0.13, 0.32, "#ddd5d0", [0, 0.16, 0], [0, 0, 0], 16); scr = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.014, 4, 24), scrMat(ROSE)); scr.rotation.x = -90 * D; scr.position.y = 0.322; }
+    if (kind === "speaker") { B.cyl(0.14, 0.15, 0.38, "#ddd5d0", [0, 0.16, 0], [0, 0, 0], 16); scr = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.014, 4, 24), scrMat(ROSE)); scr.rotation.x = -90 * D; scr.position.y = 0.322; }
     if (kind === "pad") { B.rbox(0.18, 0.09, 0.05, 0.04, "#1f1f26", [0, 0, 0]); B.sph(0.025, "#3a3a46", [-0.05, 0.01, 0.03], 6); B.sph(0.025, "#3a3a46", [0.05, -0.01, 0.03], 6); scr = quad(0.03, 0.012, scrMat("#9fe3a0")); scr.position.set(0, 0.025, 0.026); }
     g.add(B.build(litMat)); if (scr) g.add(scr); g.userData.scr = scr; return g;
   }
@@ -229,7 +229,7 @@ export default function build(ctx) {
       from: [-2.2, 1.6, -120, false], at: [SOF.x + 0.05, SOF.z + 0.6, 90, true], home: [TB.x + 0.1, 0.44, TB.z + 0.3, -90, 0], label: [SOF.x + 0.55, 1.6, SOF.z + 0.9],
       off: [SOF.x + 0.05, SOF.z + 0.6, 90, true] },
     { who: "Lillebror", use: "spil med venner", kind: "pad", h: 1.25, cloth: "#6a9a6e", legs: "#3a3a4a",
-      from: [-2.0, -1.4, -120, false], at: [BEAN.x, BEAN.z, 160, true], home: [SB.x - 0.25, 0.66, SB.z + 0.05, -90, 0], label: [BEAN.x + 0.3, 1.38, BEAN.z + 0.4],
+      from: [-2.0, -1.4, -120, false], at: [BEAN.x, BEAN.z, 160, true], home: [SB.x - 0.25, 0.66, SB.z + 0.05, -90, 0], label: [BEAN.x - 0.2, 1.75, BEAN.z - 0.1],
       off: [BEAN.x, BEAN.z, 5, true] },
   ];
   const fieldTex = (who, use) => K.canvasTexture(640, 170, (g, w, h) => {
@@ -272,8 +272,9 @@ export default function build(ctx) {
         const fx = la[0] - p[0], fz = la[2] - p[2], fl = Math.hypot(fx, fz) || 1, ux = fx / fl, uz = fz / fl;
         // nede til venstre i synsfeltet, vippet op mod øjet
         const pitch = typeof v.pitch === "number" ? v.pitch : 0;
-        const px = p[0] + ux * 1.3 + uz * 0.95, pz = p[2] + uz * 1.3 - ux * 0.95;
-        g.position.set(px, 1.6 + Math.tan(pitch * D) * 1.3 - 0.8, pz);
+        const bo = v.back || {}, side = bo.side ?? 0.95, fwd = bo.fwd ?? 1.3, dy = bo.dy ?? 0;
+        const px = p[0] + ux * fwd + uz * side, pz = p[2] + uz * fwd - ux * side;
+        g.position.set(px, 1.6 + Math.tan(pitch * D) * fwd - 0.8 + dy, pz);
         g.rotation.set(0, Math.atan2(-ux, -uz), 0, "YXZ"); g.rotateX((pitch - 22) * D);
         // pilens retning: vinkel fra blikretningen til døren (positiv = til venstre)
         const dx = doorPos[0] - p[0], dz = doorPos[2] - p[2];
@@ -299,14 +300,14 @@ export default function build(ctx) {
     // nat (21–07) mørk, dag lysere
     g.fillStyle = "#3a2a3e"; g.beginPath(); g.moveTo(c, c); g.arc(c, c, c - 8, (7 / 24) * 2 * Math.PI - Math.PI / 2, (21 / 24) * 2 * Math.PI - Math.PI / 2); g.closePath(); g.fill();
     g.strokeStyle = "rgba(232,99,140,0.95)"; g.lineWidth = 10; g.beginPath(); g.arc(c, c, c - 9, 0, 7); g.stroke();
-    g.strokeStyle = "rgba(255,255,255,0.1)"; g.lineWidth = 2; for (const rr of [0.38, 0.55, 0.72]) { g.beginPath(); g.arc(c, c, c * rr, 0, 7); g.stroke(); }
+    g.strokeStyle = "rgba(255,255,255,0.1)"; g.lineWidth = 2; for (const rr of [0.3, 0.46, 0.62]) { g.beginPath(); g.arc(c, c, c * rr, 0, 7); g.stroke(); }
     for (let i = 0; i < 24; i++) {
-      const a = (i / 24) * 2 * Math.PI - Math.PI / 2, r1 = c - 20, r2 = c - (i % 6 === 0 ? 72 : 44);
+      const a = (i / 24) * 2 * Math.PI - Math.PI / 2, r1 = c - 20, r2 = c - (i % 6 === 0 ? 46 : 36);
       g.strokeStyle = i % 6 === 0 ? "#ffe0ea" : "rgba(255,224,234,0.55)"; g.lineWidth = i % 6 === 0 ? 9 : 4;
       g.beginPath(); g.moveTo(c + Math.cos(a) * r1, c + Math.sin(a) * r1); g.lineTo(c + Math.cos(a) * r2, c + Math.sin(a) * r2); g.stroke();
     }
     g.fillStyle = "#ffe0ea"; g.font = FONT(700, 70); g.textAlign = "center"; g.textBaseline = "middle";
-    for (const [hh, lab] of [[0, "24"], [6, "06"], [12, "12"], [18, "18"]]) { const a = (hh / 24) * 2 * Math.PI - Math.PI / 2; g.fillText(lab, c + Math.cos(a) * (c - 125), c + Math.sin(a) * (c - 125)); }
+    for (const [hh, lab] of [[0, "24"], [6, "06"], [12, "12"], [18, "18"]]) { const a = (hh / 24) * 2 * Math.PI - Math.PI / 2; g.fillText(lab, c + Math.cos(a) * (c - 100) + (hh === 6 ? -10 : hh === 18 ? 10 : 0), c + Math.sin(a) * (c - 100)); }
     // sol (dag) og måne (nat)
     g.fillStyle = "#ffd9a0"; g.beginPath(); g.arc(c, c + c * 0.2, 20, 0, 7); g.fill();
     g.fillStyle = "#c9d1ff"; g.beginPath(); g.arc(c, c - c * 0.2, 20, 0, 7); g.fill(); g.fillStyle = "#24182a"; g.beginPath(); g.arc(c + 9, c - c * 0.2 - 6, 16, 0, 7); g.fill();
@@ -330,7 +331,7 @@ export default function build(ctx) {
   const dotGeo = new THREE.CylinderGeometry(0.085, 0.085, 0.05, 14);
   const dots = new THREE.InstancedMesh(dotGeo, new THREE.MeshBasicMaterial({ color: "#ffffff" }), LOG.length);
   LOG.forEach(([hh, cat], i) => {
-    const rr = DIAL.r * [0.38, 0.55, 0.72][cat];       // én ring pr. kategori, så mønstret kan aflæses
+    const rr = DIAL.r * [0.3, 0.46, 0.62][cat];       // én ring pr. kategori, så mønstret kan aflæses
     const a = (hh / 24) * 2 * Math.PI;
     LOG[i].pos = [Math.sin(a) * rr, 0.07, -Math.cos(a) * rr];
     dots.setColorAt(i, new THREE.Color(CAT[cat].c));
@@ -339,8 +340,8 @@ export default function build(ctx) {
   // sorteringsbakker: tre søjler til højre for skiven
   const binLabTex = (c) => K.canvasTexture(512, 110, (g, w, h) => { g.fillStyle = "rgba(24,14,22,0.92)"; K.roundRect(g, 3, 3, w - 6, h - 6, 30); g.fill(); g.strokeStyle = c.c; g.lineWidth = 6; g.stroke(); g.fillStyle = "#fff"; g.font = BODY(700, 46); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(c.name, w / 2, h / 2 + 2); });
   const bins = CAT.map((c, i) => {
-    const g = new THREE.Group(); g.position.set(DIAL.r + 0.8, 0, -0.85 + i * 0.75);
-    const lab = quad(0.78, 0.168, basic({ map: binLabTex(c) })); lab.position.set(0, 0.22, 0.26); lab.rotation.x = -30 * D; g.add(lab);
+    const g = new THREE.Group(); g.position.set(DIAL.r + 0.85, 0, -1.05 + i * 0.8);
+    const lab = quad(0.9, 0.194, basic({ map: binLabTex(c), depthTest: false })); lab.renderOrder = 9; lab.position.set(0.15, 0.12, 0.34); lab.rotation.x = -55 * D; g.add(lab);
     const B = batch(); B.box(0.46, 0.06, 0.46, "#3a2a35", [0, 0.03, 0]); B.box(0.46, 0.18, 0.04, "#4a3843", [0, 0.09, -0.21]); B.box(0.46, 0.18, 0.04, "#4a3843", [0, 0.09, 0.21]); g.add(B.build(litMat));
     const bar = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1, 0.32).translate(0, 0.5, 0), new THREE.MeshBasicMaterial({ color: c.c })); bar.position.y = 0.06; bar.scale.y = 0.001; g.add(bar);
     dialG.add(g); return { bar, n: LOG.filter(l => l[1] === i).length };
@@ -356,7 +357,7 @@ export default function build(ctx) {
   kit.cyl(st1, "0 0.12 0", DIAL.r, 0.24, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c1-1", st1);
   const s11 = ctx.sign(ctx.step("c1-1").title, { position: `${DIAL.x + 0.55} 2.05 ${DIAL.z - 1.55}`, width: 1.9 });
-  view("c1-1", { position: [DIAL.x + 0.55, 0, DIAL.z + 2.9], lookAt: [DIAL.x + 0.55, 0.7, DIAL.z], pitch: -17 });
+  view("c1-1", { position: [DIAL.x + 0.55, 0, DIAL.z + 2.9], lookAt: [DIAL.x + 0.55, 0.7, DIAL.z], pitch: -17, back: { side: 1.05, fwd: 1.2, dy: -0.32 } });
 
   /* ---------- c1-2: tre lag over telefonen (mod højre væg) ---------- */
   const LY = { x: 4.4, z: 2.9 };
@@ -426,9 +427,9 @@ export default function build(ctx) {
   }
   addObj(drawer);
   // telefonen, der ligger i skuffen (barn af skuffen, så den følger den ud og ind); skærmen lyser svagt rosa, så den ses
-  const drawerPhone = makeDevice("phone"); drawerPhone.rotation.set(-90 * D, 0, 0.3); drawerPhone.position.set(0.05, -0.065, -0.14); drawerPhone.scale.setScalar(1.6);
+  const drawerPhone = makeDevice("phone"); drawerPhone.rotation.set(-22 * D, 0, 0); drawerPhone.position.set(0.05, 0.04, -0.3); drawerPhone.scale.setScalar(2.0);
   drawer.add(drawerPhone); drawerPhone.visible = false;
-  const dpGlow = quad(0.5, 0.5, basic({ map: K.glowTex("#cfe2ff"), blending: THREE.AdditiveBlending, opacity: 0 })); dpGlow.rotation.x = -90 * D; dpGlow.position.set(0.05, -0.05, -0.14); drawer.add(dpGlow);
+  const dpGlow = quad(0.5, 0.5, basic({ map: K.glowTex("#cfe2ff"), blending: THREE.AdditiveBlending, opacity: 0 })); dpGlow.position.set(0.05, 0.06, -0.25); drawer.add(dpGlow);
   // dagbogen på skænken
   const diary = new THREE.Group(); diary.position.set(SB.x + 0.15, 0.655, SB.z + 0.02); diary.rotation.y = -10 * D;
   {
@@ -448,8 +449,8 @@ export default function build(ctx) {
   const st3 = kit.grp(root, `${SB.x} 0 ${SB.z + 0.7}`);
   kit.box(st3, "0 0.35 -0.7", 2.0, 0.7, 0.6, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c1-3", st3);
-  const s13 = ctx.sign(ctx.step("c1-3").title, { position: `${SB.x} 2.25 ${ZB + 0.2}`, width: 1.9 });
-  view("c1-3", { position: [-1.9, 0, -0.2], lookAt: [-3.3, 0.7, -4.5], pitch: -14 });
+  const s13 = ctx.sign(ctx.step("c1-3").title, { position: `${SB.x} 1.95 ${ZB + 0.2}`, width: 1.7 });
+  view("c1-3", { position: [-1.6, 0, -0.9], lookAt: [-3.8, 0.6, -4.4], pitch: -16 });
   // glød om skuffen i det øjeblik, telefonen lægges i
   const drawerGlow = quad(1.6, 1.0, basic({ map: K.glowTex(ROSE), blending: THREE.AdditiveBlending, opacity: 0 })); drawerGlow.position.set(SB_DRAWER.x, 0.55, SB.z + 0.5); addObj(drawerGlow);
   // "før" og "efter": to små felter over familien, der skifter
@@ -506,7 +507,7 @@ export default function build(ctx) {
         devOn(m, true);
         if (cur === "c1-0" && (m.who === "Mor" || m.who === "Far") && e > 4.8) {
           // efter ankomsten går Mor og Far videre mellem tingene: Mor hen til højttaleren, Far hen til sofabordet; så tilbage
-          const tgt = m.who === "Mor" ? [SPK.x + 0.35, SB.z + 0.95] : [TB.x + 0.95, TB.z - 0.2];
+          const tgt = m.who === "Mor" ? [SPK.x + 0.35, SB.z + 0.95] : [ISL.x - 1.6, ISL.z + 0.6];   // Far går fra øen hen mod højttaleren og tilbage
           const L = Math.hypot(tgt[0] - ax, tgt[1] - az), walkT = L / 0.9, T = (e - 4.8 - (m.who === "Far" ? 1.5 : 0) + 20) % (2 * walkT + 3.0);
           let k, yaw, moving = false, atThing = false;
           if (T < walkT) { k = T / walkT; yaw = Math.atan2(tgt[0] - ax, tgt[1] - az) / D; moving = true; }
@@ -553,7 +554,7 @@ export default function build(ctx) {
             m.dev.position.set(lerp(tmpV.x, dx, put), lerp(tmpV.y, dy, put) + Math.sin(put * Math.PI) * 0.12, lerp(tmpV.z, dz, put));
             m.dev.rotation.set(lerp(-50 * D, -90 * D, put), Math.PI, 0, "YXZ");
             devOn(m, put < 0.9);
-            drawerOpen = ease((e - out.end + 0.4) / 0.5) * (1 - 0.35 * ease((e - out.end - 2.4) / 1.0));   // bliver stående åben
+            drawerOpen = ease((e - out.end + 0.4) / 0.5);   // skuffen bliver stående åben med telefonen i
             drawerPhone.visible = put > 0.97 || home.t > 0;
             if (home.done) { pose(m, ax, az, ay, true, lerp(6, 14, ease((e - home.end) / 2)), false, 0); }
             return;
@@ -616,12 +617,12 @@ export default function build(ctx) {
 
       /* skuffen og ringene */
       const C3 = cur === "c1-3";
-      drawer.position.z = SB_DRAWER.z + (C3 ? drawerOpen : 0) * 0.34;
+      drawer.position.z = SB_DRAWER.z + (C3 ? drawerOpen : 0) * 0.4;
       drawerGlow.material.opacity = C3 ? 0.9 * drawerOpen : 0;
       if (!C3) drawerPhone.visible = false;
       dpGlow.material.opacity = C3 && drawerPhone.visible ? 0.8 + 0.2 * Math.sin(s * 3) : 0;
       // "før" vises, mens alle har skærmene fremme; det skifter til "efter", når familien har lagt tingene væk
-      phaseBefore.material.opacity = C3 ? 1 - ease((e - 6.2) / 0.5) : 0; phaseAfter.material.opacity = C3 ? ease((e - 6.6) / 0.6) : 0;
+      phaseBefore.visible = false; phaseAfter.visible = false;   // fravalgt: mærkaterne forvirrede mere, end de forklarede
       board.material.opacity = C3 ? ease((e - 7.0) / 1.2) : 0;
       pieces.visible = C3 && e > 7.5;
       ripples.forEach((r, i) => {

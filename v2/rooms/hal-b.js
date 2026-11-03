@@ -99,15 +99,15 @@ export default function build(ctx) {
     mesh(wall, wallMat, [0, y, 0], tower);
     // lagets navn hænger ved etagens forkant til venstre og drejer mod beskueren;
     // i b0-2 kommer det, der sker med data på laget, frem som en undertekst lige under navnet
-    const lp = [-1.45, y - 0.3, FR + 0.08];
+    const lp = [-0.95, y - 0.3, FR + 0.08];   // inden for tårnets silhuet, så lagnavnet aldrig står foran en dør
     const lblMat = basic("#ffffff", { map: K.labelTex(LAYERS[k].name, B, { w: 1024, h: 220, size: k === 1 ? 62 : 76, sub: LAYERS[k].n, ink: "#eef1ff" }), transparent: true, side: T.DoubleSide, depthWrite: false });
     const ry = face([lp[0], lp[2] + CZ], EYE);
     // lagnavn og undertekst tegnes efter de fjerne dørskilte, så de aldrig skæres over af dem
-    mesh(new T.PlaneGeometry(1.9, 1.9 * 220 / 1024), lblMat, lp, tower, ry).getObject3D("mesh").renderOrder = 3;
+    mesh(new T.PlaneGeometry(1.55, 1.55 * 220 / 1024), lblMat, lp, tower, ry).getObject3D("mesh").renderOrder = 3;
     const capMat = basic("#ffffff", { map: K.labelTex(LAYERS[k].what, B, { w: 1024, h: 150, size: 64, bg: true, ink: "#dffffb" }), transparent: true, side: T.DoubleSide, depthWrite: false, opacity: 0 });
-    mesh(new T.PlaneGeometry(1.9, 1.9 * 150 / 1024), capMat, [lp[0], lp[1] - 0.42, lp[2] + 0.02], tower, ry).getObject3D("mesh").renderOrder = 3;
+    mesh(new T.PlaneGeometry(1.55, 1.55 * 150 / 1024), capMat, [lp[0], lp[1] - 0.36, lp[2] + 0.02], tower, ry).getObject3D("mesh").renderOrder = 3;
     // en tynd streg fra skiltet ind til etagekanten
-    const tie = new T.BoxGeometry(0.015, 0.1, 0.015); tie.translate(-1.45, y - 0.06, FR + 0.04);
+    const tie = new T.BoxGeometry(0.015, 0.1, 0.015); tie.translate(-0.95, y - 0.06, FR + 0.04);
     mesh(tie, rimMat, [0, 0, 0], tower);
     return { y, discMat, rimMat, bandMat, wallMat, lblMat, capMat, g: 0 };
   });
@@ -175,11 +175,11 @@ export default function build(ctx) {
 
   /* ---------- døre: elevatorportaler til lagene og døren tilbage ---------- */
   // rammens dørskilt er beregnet til tættere afstand; her står dørene 7 m væk, så skiltet gøres større og løftes
-  function bigDoorSign(d, sc = 1.6) {
+  function bigDoorSign(d, sc = 1.9) {
     const sg = [...d.children].find(c => c.tagName === "A-PLANE" && c !== d.portal);
     if (!sg) return;
     sg.setAttribute("scale", `${sc} ${sc} 1`);
-    sg.setAttribute("position", "0 3.3 0.04");
+    sg.setAttribute("position", "0 3.4 0.04");
   }
   const lifts = [["b1", -100, 0], ["b2", -62, 1], ["b3", 62, 2]];   // spredt ud, så ingen står bag tårnet set fra indgangen
   const shaftMat = std(B, { emissive: new T.Color(B), emissiveIntensity: 0.6 });
@@ -192,10 +192,10 @@ export default function build(ctx) {
     const d = ctx.door(id, { position: `${w.x} 0 ${w.z}`, rotation: `0 ${w.ry / D2R} 0` });
     bigDoorSign(d);
     // stort lagnummer over dørskiltet, så det matcher etagernes navneskilte (ingen overlap)
-    const lg = group([w.x, 0, w.z], root, w.ry / D2R);
-    kit.textPlane(lg, "0 4.15 0.06", LAYERS[k].n, B, { width: 1.1, aspect: 0.3, size: 150, bg: true, ink: "#eef1ff" });
+    const lg = group([w.x, 0, w.z], root, w.ry);
+    kit.textPlane(lg, "0 4.3 0.06", LAYERS[k].n, B, { width: 1.5, aspect: 0.3, size: 150, bg: true, ink: "#eef1ff" });
     // elevatorskakt: lysende skinner fra over døren op til lagets højde, glasvæg og en repos
-    const y = FLOORS[k], y0 = 4.4, local = [];
+    const y = FLOORS[k], y0 = 4.6, local = [];
     for (const sx of [-0.95, 0.95]) { const g = new T.BoxGeometry(0.06, Math.max(0.1, y + 0.5 - y0), 0.06); g.translate(sx, (y + 0.5 + y0) / 2, 0.05); local.push(g); }
     const top = new T.BoxGeometry(1.96, 0.06, 0.06); top.translate(0, y + 0.5, 0.05); local.push(top);
     const landing = new T.BoxGeometry(1.96, 0.06, 0.9); landing.translate(0, y, 0.45); local.push(landing);
@@ -248,8 +248,9 @@ export default function build(ctx) {
   ctx.station("b0-2", st2);
 
   /* ---------- målpladen (b0-3), hænger ved udgangen ---------- */
-  const PL = [3.5, 1.75, 2.5];   // frit på gulvet foran udgangen, med døren tilbage lidt til venstre bag sig
-  const plRy = face([PL[0], PL[2]], [1.2, 5.4]);
+  // pladen står på linjen mellem beskueren og døren tilbage; når den deler sig, ses døren i åbningen imellem halvdelene
+  const PL = [3.06, 1.75, 2.41];   // frit på gulvet foran udgangen, med døren tilbage lidt til venstre bag sig
+  const plRy = face([PL[0], PL[2]], [-0.2, 4.6]);
   const plate = group(PL, root, plRy); plate.setAttribute("scale", "1.05 1.05 1.05");
   const plateSign = ctx.sign(ctx.step("b0-3").title, { parent: plate, position: "0 1.05 0", width: 1.9 });
   // ophæng fra loftet
@@ -291,7 +292,7 @@ export default function build(ctx) {
   /* ---------- views ---------- */
   ctx.view("b0-1", { position: [0, 0, 5.4], lookAt: [0, 0, CZ] });
   ctx.view("b0-2", { position: [-0.4, 0, 5.4], lookAt: [0.1, 0, CZ] });
-  ctx.view("b0-3", { position: [1.2, 0, 5.4], lookAt: [3.5, 0, 2.3] });
+  ctx.view("b0-3", { position: [-0.2, 0, 4.6], lookAt: [3.4, 0, 1.4] });
 
   /* ---------- tilstand og animation ---------- */
   let mode = null, t0 = 0, fresh = true;
@@ -384,7 +385,7 @@ export default function build(ctx) {
       const lit = on ? ease((s - 1.7) / 0.5) : 0;
       plateSign.object3D.position.y = 1.05 + 0.6 * rise;
       halves.forEach((hv, i) => {
-        hv.g.object3D.position.set(hv.side * (0.82 + 0.3 * split), (halfY[i] - PL[1]) * rise, 0);
+        hv.g.object3D.position.set(hv.side * (0.82 + 0.95 * split), (halfY[i] - PL[1]) * rise, 0);
         hv.g.object3D.rotation.y = -hv.side * 0.12 * split;
         hv.frame.opacity = 0.9 * lit;
         hv.floors.forEach(([k, w]) => setFloor(k, Math.max(F[k].g, 0.1 + 0.9 * w * lit)));
