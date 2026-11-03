@@ -75,6 +75,7 @@ Kør en webserver i `v2/` (`python3 -m http.server 8765`, kører måske allerede
 ```
 node tools/shot.mjs <rum-id>            # skærmbillede af hvert trin i rummet → tools/shots/<rum>/<trin>.png
 node tools/shot.mjs <rum-id> b2-3       # kun ét trin
+node tools/shot.mjs <rum-id> --wait 12000   # vent længere pr. trin (lange forløb)
 ```
 
 Det skriver også fejl og trekanter/draw calls pr. trin. **Kig på billederne** (Read-værktøjet viser dem), og ret, indtil hvert trin ser rigtigt ud: stationen er i billedet, skiltene kan læses, intet overlapper eller står uden for rummet, og scenen viser trinnets pointe. Tjek også, at dørene fører de rigtige steder hen (labels). Konsolfejl om Google Fonts kan ignoreres.

@@ -192,7 +192,7 @@ export default function build(ctx) {
     g.fillStyle = C.a; g.beginPath(); g.moveTo(60, 50); g.lineTo(120, 50); g.lineTo(120, 30); g.lineTo(160, 75); g.lineTo(120, 120); g.lineTo(120, 100); g.lineTo(60, 100); g.closePath(); g.fill();
     g.fillStyle = "#fff"; g.font = BODY(600, 50); g.textBaseline = "middle"; g.fillText("… og videre: nye handlinger", 190, h / 2 + 2);
   });
-  const onward = quad(2.5, 0.417, basic({ map: onTex, opacity: 0 })); window.__dbgOn = onward; onward.position.set(0, 2.62, R - 0.55); onward.scale.setScalar(0.72); onward.rotation.set(-10 * D, Math.PI, 0); addObj(onward);
+  const onward = quad(2.5, 0.417, basic({ map: onTex, opacity: 0 })); onward.renderOrder = 5; onward.position.set(0, 2.62, R - 0.55); onward.scale.setScalar(0.72); onward.rotation.set(10 * D, Math.PI, 0); addObj(onward);
   const st0 = kit.grp(root, "0 0 0");
   kit.box(st0, "0 1.2 0", 2.6, 2.4, 0.8, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c3-0", st0);

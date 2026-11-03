@@ -11,7 +11,9 @@ const room = args[0];
 const outIdx = args.indexOf("--out");
 const outDir = outIdx > -1 ? args[outIdx + 1] : path.join(path.dirname(new URL(import.meta.url).pathname), "shots", room);
 const wide = args.includes("--wide");
-let steps = args.slice(1).filter((a, i, all) => !a.startsWith("--") && all[i] !== outDir);
+const waitIdx = args.indexOf("--wait");
+const WAIT = waitIdx > -1 ? +args[waitIdx + 1] : 4200;   // ms pr. trin; brug fx --wait 12000 for at se lange forløb færdige
+let steps = args.slice(1).filter((a, i, all) => !a.startsWith("--") && !["--out", "--wait"].includes(all[i - 1]));
 fs.mkdirSync(outDir, { recursive: true });
 
 const browser = await puppeteer.launch({
@@ -21,7 +23,7 @@ const browser = await puppeteer.launch({
 const page = await browser.newPage();
 await page.setViewport({ width: wide ? 1600 : 1200, height: wide ? 900 : 760 });
 const errors = [];
-page.on("console", m => { if (["error", "warn"].includes(m.type())) errors.push(`${m.type()}: ${m.text()}`); });
+page.on("console", m => { if (["error", "warn"].includes(m.type()) && !/useLegacyLights|ERR_TUNNEL_CONNECTION_FAILED/.test(m.text())) errors.push(`${m.type()}: ${m.text()}`); });
 page.on("pageerror", e => errors.push(`pageerror: ${e.message}`));
 page.on("requestfailed", r => { if (!/fonts\.(googleapis|gstatic)/.test(r.url())) errors.push(`requestfailed: ${r.url()}`); });
 
@@ -33,7 +35,7 @@ if (!steps.length) steps = await page.evaluate(r => fetch("manus.json").then(x =
 const report = [];
 for (const s of steps) {
   await page.evaluate(id => window.__fagrum.setStep(id), s);
-  await new Promise(r => setTimeout(r, 4200));   // lad kamera-animation (1,4 s, langsom under swiftshader) og rummets animationer køre
+  await new Promise(r => setTimeout(r, WAIT));   // lad kamera-animation (1,4 s, langsom under swiftshader) og rummets animationer køre
   const f = path.join(outDir, `${s}.png`);
   await page.screenshot({ path: f });
   const st = await page.evaluate(() => window.__fagrum.stats());

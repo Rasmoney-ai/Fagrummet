@@ -36,9 +36,9 @@ function resetHead() {
 function placeRig(x, z, yaw, animate) {
   rig.removeAttribute("animation__p"); rig.removeAttribute("animation__r");
   if (!animate) { rig.object3D.position.set(x, 0, z); rig.object3D.rotation.set(0, yaw / R2D, 0); resetHead(); return; }
-  rig.setAttribute("animation__p", `property: position; to: ${x} 0 ${z}; dur: 1400; easing: easeInOutCubic`);
+  rig.setAttribute("animation__p", `property: position; to: ${(+x).toFixed(3)} 0 ${(+z).toFixed(3)}; dur: 1400; easing: easeInOutCubic`);
   const ry = rig.object3D.rotation.y * R2D; let to = yaw; while (to - ry > 180) to -= 360; while (to - ry < -180) to += 360;
-  rig.setAttribute("animation__r", `property: rotation; to: 0 ${to} 0; dur: 1400; easing: easeInOutCubic`);
+  rig.setAttribute("animation__r", `property: rotation; to: 0 ${(+to).toFixed(2)} 0; dur: 1400; easing: easeInOutCubic`);
   resetHead();
 }
 

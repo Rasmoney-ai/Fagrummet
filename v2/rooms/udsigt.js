@@ -524,8 +524,8 @@ export default function build(ctx) {
     // S2: målpladerne
     plates.forEach(p => {
       const k = step === "s2" ? ease((el - p.delay) / 1400) : 0;
-      const vis = step === "s2" ? k : approach(p.m.material.opacity, 0, dt, 6);
-      p.m.visible = vis > 0.01; p.m.material.opacity = Math.min(1, vis * 1.4);
+      p.vis = step === "s2" ? k : approach(p.vis || 0, 0, dt, 6);      // egen tilstand, så udfadningen ikke modvirkes
+      p.m.visible = p.vis > 0.01; p.m.material.opacity = Math.min(1, p.vis * 1.4);
       if (step === "s2") { p.curve.getPoint(k, tmp); p.m.position.copy(tmp); p.m.quaternion.copy(ringQ); p.m.scale.setScalar(0.35 + 0.65 * k); }
     });
     ringMat.opacity = (step === "s2" ? ease((el - 3200) / 1000) : 0) * 0.45; ring.visible = ringMat.opacity > 0.01;
