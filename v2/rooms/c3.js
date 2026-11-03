@@ -74,7 +74,7 @@ export default function build(ctx) {
     const w = 2 * Math.PI * (R + 0.15) / NW + 0.02;
     S.box(w, H, 0.25, i % 2 ? "#4a3240" : "#523848", [x, H / 2, z], [0, -a / D, 0]);
     const a2 = i / NW * Math.PI * 2;
-    if (inNiche(a2)) continue;
+    if (inNiche(a2) || Math.abs(a2 - Math.PI) < 1e-3) continue;      // ingen pilaster i nicher eller midt i døren
     S.box(0.22, H, 0.32, "#5e4252", [Math.sin(a2) * (R - 0.02), H / 2, -Math.cos(a2) * (R - 0.02)], [0, -a2 / D, 0]);
   }
   // kuppelloft: en lav kegle og en lysende oculus
@@ -134,7 +134,7 @@ export default function build(ctx) {
 
   /* ---------- Skilt med rummets navn og dør tilbage til Gaden (i syd ved indgangen) ---------- */
   ctx.door(ctx.room.parent, { position: `0 0 ${R - 0.3}`, rotation: "0 180 0" });
-  ctx.sign(ctx.room.name, { position: `0 3.85 ${R - 0.35}`, rotation: "0 180 0", width: 2.8, sub: ctx.room.sub });
+  ctx.sign(ctx.room.name, { position: `0 4.0 ${R - 0.35}`, rotation: "0 180 0", width: 2.8, sub: ctx.room.sub });
 
   // hjælper: position i salen ud fra vinkel (fra nord, med uret) og radius
   const polar = (a, r, y = 0) => [Math.sin(a) * r, y, -Math.cos(a) * r];
@@ -192,7 +192,7 @@ export default function build(ctx) {
     g.fillStyle = C.a; g.beginPath(); g.moveTo(60, 50); g.lineTo(120, 50); g.lineTo(120, 30); g.lineTo(160, 75); g.lineTo(120, 120); g.lineTo(120, 100); g.lineTo(60, 100); g.closePath(); g.fill();
     g.fillStyle = "#fff"; g.font = BODY(600, 50); g.textBaseline = "middle"; g.fillText("… og videre: nye handlinger", 190, h / 2 + 2);
   });
-  const onward = quad(2.5, 0.417, basic({ map: onTex, opacity: 0 })); onward.position.set(0, 2.2, R - 0.9); onward.rotation.set(-10 * D, Math.PI, 0); addObj(onward);
+  const onward = quad(2.5, 0.417, basic({ map: onTex, opacity: 0 })); window.__dbgOn = onward; onward.position.set(0, 2.62, R - 0.55); onward.scale.setScalar(0.72); onward.rotation.set(-10 * D, Math.PI, 0); addObj(onward);
   const st0 = kit.grp(root, "0 0 0");
   kit.box(st0, "0 1.2 0", 2.6, 2.4, 0.8, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c3-0", st0);
