@@ -83,7 +83,7 @@ export default function build(ctx) {
   kit.el("a-entity", { light: `type: point; color: ${B}; intensity: 0.5; distance: 10; decay: 1.3`, position: "0 4.2 -3" });
 
   /* ---------- skilte og dør ---------- */
-  ctx.sign(ctx.room.name, { position: `-5.4 3.2 ${Z0 + 0.25}`, width: 2.4, sub: ctx.room.sub });
+  ctx.sign(ctx.room.name, { position: `0 4.15 ${Z0 + 0.25}`, width: 2.6, sub: ctx.room.sub });
   ctx.door(ctx.room.parent, { position: `${X0 + 0.15} 0 3.6`, rotation: "0 90 0" });
 
   /* ---------- fem stationer: placering, lampe og gulvplade ---------- */
@@ -564,7 +564,7 @@ export default function build(ctx) {
       fig2.object3D.position.set(gx(ip), Math.abs(Math.sin(f2 * Math.PI * 2)) * 0.04 * (st0.i !== st1.i || st0.j !== st1.j ? 1 : 0), gz(jp));
       fig2.object3D.rotation.y = (ang0 + (ang1 - ang0) * f2) * D2R + (cur === 4 && fr < 0.45 ? Math.sin(t * 0.02) * 0.25 : 0);
       const wrong = a2 && (cur === 4 || c2 >= 7.3);
-      qMark.object3D.visible = wrong;
+      qMark.object3D.visible = wrong; window.__dbg = { c2, cur, wrong, vis: qMark.object3D.visible, pos: fig2.object3D.position.toArray(), qpos: qMark.object3D.position.toArray(), has: !!qMark.object3D.children.length };
       qMark.object3D.rotation.y = -fig2.object3D.rotation.y;
       fig2Mat.emissive.set(a2 && c2 >= 8.4 ? RED : "#9fb6d8"); fig2Mat.emissiveIntensity = a2 && c2 >= 8.4 ? 0.4 : 0.15;
       ghostMat.opacity = a2 && c2 >= 8.6 ? 0.85 * ((Math.floor(t / 350) % 2) ? 1 : 0.4) : 0;

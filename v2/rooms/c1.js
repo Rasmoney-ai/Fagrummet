@@ -70,7 +70,7 @@ export default function build(ctx) {
   S.box(2 * W, H, 0.2, "#5d4a55", [0, H / 2, ZF + 0.1]);
   S.box(0.2, H, ZF - ZB, "#65505c", [-W - 0.1, H / 2, (ZB + ZF) / 2]);
   S.box(0.2, H, ZF - ZB, "#65505c", [W + 0.1, H / 2, (ZB + ZF) / 2]);
-  U.box(2 * W, 0.1, ZF - ZB, "#21181e", [0, H + 0.05, (ZB + ZF) / 2]);
+  U.box(2 * W, 0.1, ZF - ZB, "#33252c", [0, H + 0.05, (ZB + ZF) / 2]);
   S.box(2 * W, 0.1, 0.04, "#efe2dc", [0, 0.05, ZB + 0.02]);
   S.box(0.04, 0.1, ZF - ZB, "#efe2dc", [-W + 0.02, 0.05, (ZB + ZF) / 2]);
   S.box(0.04, 0.1, ZF - ZB, "#efe2dc", [W - 0.02, 0.05, (ZB + ZF) / 2]);
@@ -79,63 +79,57 @@ export default function build(ctx) {
   S.box(0.05, 0.04, ZF - ZB, "#d8c6c0", [-W + 0.03, 1.0, (ZB + ZF) / 2]);
   S.box(0.05, 0.04, ZF - ZB, "#d8c6c0", [W - 0.03, 1.0, (ZB + ZF) / 2]);
   // loftsbjælker
-  for (let z = -3.5; z < ZF; z += 2.5) U.box(2 * W, 0.14, 0.16, "#2e232a", [0, H - 0.07, z]);
+  for (let z = -3.5; z < ZF; z += 2.5) U.box(2 * W, 0.14, 0.16, "#45343c", [0, H - 0.07, z]);
 
   /* entré: døren i bagvæggen (rammen tegner portalen), knagerække, skohylde, højttaler på hylde */
   const DOOR = { x: 0.2 };
-  S.box(1.25, 0.08, 0.1, "#4a3a40", [DOOR.x - 1.75, 1.78, ZB + 0.06]);
-  for (let i = 0; i < 3; i++) S.rbox(0.34, 0.78, 0.14, 0.12, ["#5a7a8c", "#a65e6e", "#c49a5a"][i], [DOOR.x - 2.15 + i * 0.4, 1.36, ZB + 0.13]);
-  S.box(1.1, 0.35, 0.34, "#4a3a40", [DOOR.x - 1.75, 0.175, ZB + 0.2]);
-  for (let i = 0; i < 4; i++) S.box(0.22, 0.1, 0.28, ["#2a2a33", "#e7d7c1", "#a65e6e", "#2a2a33"][i], [DOOR.x - 2.15 + i * 0.27, 0.4, ZB + 0.22]);
+  S.box(1.25, 0.08, 0.1, "#4a3a40", [DOOR.x + 1.55, 1.78, ZB + 0.06]);
+  for (let i = 0; i < 3; i++) S.rbox(0.34, 0.78, 0.14, 0.12, ["#5a7a8c", "#a65e6e", "#c49a5a"][i], [DOOR.x + 1.15 + i * 0.4, 1.36, ZB + 0.13]);
+  S.box(1.1, 0.35, 0.34, "#4a3a40", [DOOR.x + 1.55, 0.175, ZB + 0.2]);
+  for (let i = 0; i < 4; i++) S.box(0.22, 0.1, 0.28, ["#2a2a33", "#e7d7c1", "#a65e6e", "#2a2a33"][i], [DOOR.x + 1.15 + i * 0.27, 0.4, ZB + 0.22]);
   S.box(1.3, 0.02, 0.8, "#5a4048", [DOOR.x, 0.01, ZB + 0.6]);                     // dørmåtte
 
-  /* tv-væg (venstre væg) med tv-bænk og konsol */
-  const TV = { z: -1.6 };
-  S.box(0.5, 0.45, 2.6, "#3a2a30", [-W + 0.27, 0.225, TV.z]);
-  S.box(0.46, 0.02, 2.5, "#4c3840", [-W + 0.27, 0.46, TV.z]);
-  S.box(0.06, 1.0, 1.75, "#0d0d12", [-W + 0.05, 1.45, TV.z]);
-  S.box(0.3, 0.08, 0.42, "#16161c", [-W + 0.3, 0.51, TV.z + 0.8]);                // spillekonsol
-  G.box(0.01, 0.012, 0.06, "#9fe3a0", [-W + 0.455, 0.51, TV.z + 0.8]);
-  // tæppe og sofa (vender mod tv'et, dvs. −x)
-  S.box(3.4, 0.02, 3.0, "#8a4a5c", [-4.2, 0.01, TV.z]);
-  S.box(3.1, 0.022, 2.7, "#a35a6f", [-4.2, 0.012, TV.z]);
-  const SOF = { x: -2.9, z: TV.z };
+  /* sofa langs venstre væg (vender mod rummet), sofabord, tæppe, standerlampe og en sækkestol */
+  const SOF = { x: -5.75, z: -1.4 };
+  S.box(3.6, 0.02, 3.2, "#8a4a5c", [-4.6, 0.01, -1.7]);
+  S.box(3.3, 0.022, 2.9, "#a35a6f", [-4.6, 0.012, -1.7]);
   S.rbox(2.5, 0.4, 0.95, 0.08, "#7b5a68", [SOF.x, 0.22, SOF.z], [0, 90, 0]);
-  S.rbox(2.5, 0.8, 0.25, 0.08, "#6e505d", [SOF.x + 0.42, 0.62, SOF.z], [0, 90, 0]);
-  S.rbox(0.24, 0.6, 0.95, 0.08, "#6e505d", [SOF.x, 0.42, SOF.z - 1.3], [0, 0, 0]);
-  S.rbox(0.24, 0.6, 0.95, 0.08, "#6e505d", [SOF.x, 0.42, SOF.z + 1.3], [0, 0, 0]);
-  for (const dz of [-0.6, 0.6]) S.rbox(1.15, 0.14, 0.82, 0.06, "#8a6878", [SOF.x - 0.05, 0.47, SOF.z + dz], [-90, 90, 0]);
-  S.rbox(0.42, 0.38, 0.14, 0.1, "#d99aa8", [SOF.x + 0.22, 0.75, SOF.z + 0.95], [-12, 70, 0]);
-  // sofabord
-  const TB = { x: -4.5, z: TV.z };
+  S.rbox(2.5, 0.8, 0.25, 0.08, "#6e505d", [SOF.x - 0.42, 0.62, SOF.z], [0, 90, 0]);
+  S.rbox(0.24, 0.6, 0.95, 0.08, "#6e505d", [SOF.x, 0.42, SOF.z - 1.3]);
+  S.rbox(0.24, 0.6, 0.95, 0.08, "#6e505d", [SOF.x, 0.42, SOF.z + 1.3]);
+  for (const dz of [-0.6, 0.6]) S.rbox(1.15, 0.14, 0.82, 0.06, "#8a6878", [SOF.x + 0.05, 0.47, SOF.z + dz], [-90, 90, 0]);
+  S.rbox(0.42, 0.38, 0.14, 0.1, "#d99aa8", [SOF.x - 0.22, 0.75, SOF.z - 0.95], [-12, 110, 0]);
+  const TB = { x: -4.4, z: SOF.z };
   S.box(0.7, 0.06, 1.3, "#8b6a4e", [TB.x, 0.4, TB.z]);
   for (const [dx, dz] of [[-0.28, -0.58], [0.28, -0.58], [-0.28, 0.58], [0.28, 0.58]]) S.box(0.05, 0.38, 0.05, "#5b4434", [TB.x + dx, 0.19, TB.z + dz]);
-  // standerlampe ved sofaen
-  S.cyl(0.02, 0.02, 1.55, "#2a2228", [SOF.x + 0.2, 0.78, SOF.z - 1.75], [0, 0, 0], 6);
-  S.cyl(0.18, 0.18, 0.03, "#2a2228", [SOF.x + 0.2, 0.015, SOF.z - 1.75], [0, 0, 0], 10);
-  G.cyl(0.16, 0.24, 0.3, "#ffd9a6", [SOF.x + 0.2, 1.66, SOF.z - 1.75], [0, 0, 0], 12);
-  // skænk med skuffer mod bagvæggen (station for brugseksperimentet)
-  const SB = { x: -1.95, z: TV.z };
-  S.box(0.48, 0.78, 1.8, "#8b6a4e", [SB.x, 0.39, SB.z]);
-  S.box(0.52, 0.04, 1.86, "#6d523c", [SB.x, 0.8, SB.z]);
-  S.box(0.02, 0.32, 0.84, "#7a5c44", [SB.x + 0.245, 0.24, SB.z - 0.44]);
-  S.box(0.03, 0.025, 0.12, "#d6c3a6", [SB.x + 0.265, 0.24, SB.z - 0.44]);
-  S.box(0.02, 0.32, 0.84, "#7a5c44", [SB.x + 0.245, 0.24, SB.z + 0.44]);
-  S.box(0.03, 0.025, 0.12, "#d6c3a6", [SB.x + 0.265, 0.24, SB.z + 0.44]);
-  S.cyl(0.1, 0.07, 0.22, "#e7d7c1", [SB.x, 0.93, SB.z + 0.7], [0, 0, 0], 8);
-  for (let i = 0; i < 3; i++) S.cyl(0.006, 0.006, 0.4, "#5f8a5f", [SB.x, 1.18, SB.z + 0.7 + (i - 1) * 0.03], [(i - 1) * 12, 0, 0], 4);
-  const SPK = { x: SB.x, y: 0.82, z: SB.z - 0.15 };
-  // billeder på bagvæggen (farvefelter)
-  S.box(0.62, 0.82, 0.03, "#2f2730", [-4.0, 1.85, ZB + 0.02]); G.box(0.52, 0.72, 0.02, "#c47a6a", [-4.0, 1.85, ZB + 0.04]);
-  S.box(0.5, 0.5, 0.03, "#2f2730", [-3.2, 1.7, ZB + 0.02]); G.box(0.4, 0.4, 0.02, "#7a8cc4", [-3.2, 1.7, ZB + 0.04]);
+  const LAMP = [-6.05, -3.1];
+  S.cyl(0.02, 0.02, 1.55, "#2a2228", [LAMP[0], 0.78, LAMP[1]], [0, 0, 0], 6);
+  S.cyl(0.18, 0.18, 0.03, "#2a2228", [LAMP[0], 0.015, LAMP[1]], [0, 0, 0], 10);
+  G.cyl(0.16, 0.24, 0.3, "#ffd9a6", [LAMP[0], 1.66, LAMP[1]], [0, 0, 0], 12);
+  const BEAN = { x: -4.5, z: -3.25 };
+  S.sph(0.42, "#5a7a8c", [BEAN.x, 0.25, BEAN.z], 10, [1, 0.62, 1]);
+  /* skænk mod bagvæggen med to skuffer (station for brugseksperimentet), tv over den, konsol og højttaler */
+  const SB = { x: -3.3, z: ZB + 0.3 };
+  S.box(2.0, 0.6, 0.48, "#8b6a4e", [SB.x, 0.3, SB.z]);
+  S.box(2.06, 0.04, 0.52, "#6d523c", [SB.x, 0.62, SB.z]);
+  for (const dx of [-0.5, 0.5]) { S.box(0.94, 0.26, 0.02, "#7a5c44", [SB.x + dx, 0.17, SB.z + 0.245]); S.box(0.14, 0.025, 0.03, "#d6c3a6", [SB.x + dx, 0.17, SB.z + 0.265]); }
+  S.box(1.8, 1.02, 0.06, "#0d0d12", [SB.x, 1.55, ZB + 0.04]);                          // tv
+  S.box(0.36, 0.07, 0.3, "#16161c", [SB.x - 0.55, 0.675, SB.z]);                        // spillekonsol
+  G.box(0.06, 0.012, 0.01, "#9fe3a0", [SB.x - 0.55, 0.675, SB.z + 0.155]);
+  const SPK = { x: SB.x + 0.75, y: 0.64, z: SB.z };
+  const SB_DRAWER = { x: SB.x + 0.5, y: 0.47, z: SB.z + 0.24 };                         // den øverste skuffe til højre
+  S.box(0.94, 0.2, 0.02, "#7a5c44", [SB.x - 0.5, 0.45, SB.z + 0.245]); S.box(0.14, 0.025, 0.03, "#d6c3a6", [SB.x - 0.5, 0.45, SB.z + 0.265]);
+  // billeder på bagvæggen (farvefelter) mellem skænk og entré
+  S.box(0.5, 0.66, 0.03, "#2f2730", [-1.7, 1.75, ZB + 0.02]); G.box(0.42, 0.58, 0.02, "#c47a6a", [-1.7, 1.75, ZB + 0.04]);
+  S.box(0.4, 0.4, 0.03, "#2f2730", [-6.0, 1.9, ZB + 0.02]); G.box(0.32, 0.32, 0.02, "#7a8cc4", [-6.0, 1.9, ZB + 0.04]);
   // reol og plante (venstre væg, forrest)
-  S.box(0.4, 2.0, 1.6, "#4a3a40", [-W + 0.22, 1.0, 1.8]);
+  S.box(0.4, 2.0, 1.6, "#4a3a40", [-W + 0.22, 1.0, 1.4]);
   for (let y = 0.35; y < 1.95; y += 0.45) {
-    S.box(0.36, 0.03, 1.5, "#5c4850", [-W + 0.24, y, 1.8]);
-    for (let i = 0; i < 9; i++) if ((i * 7 + Math.round(y * 13)) % 5 > 1) S.box(0.24, 0.28 + ((i * 3) % 4) * 0.025, 0.07, ["#c96a7e", "#e7d7c1", "#6c8aa8", "#d7a35c", "#8e6c8a"][(i + Math.round(y * 10)) % 5], [-W + 0.26, y + 0.17, 1.15 + i * 0.16]);
+    S.box(0.36, 0.03, 1.5, "#5c4850", [-W + 0.24, y, 1.4]);
+    for (let i = 0; i < 9; i++) if ((i * 7 + Math.round(y * 13)) % 5 > 1) S.box(0.24, 0.28 + ((i * 3) % 4) * 0.025, 0.07, ["#c96a7e", "#e7d7c1", "#6c8aa8", "#d7a35c", "#8e6c8a"][(i + Math.round(y * 10)) % 5], [-W + 0.26, y + 0.17, 0.75 + i * 0.16]);
   }
-  S.cyl(0.14, 0.1, 0.26, "#c9a487", [-W + 0.5, 0.13, 0.55], [0, 0, 0], 8);
-  for (let i = 0; i < 8; i++) S.box(0.07, 0.65, 0.02, "#4e7a54", [-W + 0.5 + Math.sin(i) * 0.07, 0.52, 0.55 + Math.cos(i) * 0.07], [Math.sin(i * 2) * 25, i * 45, Math.cos(i * 3) * 25]);
+  S.cyl(0.14, 0.1, 0.26, "#c9a487", [-W + 0.5, 0.13, 2.55], [0, 0, 0], 8);
+  for (let i = 0; i < 8; i++) S.box(0.07, 0.65, 0.02, "#4e7a54", [-W + 0.5 + Math.sin(i) * 0.07, 0.52, 2.55 + Math.cos(i) * 0.07], [Math.sin(i * 2) * 25, i * 45, Math.cos(i * 3) * 25]);
 
   /* køkken (højre side): skabe langs højre væg og bagvæg, ø med barstole, pendler */
   S.box(0.62, 0.9, 3.4, "#d9cfc8", [W - 0.32, 0.45, -3.0]);
@@ -162,10 +156,10 @@ export default function build(ctx) {
 
   // tv-billede og lys
   const tvTex = K.canvasTexture(256, 144, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, "#3a4f9a"); gr.addColorStop(1, "#c25a86"); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.fillStyle = "rgba(255,255,255,0.85)"; g.beginPath(); g.arc(70, 72, 26, 0, 7); g.fill(); g.fillStyle = "rgba(255,230,140,0.9)"; g.fillRect(130, 50, 80, 14); g.fillRect(130, 80, 56, 14); });
-  const tvScreen = quad(1.65, 0.92, basic({ map: tvTex })); tvScreen.rotation.y = 90 * D; tvScreen.position.set(-W + 0.085, 1.45, TV.z); addObj(tvScreen);
-  addObj(new THREE.PointLight("#ffcf9a", 8, 8, 1.4), root, `${SOF.x + 0.2} 2.0 ${SOF.z - 1.75}`);
+  const tvScreen = quad(1.7, 0.92, basic({ map: tvTex })); tvScreen.position.set(SB.x, 1.55, ZB + 0.075); addObj(tvScreen);
+  addObj(new THREE.PointLight("#ffcf9a", 8, 8, 1.4), root, `${LAMP[0] + 0.3} 2.0 ${LAMP[1]}`);
   addObj(new THREE.PointLight("#ffd9b0", 6, 7, 1.4), root, `${ISL.x} 2.0 ${ISL.z + 0.5}`);
-  for (const [x, z, sz, c, o] of [[SOF.x + 0.2, SOF.z - 1.75, 4.0, "#ffcf9a", 0.45], [ISL.x, ISL.z, 3.2, "#ffe2b8", 0.45], [-W + 1.2, TV.z, 2.8, "#8fa6ff", 0.4]]) {
+  for (const [x, z, sz, c, o] of [[LAMP[0] + 0.4, LAMP[1], 4.0, "#ffcf9a", 0.45], [ISL.x, ISL.z, 3.2, "#ffe2b8", 0.45], [SB.x, ZB + 1.3, 2.8, "#8fa6ff", 0.4]]) {
     const p = quad(sz, sz, basic({ map: K.glowTex(c), blending: THREE.AdditiveBlending, opacity: o })); p.rotation.x = -90 * D; p.position.set(x, 0.025, z); addObj(p);
   }
 
@@ -220,17 +214,17 @@ export default function build(ctx) {
      hvor tingen ligger, feltets placering, og hvad de gør i brugseksperimentet (c1-3). */
   const fam = [
     { who: "Mor", use: "beskeder, bank og kalender", kind: "phone", h: 1.7,
-      from: [DOOR.x, ZB + 0.2, 0, false], at: [DOOR.x - 0.9, ZB + 1.4, 25, false], home: null, label: [DOOR.x - 0.9, 2.25, ZB + 1.4],
-      off: [TB.x, TB.z - 1.0, 0, false] },
+      from: [DOOR.x, ZB + 0.2, 0, false], at: [DOOR.x - 0.7, ZB + 1.6, 30, false], home: null, label: [DOOR.x - 0.7, 2.3, ZB + 1.6],
+      off: [TB.x + 0.75, TB.z + 0.2, -100, false] },
     { who: "Far", use: "opskrifter og nyheder", kind: "tablet", h: 1.82,
       from: [W - 1.2, ZB + 1.0, -90, false], at: [ISL.x, ISL.z - 0.75, 0, false], home: [ISL.x + 0.25, 0.98, ISL.z - 0.1, -90, 0], label: [ISL.x, 2.45, ISL.z - 0.75],
-      off: [ISL.x - 1.1, ISL.z - 0.2, -70, false] },
+      off: [ISL.x - 1.3, ISL.z - 0.4, -80, false] },
     { who: "Storesøster", use: "klassechat og video", kind: "phone", h: 1.6,
-      from: [-1.6, 1.2, -120, false], at: [SOF.x, SOF.z + 0.6, -90, true], home: [TB.x + 0.1, 0.44, TB.z + 0.3, -90, 0], label: [SOF.x, 1.95, SOF.z + 0.75],
-      off: [SOF.x, SOF.z + 0.6, -90, true] },
+      from: [-2.2, 1.6, -120, false], at: [SOF.x + 0.05, SOF.z + 0.6, 90, true], home: [TB.x + 0.1, 0.44, TB.z + 0.3, -90, 0], label: [SOF.x + 0.1, 1.95, SOF.z + 0.6],
+      off: [SOF.x + 0.05, SOF.z + 0.6, 90, true] },
     { who: "Lillebror", use: "spil med venner", kind: "pad", h: 1.25,
-      from: [-1.4, -3.4, -110, false], at: [SOF.x, SOF.z - 0.6, -90, true], home: [-W + 0.35, 0.5, TV.z + 0.35, -90, 90], label: [SOF.x, 1.6, SOF.z - 0.8],
-      off: [SOF.x, SOF.z - 0.6, -60, true] },
+      from: [-2.0, -1.4, -120, false], at: [BEAN.x, BEAN.z, 160, true], home: [SB.x - 0.25, 0.66, SB.z + 0.05, -90, 0], label: [BEAN.x, 1.6, BEAN.z + 0.1],
+      off: [BEAN.x, BEAN.z, 30, true] },
   ];
   const fieldTex = (who, use) => K.canvasTexture(640, 170, (g, w, h) => {
     g.fillStyle = "rgba(24,14,22,0.9)"; K.roundRect(g, 4, 4, w - 8, h - 8, 28); g.fill(); g.strokeStyle = "rgba(232,99,140,0.9)"; g.lineWidth = 5; g.stroke();
@@ -238,22 +232,22 @@ export default function build(ctx) {
     g.fillStyle = "#ecd9e1"; g.font = BODY(500, 42); g.fillText(use, 32, 122);
   });
   const fields = [];
-  const FIELD_EYE = [0.6, 1.6, 4.0];   // felterne drejes mod overbliksviewet
+  const FIELD_EYE = [0.9, 1.6, 3.2];   // felterne drejes mod overbliksviewet
   function addField(who, use, pos) {
-    const q = quad(1.2, 0.32, basic({ map: fieldTex(who, use), side: THREE.DoubleSide }));
+    const q = quad(1.1, 0.29, basic({ map: fieldTex(who, use), side: THREE.DoubleSide }));
     q.position.set(...pos); q.lookAt(FIELD_EYE[0], pos[1], FIELD_EYE[2]); addObj(q); fields.push(q); return q;
   }
-  addField("Hele familien", "musik, timer og indkøb", [SPK.x + 0.1, 1.45, SPK.z]);
+  addField("Hele familien", "musik, timer og indkøb", [SPK.x + 0.55, 2.35, SPK.z + 0.1]);
   for (const m of fam) { m.fig = makeFigure(m.h); addObj(m.fig.f); m.dev = makeDevice(m.kind); addObj(m.dev); m.field = addField(m.who, m.use, m.label); }
 
   /* ---------- c1-0: intro, overblik over stuen ---------- */
-  const st0 = kit.grp(root, `${-0.6} 0 ${-1.0}`);
+  const st0 = kit.grp(root, `${-1.2} 0 ${-1.2}`);
   kit.box(st0, "0 0.5 0", 1.2, 1.0, 1.2, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c1-0", st0);
-  ctx.view("c1-0", { position: [0.6, 0, 4.0], lookAt: [-0.5, 1.3, -2.0] });
+  ctx.view("c1-0", { position: [0.9, 0, 3.2], lookAt: [-1.4, 1.2, -3.0] });
 
   /* ---------- c1-1: døgnurskiven ---------- */
-  const DIAL = { x: -3.4, z: 3.2, r: 1.35 };
+  const DIAL = { x: -3.6, z: 4.3, r: 1.35 };
   const dialG = new THREE.Group(); dialG.position.set(DIAL.x, 0, DIAL.z);
   const dialTilt = new THREE.Group(); dialTilt.position.y = 0.2; dialTilt.rotation.x = 18 * D; dialG.add(dialTilt);
   const dialTex = K.canvasTexture(1024, 1024, (g, w) => {
@@ -313,8 +307,8 @@ export default function build(ctx) {
   const st1 = kit.grp(root, `${DIAL.x} 0 ${DIAL.z}`);
   kit.cyl(st1, "0 0.12 0", DIAL.r, 0.24, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c1-1", st1);
-  const s11 = ctx.sign(ctx.step("c1-1").title, { position: `${DIAL.x + 0.4} 2.1 ${DIAL.z - 1.7}`, width: 2.1 });
-  ctx.view("c1-1", { position: [DIAL.x + 0.5, 0, DIAL.z + 3.6], lookAt: [DIAL.x + 0.5, 0.25, DIAL.z] });
+  const s11 = ctx.sign(ctx.step("c1-1").title, { position: `${DIAL.x + 0.55} 1.95 ${DIAL.z - 1.55}`, width: 1.9 });
+  ctx.view("c1-1", { position: [DIAL.x + 0.55, 0, DIAL.z + 3.05], lookAt: [DIAL.x + 0.55, 0.7, DIAL.z - 0.4] });
 
   /* ---------- c1-2: tre lag over telefonen (mod højre væg) ---------- */
   const LY = { x: 4.4, z: 2.9 };
@@ -364,18 +358,18 @@ export default function build(ctx) {
   ctx.view("c1-2", { position: [LY.x - 2.5, 0, LY.z], lookAt: [LY.x, 1.5, LY.z] });
 
   /* ---------- c1-3: skuffen ---------- */
-  const drawer = new THREE.Group(); drawer.rotation.y = 90 * D; drawer.position.set(SB.x + 0.24, 0.58, SB.z - 0.44);
+  const drawer = new THREE.Group(); drawer.position.set(SB_DRAWER.x, SB_DRAWER.y, SB_DRAWER.z);
   {
     const B = batch();
-    B.box(0.84, 0.3, 0.03, "#8a6a52", [0, 0, 0]);
-    B.box(0.8, 0.02, 0.42, "#5c4432", [0, -0.13, -0.21]);
-    B.box(0.02, 0.24, 0.42, "#5c4432", [-0.39, -0.03, -0.21]); B.box(0.02, 0.24, 0.42, "#5c4432", [0.39, -0.03, -0.21]);
-    B.box(0.12, 0.025, 0.03, "#e6d3b6", [0, 0, 0.025]);
+    B.box(0.94, 0.2, 0.03, "#8a6a52", [0, 0, 0]);
+    B.box(0.9, 0.02, 0.42, "#5c4432", [0, -0.09, -0.21]);
+    B.box(0.02, 0.16, 0.42, "#5c4432", [-0.44, -0.02, -0.21]); B.box(0.02, 0.16, 0.42, "#5c4432", [0.44, -0.02, -0.21]);
+    B.box(0.14, 0.025, 0.03, "#e6d3b6", [0, 0, 0.025]);
     drawer.add(B.build(litMat));
   }
   addObj(drawer);
   // dagbogen på skænken
-  const diary = new THREE.Group(); diary.position.set(SB.x + 0.02, 0.835, SB.z + 0.25); diary.rotation.y = 75 * D;
+  const diary = new THREE.Group(); diary.position.set(SB.x + 0.15, 0.655, SB.z + 0.02); diary.rotation.y = -10 * D;
   {
     const B = batch(); B.box(0.32, 0.025, 0.23, "#a65e6e", [0, 0, 0]); B.box(0.3, 0.012, 0.21, "#f2ebe1", [0, 0.018, 0]); diary.add(B.build(litMat));
     const ln = quad(0.26, 0.17, basic({ map: K.canvasTexture(256, 170, (g, w, h) => { g.strokeStyle = "rgba(60,60,90,0.55)"; g.lineWidth = 3; for (let y = 22; y < h; y += 22) { g.beginPath(); g.moveTo(10, y); g.lineTo(w - 10 - (y * 7) % 60, y); g.stroke(); } }) }));
@@ -389,12 +383,12 @@ export default function build(ctx) {
   for (let i = 0; i < 8; i++) { pieces.setMatrixAt(i, new THREE.Matrix4().makeTranslation(TB.x - 0.17 + (i % 4) * 0.11, 0.455, TB.z + (i < 4 ? -0.17 : 0.17))); pieces.setColorAt(i, new THREE.Color(i < 4 ? ROSE : "#2a1f2e")); }
   addObj(pieces);
   // ringe, der breder sig ud fra skuffen: eksperimentet mærkes i hele stuen
-  const ripples = [0, 1, 2].map(() => { const r = new THREE.Mesh(new THREE.RingGeometry(0.95, 1.0, 48), basic({ color: ROSE, opacity: 0, side: THREE.DoubleSide })); r.rotation.x = -90 * D; r.position.set(SB.x + 0.4, 0.03, SB.z - 0.44); addObj(r); return r; });
-  const st3 = kit.grp(root, `${SB.x + 0.5} 0 ${SB.z}`);
-  kit.box(st3, "-0.5 0.45 0", 0.6, 0.9, 1.9, "opacity: 0; transparent: true; depthWrite: false");
+  const ripples = [0, 1, 2].map(() => { const r = new THREE.Mesh(new THREE.RingGeometry(0.95, 1.0, 48), basic({ color: ROSE, opacity: 0, side: THREE.DoubleSide })); r.rotation.x = -90 * D; r.position.set(SB_DRAWER.x, 0.03, SB.z + 0.5); addObj(r); return r; });
+  const st3 = kit.grp(root, `${SB.x} 0 ${SB.z + 0.7}`);
+  kit.box(st3, "0 0.35 -0.7", 2.0, 0.7, 0.6, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c1-3", st3);
-  const s13 = ctx.sign(ctx.step("c1-3").title, { position: `${SB.x - 0.2} 2.35 ${SB.z - 1.25}`, width: 1.8, rotation: "0 50 0" });
-  ctx.view("c1-3", { position: [0.6, 0, 1.5], lookAt: [-2.4, 0.9, -1.7] });
+  const s13 = ctx.sign(ctx.step("c1-3").title, { position: `${SB.x} 2.6 ${ZB + 0.2}`, width: 1.9 });
+  ctx.view("c1-3", { position: [-0.4, 0, 0.9], lookAt: [-3.3, 0.9, -4.2] });
 
   /* ---------- Tilstand og animation ---------- */
   let cur = null, t0 = null;
@@ -461,7 +455,7 @@ export default function build(ctx) {
         if (cur === "c1-3") {
           if (m.who === "Storesøster") {
             // hun rejser sig, går rundt om skænken, lægger telefonen i skuffen og går tilbage til sofaen
-            const path = [[ax, az], [ax, SOF.z + 1.55], [SB.x + 0.85, SOF.z + 1.55], [SB.x + 0.8, SB.z - 0.44]];
+            const path = [[ax, az], [SOF.x + 0.75, SOF.z + 1.1], [-3.3, SOF.z + 1.1], [SB_DRAWER.x, -2.6], [SB_DRAWER.x, SB.z + 0.75]];
             const out = walkPath(path, e - 0.3, 1.1); out.end = 0.3 + out.dur;   // ud til skuffen
             const put = ease((e - out.end - 0.2) / 1.0);
             const home = walkPath(path.slice().reverse(), e - out.end - 1.5, 1.1); home.end = out.end + 1.5 + home.dur;
@@ -469,14 +463,14 @@ export default function build(ctx) {
             const moving = p.moving;
             const seated = e < 0.3 || home.done;
             let yaw = e < 0.3 ? ay : p.yaw;
-            if (out.done && home.t <= 0) yaw = -90;
+            if (out.done && home.t <= 0) yaw = 180;
             if (home.done) yaw = ay;
             pose(m, p.x, p.z, yaw, seated, home.t > 0 ? 6 : lerp(28, 6, put), home.t > 0 ? false : put < 0.6, 1 - put, moving ? Math.abs(Math.sin(e * 7)) * 0.025 : 0);
             m.fig.f.updateMatrixWorld(true); m.fig.hand.getWorldPosition(tmpV);
-            const dx = SB.x + 0.42, dy = 0.6, dz = SB.z - 0.44;
+            const dx = SB_DRAWER.x, dy = 0.5, dz = SB.z + 0.3;
             m.dev.visible = put < 0.98 && home.t <= 0;
             m.dev.position.set(lerp(tmpV.x, dx, put), lerp(tmpV.y, dy, put) + Math.sin(put * Math.PI) * 0.12, lerp(tmpV.z, dz, put));
-            m.dev.rotation.set(lerp(-50 * D, -90 * D, put), -90 * D, 0, "YXZ");
+            m.dev.rotation.set(lerp(-50 * D, -90 * D, put), Math.PI, 0, "YXZ");
             devOn(m, put < 0.9);
             drawerOpen = ease((e - out.end + 0.4) / 0.5) * (1 - ease((e - out.end - 1.2) / 0.5));
             if (home.done) { pose(m, ax, az, ay, true, lerp(6, 14, ease((e - home.end) / 2)), false, 0); }
@@ -498,7 +492,7 @@ export default function build(ctx) {
       });
       speaker.userData.scr.material.color.set(ROSE).multiplyScalar(0.55 + 0.45 * Math.sin(s * 3));
       tvScreen.material.opacity = cur === "c1-3" ? 1 - 0.7 * ease((e - 5) / 2) : 1;
-      fields.forEach(q => { q.material.opacity = cur === "c1-0" ? 1 : cur === "c1-3" ? 0.25 : 0.5; });
+      fields.forEach(q => { q.material.opacity = cur === "c1-0" ? 1 : cur === "c1-3" ? 0 : 0.4; q.visible = cur !== "c1-3"; });
 
       /* døgnurskiven */
       const D1 = cur === "c1-1";
@@ -513,7 +507,7 @@ export default function build(ctx) {
         dots.setMatrixAt(i, M); if (hours >= hh) cnt[cat]++;
       });
       dots.instanceMatrix.needsUpdate = true;
-      bins.forEach((b, i) => { const target = (D1 ? cnt[i] : b.n) * 0.07; b.bar.scale.y = Math.max(0.001, lerp(b.bar.scale.y, target, 0.15)); });
+      bins.forEach((b, i) => { const target = (D1 ? cnt[i] : b.n) * 0.075; b.bar.scale.y = Math.max(0.001, lerp(b.bar.scale.y, target, 0.15)); });
       dialDisc.material.color.setScalar(D1 ? 1 : 0.75);
       legend.material.opacity = D1 ? 1 : 0.55;
 
@@ -530,7 +524,7 @@ export default function build(ctx) {
 
       /* skuffen og ringene */
       const C3 = cur === "c1-3";
-      drawer.position.x = SB.x + 0.24 + (C3 ? drawerOpen : 0) * 0.34;
+      drawer.position.z = SB_DRAWER.z + (C3 ? drawerOpen : 0) * 0.34;
       board.material.opacity = C3 ? ease((e - 7.0) / 1.2) : 0;
       pieces.visible = C3 && e > 7.5;
       ripples.forEach((r, i) => {

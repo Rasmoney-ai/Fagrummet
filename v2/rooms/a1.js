@@ -81,13 +81,13 @@ export default function build(ctx) {
   }
   // venstre bue (design): stram, lige linje med jævne streger. Højre bue (åbne tilgange): løs, prikket og snoet.
   const designTex = T.canvas(1024, 64, (g, w, h) => {
-    g.fillStyle = A; g.fillRect(0, 24, w, 16);
-    for (let x = 0; x <= w; x += 64) g.fillRect(x, 8, 6, 48);
+    g.fillStyle = A; g.fillRect(0, 22, w, 20);
+    for (let x = 0; x <= w; x += 64) g.fillRect(x, 4, 8, 56);
   });
   const aabenTex = T.canvas(1024, 64, (g, w, h) => {
-    g.fillStyle = A; g.strokeStyle = A; g.lineWidth = 7; g.lineCap = "round";
+    g.fillStyle = A; g.strokeStyle = A; g.lineWidth = 11; g.lineCap = "round";
     g.beginPath(); for (let x = 0; x <= w; x += 4) { const y = 32 + Math.sin(x / 28) * 16 * Math.min(1, x / 200); x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke();
-    for (let x = 30; x < w; x += 46) { g.beginPath(); g.arc(x, 32 + Math.cos(x / 9) * 22, 4, 0, 7); g.fill(); }
+    for (let x = 30; x < w; x += 46) { g.beginPath(); g.arc(x, 32 + Math.cos(x / 9) * 22, 6, 0, 7); g.fill(); }
   });
   const buer = [
     { geo: bue(196, 92, RB - 0.17, RB + 0.17, 48), tex: designTex },
@@ -108,12 +108,13 @@ export default function build(ctx) {
     for (const sx of [-0.95, 0.95]) S.box("#11131c", [x + Math.cos(yaw * D) * sx, (H + 3.8) / 2, z - Math.sin(yaw * D) * sx], [0.012, H - 3.8, 0.012]);
     return ctx.sign(polTekst[i][0], { parent: g, sub: polTekst[i][1], position: "0 3.45 0", width: 2.3, size: 82 });
   });
-  // små markeringer på skalaen, hvor stationerne står
   /* ---------- Stationerne ---------- */
   const STATION = [
     { id: "a1-1", ang: 166 }, { id: "a1-2", ang: 123 }, { id: "a1-3", ang: 57 }, { id: "a1-4", ang: 14 },
   ];
   const stationer = {};
+  // små lysende markeringer på skalaen ud for hver station
+  STATION.forEach(st => { const a = st.ang * D; L.cyl(A, [CEN[0] + Math.cos(a) * RB, 0.02, CEN[1] - Math.sin(a) * RB], 0.11, 0.02, null, 16); });
   const poolTex = T.glow(A);
   STATION.forEach(st => {
     const a = st.ang * D;
@@ -143,7 +144,7 @@ export default function build(ctx) {
     const poolMat = T.hold(new THREE.MeshBasicMaterial({ map: poolTex, transparent: true, opacity: 0.2, depthWrite: false, blending: THREE.AdditiveBlending }));
     T.mesh(g, pg, poolMat, "0 0.935 0");
     ctx.station(st.id, g);
-    ctx.sign(ctx.step(st.id).title, { parent: g, position: "0 1.9 -0.55", width: 1.6, size: 72 });
+    ctx.sign(ctx.step(st.id).title, { parent: g, position: "0 2.08 -0.5", width: 1.6, size: 72 });
     // view: halvanden meter foran bordet, mod centrum
     const vx = x + dx / len * 1.55, vz = z + dz / len * 1.55;
     ctx.view(st.id, { position: [vx, 0, vz], lookAt: [x, 1.15, z] });
@@ -196,7 +197,7 @@ export default function build(ctx) {
   ctx.sign(ctx.room.name, { sub: ctx.room.sub, position: `0 3.75 ${Z0 + 0.08}`, width: 3.2 });
   const erk = T.erkendeformer(ctx.root, `2.6 3.75 ${Z0 + 0.1}`);
 
-  ctx.view("a1-0", { position: [0, 0, 3.9], lookAt: [0, 0.55, -3.2] });
+  ctx.view("a1-0", { position: [0, 0, 2.6], lookAt: [0, 0.55, -3.6] });
 
   /* ---------- Trin og animation ---------- */
   let aktiv = null, t0 = 0, tNu = 0;
@@ -211,7 +212,7 @@ export default function build(ctx) {
       const fase = intro ? Math.floor(s / 2.6) % 2 : -1;
       const blødt = intro ? Math.min(1, (s % 2.6) / 0.5) : 1;
       buer.forEach((m, i) => { m.opacity = intro ? (i === fase ? lerp(0.5, 1, blødt) : 0.4) : 0.55; });
-      polSkilte.forEach((p, i) => { const mm = p.getObject3D("mesh"); if (mm) mm.material.opacity = intro ? (i === fase ? 1 : 0.45) : 0.8; });
+      polSkilte.forEach((p, i) => { const mm = p.getObject3D("mesh"); if (mm) mm.material.opacity = intro ? (i === fase ? 1 : 0.7) : 0.9; });
       STATION.forEach((st, i) => {
         const o = stationer[st.id];
         const gruppe = i < 2 ? 0 : 1;
@@ -501,7 +502,7 @@ export default function build(ctx) {
   function lampeStation(g0) {
     const Y = 0.93;
     // modellen bygges i 1,35 gange størrelse omkring bordpladens midte
-    const g = kit.grp(g0, `0 ${Y - Y * 1.35} 0`, { scale: "1.35 1.35 1.35" });
+    const g = kit.grp(g0, `0 ${Y - Y * 1.25} 0`, { scale: "1.25 1.25 1.25" });
     const B = new Batch();
     // lampe: tung fod, slank stang, opal kuppel; en lille sensor i foden
     B.cyl("#2b2f40", [-0.32, Y + 0.02, -0.02], 0.14, 0.04, null, 18);

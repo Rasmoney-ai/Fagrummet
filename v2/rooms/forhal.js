@@ -154,15 +154,16 @@ export default function build(ctx) {
   /* ---------- Stationer: lave stelæer lidt til siden for blikket, så kernen er fri ---------- */
   // phi: retning fra kernen til brugeren; vr: brugerens afstand; side: stelens side (+1 = højre); out: kigger udad (F6)
   const ST = {
-    f1: { phi: 0, vr: 4.9, side: 1 },
-    f2: { phi: -40, vr: 4.7, side: 1 },
-    f3: { phi: 40, vr: 4.9, side: 1, off: 1.45 },
-    f4: { phi: -92, vr: 4.9, side: 1, off: 1.45 },
-    f5: { phi: 100, vr: 4.8, side: -1, off: 1.45 },
-    f6: { phi: 180, vr: 0.9, side: 1, out: true, dist: 1.5, off: 1.0 },
+    f1: { phi: 0, vr: 5.0 },
+    f2: { phi: -50, vr: 4.9 },
+    f3: { phi: 50, vr: 5.0 },
+    f4: { phi: -110, vr: 5.0 },
+    f5: { phi: 110, vr: 4.9 },
+    f6: { phi: 180, vr: 0.9, out: true },
   };
+  const STELE_R = 3.15;                       // stelerne står i en ring lige uden for podiet
   const steleGeo = (() => {
-    const parts = [[0.42, 0.05, 0.3, 0, 0.025, 0], [0.16, 1.0, 0.1, 0, 0.55, -0.02], [0.3, 0.04, 0.16, 0, 0.06, 0]];
+    const parts = [[0.42, 0.05, 0.3, 0, 0.025, 0], [0.16, 0.74, 0.1, 0, 0.42, -0.02], [0.3, 0.04, 0.16, 0, 0.06, 0]];
     return mergeBoxes(parts);
   })();
   const steleMat = std("#262d55", { roughness: 0.45, metalness: 0.35 });
@@ -174,14 +175,11 @@ export default function build(ctx) {
   for (const s of ctx.steps) {
     const cfg = ST[s.id]; if (!cfg) continue;
     const [vx, vz] = polar(cfg.phi, cfg.vr);
-    const fwd = cfg.out ? polar(cfg.phi, 1) : polar(cfg.phi + 180, 1);          // blikretning
-    const rgt = [-fwd[1], fwd[0]];                                              // højre for blikket
-    const dist = cfg.dist ?? 1.9, off = cfg.off ?? 1.3;
-    const x = vx + fwd[0] * dist + rgt[0] * off * cfg.side, z = vz + fwd[1] * dist + rgt[1] * off * cfg.side;
-    const face = Math.atan2(vx - x, vz - z) / D2R;                              // stelen vender mod brugeren
+    const [x, z] = polar(cfg.phi, STELE_R);
+    const face = cfg.out ? cfg.phi + 180 : cfg.phi;                             // stelen vender mod brugeren
     const g = kit.grp(root, `${x} 0 ${z}`, { rotation: `0 ${face} 0` });
     const hm = new THREE.Group(); hm.add(new THREE.Mesh(steleGeo, steleMat), new THREE.Mesh(capGeo, capMat)); g.object3D.add(hm);
-    const sg = kit.grp(g, "0 1.2 0.02", { rotation: "-18 0 0" });
+    const sg = kit.grp(g, "0 0.9 0.02", { rotation: "-24 0 0" });
     ctx.sign(s.title, { parent: sg, position: "0 0 0.006", width: 0.92, color: C.core, size: 74 });
     sg.object3D.add(new THREE.Mesh(backGeo, steleMat));      // bagplade, så skiltet ikke ses spejlvendt bagfra
     ctx.station(s.id, g);
@@ -210,7 +208,7 @@ export default function build(ctx) {
   }
   const f2 = ST.f2, right = phi => [Math.cos(phi * D2R), -Math.sin(phi * D2R)];
   const words = [["med", "udtrykke sig med teknologierne", -1], ["om", "udtrykke sig om teknologierne", 1]].map(([w, sub, side]) => {
-    const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.7, 0.85)), label(wordTex(w, sub)));
+    const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.7, 0.85)), label(wordTex(w, sub), { side: THREE.FrontSide }));
     const [rx, rz] = right(f2.phi), [fx, fz] = polar(f2.phi, 0.7);
     m.position.set(rx * side * 1.75 + fx, CORE_Y + 0.05, rz * side * 1.75 + fz); m.rotation.y = f2.phi * D2R; m.renderOrder = 20; add(m);
     return { m, side };
@@ -263,9 +261,9 @@ export default function build(ctx) {
     const mat = std(col, { roughness: 0.4, emissive: new THREE.Color(col), emissiveIntensity: 0.3, flatShading: false });
     const mesh = new THREE.Mesh(geo, mat); add(mesh);
     // navn ved rodens fod, stående, vendt mod F3-stationen
-    const [bx, bz] = [Math.sin(a0) * 2.6, Math.cos(a0) * 2.6];
-    const lbl = new THREE.Mesh(keep(new THREE.PlaneGeometry(0.9, 0.193)), label(keep(K.labelTex(name, col, { w: 1024, h: 220, size: 70, bg: true, weight: 700 }))));
-    lbl.position.set(bx, 0.36, bz); lbl.renderOrder = 15;
+    const [bx, bz] = [Math.sin(a0) * 2.25, Math.cos(a0) * 2.25];
+    const lbl = new THREE.Mesh(keep(new THREE.PlaneGeometry(0.78, 0.168)), label(keep(K.labelTex(name, col, { w: 1024, h: 220, size: 70, bg: true, weight: 700 }))));
+    lbl.position.set(bx, 0.24, bz); lbl.renderOrder = 15;
     const [vx, vz] = polar(ST.f3.phi, ST.f3.vr); lbl.rotation.y = Math.atan2(vx - bx, vz - bz);
     add(lbl);
     return { mesh, geo, mat, lbl, count: geo.index.count };
@@ -452,7 +450,7 @@ export default function build(ctx) {
   const tmpQ = new THREE.Quaternion(), tmpV = new THREE.Vector3(), spinQ = new THREE.Quaternion();
   function tick(t, dt) {
     if (!step) return;
-    dt = Math.min(dt, 60);
+    dt = Math.min(dt, 250);
     const el = now() - stepAt;
     for (const k of Object.keys(T)) if (k !== "rootGrow") S[k] = approach(S[k], T[k], dt, 3.5);
     // kernen
@@ -501,7 +499,7 @@ export default function build(ctx) {
     facetMat.emissiveIntensity = 0.15 + k * 0.55;
     // F5/F6: erkendeformernes tegn kredser
     const big = ease(S.iconBig);
-    const R = 1.15 + 0.75 * big, size = 0.36 + 0.66 * big, lift = (1 - big) * 1.05;
+    const R = 1.15 + 0.75 * big, size = 0.4 + 0.58 * big, lift = (1 - big) * 1.05;
     ICONS.forEach(({ s, mat, ph }) => {
       const a = ph + t * 0.00024;
       // banen hælder, så det tegn, der er bag kernen, går hen over den
@@ -510,10 +508,10 @@ export default function build(ctx) {
     });
     orbit.scale.setScalar(R / 1.75); orbitTilt.position.y = lift; orbit.rotation.x = Math.PI / 2 + Math.atan2(0.75 * big, R); orbitMat.opacity = S.icons * (0.12 + 0.4 * big); orbit.visible = S.icons > 0.01;
     // F6: portene åbner sig én ad gangen
-    const keys = ["hal-a", "hal-b", "hal-c"];
+    const keys = ["hal-a", "hal-b", "hal-c"], GATE_AT = [1600, 5600, 10400];
     keys.forEach((key, i) => {
       const gt = gates[key];
-      const tgt = step === "f6" ? ease((el - 300 - i * 700) / 700) : 0;
+      const tgt = step === "f6" ? ease((el - GATE_AT[i]) / 900) : 0;   // åbner, når porten nævnes i speaken
       gt.open = step === "f6" ? tgt : approach(gt.open, 0, dt, 5);
       const o = gt.open;
       gt.leaves.forEach(({ hinge, s }) => { hinge.rotation.y = s * -o * 1.75; });
