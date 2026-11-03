@@ -137,12 +137,12 @@ export default function build(ctx) {
     [[900, 180 + DH], [900, 520 - BH2]],                     // nej: mål regn
     [[900 + BW2, 520], [1320 - DW2, 520]],                   // → regner det?
     [[1320 + DW2, 520], [1740 - BW2, 520]],                  // ja: dage + 1
-    [[1740, 520 + BH2], [1740, 800], [600, 800], [600, 180]],// tilbage til løkkens test
+    [[1740, 520 + BH2], [1740, 800], [705, 800], [705, 190]],// tilbage til løkkens test (ind på kanten før romben)
     [[1320, 520 + DH], [1320, 800]],                         // nej: direkte tilbage
   ];
-  const HEADS = [[345, 180, 0], [900 - DW2, 180, 0], [1320 - BW2, 180, 0], [1740 - BW2, 180, 0], [900, 520 - BH2, 90], [1320 - DW2, 520, 0], [1740 - BW2, 520, 0], [600, 330, -90], [1320, 790, 90]];
+  const HEADS = [[345, 180, 0], [900 - DW2, 180, 0], [1320 - BW2, 180, 0], [1740 - BW2, 180, 0], [900, 520 - BH2, 90], [1320 - DW2, 520, 0], [1740 - BW2, 520, 0], [705, 200, -90], [1320, 790, 90]];
   // tokenets rute gennem tre dage (regn, ingen regn) og ud af løkken
-  const ROUTE = [[170, 180], [900, 180], [900, 520], [1320, 520], [1740, 520], [1740, 800], [600, 800], [600, 180], [900, 180], [900, 520], [1320, 520], [1320, 800], [600, 800], [600, 180], [900, 180], [1740, 180]];
+  const ROUTE = [[170, 180], [900, 180], [900, 520], [1320, 520], [1740, 520], [1740, 800], [705, 800], [705, 180], [900, 180], [900, 520], [1320, 520], [1320, 800], [705, 800], [705, 180], [900, 180], [1740, 180]];
   const fdc = liveCanvas(FD.w, FD.h); fdc.key = "init";   // så første tegning (uden aktiv knude) ikke springes over
   function drawFlow(active) {
     if (fdc.key === active) return; fdc.key = active;
@@ -154,7 +154,7 @@ export default function build(ctx) {
     EDGES.forEach(pts => { g.beginPath(); g.moveTo(...pts[0]); pts.slice(1).forEach(p => g.lineTo(...p)); g.stroke(); });
     HEADS.forEach(([x, y, a]) => { g.save(); g.translate(x, y); g.rotate(a * Math.PI / 180); g.beginPath(); g.moveTo(0, 0); g.lineTo(-30, -17); g.lineTo(-30, 17); g.closePath(); g.fill(); g.restore(); });
     g.fillStyle = "#cfe9ff"; g.font = '700 44px "Familjen Grotesk", sans-serif'; g.textAlign = "center"; g.textBaseline = "middle";
-    g.fillText("ja", 1110, 145); g.fillText("nej", 945, 380); g.fillText("ja", 1530, 485); g.fillText("nej", 1370, 715);
+    g.fillText("ja", 1110, 145); g.fillText("nej", 950, 360); g.fillText("ja", 1530, 485); g.fillText("nej", 1375, 690);
     // knuder
     for (const n of NODES) {
       const on = n.id === active;

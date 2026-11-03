@@ -91,8 +91,8 @@ export default function build(ctx) {
   const FZ = -5.8;
   const bld = [
     { x0: -11, x1: -6.8, h: 6.6, c: "#272a40" },
-    { x0: -6.8, x1: -1.6, h: 5.0, c: "#3b2c3c" },   // hus med stuevindue og dør til Stuen
-    { x0: -1.6, x1: 2.4, h: 4.2, c: "#2e3446" },    // værksted: Bag skærmen
+    { x0: -6.8, x1: -1.6, h: 5.3, c: "#3b2c3c" },   // hus med stuevindue og dør til Stuen
+    { x0: -1.6, x1: 2.4, h: 5.3, c: "#2e3446" },    // værksted: Bag skærmen
     { x0: 2.4, x1: 7.4, h: 6.9, c: "#33354a" },     // forsamlingshus
     { x0: 7.4, x1: 11, h: 5.6, c: "#262a3d" },
   ];
@@ -379,7 +379,7 @@ export default function build(ctx) {
 
   /* ---------- Skilte og døre ---------- */
   // rummets skilt hænger over gaden mellem to wirer
-  const roomSign = ctx.sign(ctx.room.name, { position: "6.2 5.0 -0.8", width: 2.6, sub: ctx.room.sub, rotation: "0 -12 0" });
+  const roomSign = ctx.sign(ctx.room.name, { position: "6.6 5.6 -0.8", width: 2.4, sub: ctx.room.sub, rotation: "0 -12 0" });
   kit.link(root, [5.0, 5.4, -0.55], [2.4, 6.9, FZ - 0.1], 0.008, K.flat("#555a74"));
   kit.link(root, [7.4, 5.4, -1.05], [9.0, 4.2, 1.25], 0.008, K.flat("#555a74"));
 
@@ -405,7 +405,7 @@ export default function build(ctx) {
     const peek = quad(1.5, 2.4, new THREE.MeshBasicMaterial({ map: K.canvasTexture(200, 320, d.inner), fog: false }));
     peek.position.set(d.x, 1.25, FZ + 0.06); addObj(peek); doorPeeks.push(peek);
     // stor plade over døren (læses fra spawn)
-    const lab = quad(d.id === "c3" ? 2.9 : 2.4, (d.id === "c3" ? 2.9 : 2.4) * 0.2, basic({ map: doorLabelTex(ctx.rooms[d.id]), fog: false })); lab.position.set(d.x, 3.9, FZ + 0.12); addObj(lab);
+    const lab = quad(d.id === "c3" ? 2.9 : 2.4, (d.id === "c3" ? 2.9 : 2.4) * 0.2, basic({ map: doorLabelTex(ctx.rooms[d.id]), fog: false })); lab.position.set(d.x, 4.55, FZ + 0.12); addObj(lab);
   });
   // stuevinduet hører til Stuen: en rosa lysstribe forbinder vinduet med Stuen-døren
   { const B = batch(); B.box(Math.abs(SW.x - (-2.9)) + 0.3, 0.04, 0.04, ROSE, [(SW.x + -2.9) / 2 + 0.1, SW.y + SW.h / 2 + 0.16, FZ + 0.1]); addObj(B.build(glowMat)); }

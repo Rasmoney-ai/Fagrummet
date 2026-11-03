@@ -528,7 +528,7 @@ export default function build(ctx) {
     const navn = fakt.map(f => { const tp = kit.textPlane(g, `0 ${Y + 0.72} 0.1`, f.navn, A, { width: 0.62, aspect: 0.22, size: 110, bg: true, ink: "#eef1ff" }); tp.object3D.visible = false; return tp; });
     // et lille hint: "klik på en komponent"
     const hint = kit.textPlane(g, `0 ${Y + 0.05} ${BD / 2 + 0.16}`, "klik på en komponent", A, { width: 0.8, aspect: 0.11, size: 84, bg: true, ink: "#eef1ff", rotation: "-45 0 0" });
-    let valgt = -1, tValgt = 0;
+    let valgt = -1, tValgt = -1e9;
     return {
       nulstil() { if (tNu - tValgt > 300) valgt = -1; },   // et klik, der selv skiftede trin, bevares
       tick(s) {
