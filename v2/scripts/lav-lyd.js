@@ -12,7 +12,7 @@
  * og v2/audio/hashes.json husker, hvilken tekst og stemme hver fil blev lavet med, så kun ændrede trin laves om.
  *
  * API-nøglen læses fra miljøvariablen ELEVENLABS_API_KEY eller fra .env i roden af repoet (samme som version 1).
- * Uden voice_id finder scriptet den stemme, der blev brugt til version 1, i kontoens historik. */
+ * Uden voice_id bruges stemmen fra version 1 (xj6X4BCUsv9oxohm1E8o). */
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
@@ -27,7 +27,9 @@ const args = process.argv.slice(2);
 const flag = f => args.includes(f);
 const kunIdx = args.indexOf("--kun");
 const kun = kunIdx > -1 ? args[kunIdx + 1].split(",").map(s => s.trim()) : null;
-let voiceId = args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--kun") || null;
+// Stemmen fra version 1 (står også i worker/wrangler.toml). Kan overskrives med et voice_id som argument.
+const V1_STEMME = "xj6X4BCUsv9oxohm1E8o";
+let voiceId = args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--kun") || process.env.ELEVENLABS_VOICE_ID || V1_STEMME;
 
 let valgte = flag("--proeve") ? MANUS.filter(s => s.id === "f1") : kun ? MANUS.filter(s => kun.includes(s.id)) : MANUS;
 if (flag("--tael")) {
