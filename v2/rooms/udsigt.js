@@ -88,7 +88,7 @@ export default function build(ctx) {
   const ground = new THREE.Mesh(keep(new THREE.CircleGeometry(10, 48)), groundMat);
   ground.rotation.x = -Math.PI / 2; ground.position.set(PLAZA.x, G, PLAZA.z); add(ground);
   // resten af byens tage ud til horisonten: en stor mørk flade, så pladsens kant ikke ses
-  const farMat = basic("#0b0d1f");
+  const farMat = basic("#0b0d1f", { fog: false });
   const far = new THREE.Mesh(keep(new THREE.RingGeometry(9.9, 38, 48, 1)), farMat); far.rotation.x = -Math.PI / 2; far.position.set(PLAZA.x, G - 0.02, PLAZA.z); add(far);
   const plazaGlowMat = additive(keep(K.glowTex(C.core)), 0.5);
   const plazaGlow = new THREE.Mesh(keep(new THREE.PlaneGeometry(3.2, 3.2)), plazaGlowMat);
@@ -111,6 +111,20 @@ export default function build(ctx) {
     const map = tex(W, H, g => { g.fillStyle = "#ffffff"; g.fillRect(0, 0, W, H); g.fillStyle = "rgba(0,0,0,0.08)"; g.fillRect(0, H - 14, W, 14); drawWin(g, false); });
     const em = tex(W, H, g => { g.fillStyle = "#000"; g.fillRect(0, 0, W, H); drawWin(g, true); });
     return { map, em };
+  }
+
+  // Tårnets facade: rack-skuffer med lysdioder (materielt grundlag: elektronik, ikke en bygning med kontorer)
+  function rackFacade() {
+    const W = 256, H = 256;
+    const draw = (g, lit) => {
+      for (let r = 0; r < 9; r++) {
+        const y = 14 + r * 26;
+        if (!lit) { g.fillStyle = "#1c2140"; g.fillRect(18, y, W - 36, 20); g.fillStyle = "#0b0e1c"; g.fillRect(24, y + 4, 60, 12); }
+        g.fillStyle = lit ? "#d6fff8" : "#0b0e1c";
+        for (let k = 0; k < 8; k++) if (!lit || rnd() < 0.6) g.fillRect(100 + k * 16, y + 7, 6, 6);
+      }
+    };
+    return { map: tex(W, H, g => { g.fillStyle = "#ffffff"; g.fillRect(0, 0, W, H); draw(g, false); }), em: tex(W, H, g => { g.fillStyle = "#000"; g.fillRect(0, 0, W, H); draw(g, true); }) };
   }
 
   /* ---------- De tre fløje som modeller ---------- */
@@ -153,7 +167,16 @@ export default function build(ctx) {
     const bodies = [boxAt(1.7, 1.25, 1.7, 0, 0.1 + 0.625, 0), boxAt(1.42, 1.2, 1.42, 0, 1.35 + 0.6, 0), boxAt(1.14, 1.1, 1.14, 0, 2.55 + 0.55, 0)];
     const roofs = [boxAt(1.8, 0.06, 1.8, 0, 1.35, 0), boxAt(1.52, 0.06, 1.52, 0, 2.55, 0), boxAt(1.24, 0.08, 1.24, 0, 3.69, 0),
       boxAt(0.05, 0.9, 0.05, 0.25, 4.15, 0.2), boxAt(0.36, 0.22, 0.36, -0.2, 3.84, -0.15)];
-    makeWing("b", C.b, new THREE.Vector3(1.7, G, -12.2), -8 * D2R, bodies, roofs, facade(4, 3, { warm: "#d6fff8" }), 3.9);
+    // ikke et kontorhøjhus: facaden er rack-skuffer med små lysdioder, og kabler løber ned ad siden
+    const w = makeWing("b", C.b, new THREE.Vector3(1.2, G, -10.6), -8 * D2R, bodies, roofs, rackFacade(), 3.9);
+    const cables = [];
+    for (let k = 0; k < 3; k++) {
+      const x0 = 0.87, z0 = -0.5 + k * 0.42;
+      const c = new THREE.CatmullRomCurve3([new THREE.Vector3(0.6, 3.55, z0 * 0.7), new THREE.Vector3(x0 + 0.06, 3.2, z0), new THREE.Vector3(x0 + 0.1, 1.6, z0 + 0.05), new THREE.Vector3(x0 + 0.35, 0.2, z0 + 0.2), new THREE.Vector3(x0 + 0.9 + k * 0.15, 0.1, z0 + 0.4)]);
+      cables.push(new THREE.TubeGeometry(c, 24, 0.028, 4, false));
+    }
+    w.cableMat = std("#151a33", { emissive: new THREE.Color(C.b), emissiveIntensity: 0.2, roughness: 0.4 });
+    w.grp.add(new THREE.Mesh(merged(cables), w.cableMat));
   }
   // Gaden: to rækker små huse om en gade med lygtepæle
   const lampPos = [];
@@ -179,12 +202,13 @@ export default function build(ctx) {
   }
   const WING = Object.fromEntries(WINGS.map(w => [w.key, w]));
 
+  let drumMat;
   /* ---------- Forhallens tromle bærer terrassen ---------- */
   {
     const fac = facade(16, 2, { warm: "#dfe3ff" });
     fac.map.wrapS = fac.em.wrapS = THREE.RepeatWrapping; fac.map.repeat.set(3, 1); fac.em.repeat.set(3, 1);
     const drum = new THREE.Mesh(keep(new THREE.CylinderGeometry(PR - 0.35, PR - 0.35, -0.3 - G, 40, 1, true)),
-      std("#252b50", { map: fac.map, emissiveMap: fac.em, emissive: new THREE.Color(C.core), emissiveIntensity: 0.3 }));
+      drumMat = std("#252b50", { map: fac.map, emissiveMap: fac.em, emissive: new THREE.Color(C.core), emissiveIntensity: 0.3 }));
     drum.position.set(PLAT.x, (G - 0.3) / 2, PLAT.z); add(drum);
   }
 
@@ -199,12 +223,14 @@ export default function build(ctx) {
     g.fillStyle = "rgba(0,0,0,0.25)"; g.fillRect(0, 0, w, h);
   });
   const deckMat = std("#ffffff", { map: deckTex, roughness: 0.9, flatShading: false });
+  const darkMats = [];
   const deck = new THREE.Mesh(keep(new THREE.CylinderGeometry(PR, PR - 0.15, 0.3, 64)), [deckMat, std("#1e2340"), deckMat]);
   // CylinderGeometry har grupper: side, top, bund
   deck.material = [std("#1e2340", { roughness: 0.6 }), deckMat, std("#14182e")];
   deck.position.set(PLAT.x, -0.15, PLAT.z); add(deck);
   // rækværk: lav brystning, glas og en lysende håndliste
-  const parapet = new THREE.Mesh(keep(new THREE.TorusGeometry(PR - 0.06, 0.07, 4, 72)), std("#343b62", { roughness: 0.5, metalness: 0.4 }));
+  const parMat = std("#343b62", { roughness: 0.5, metalness: 0.4 }); darkMats.push([parMat, "#343b62"]);
+  const parapet = new THREE.Mesh(keep(new THREE.TorusGeometry(PR - 0.06, 0.07, 4, 72)), parMat);
   parapet.rotation.x = Math.PI / 2; parapet.position.set(PLAT.x, 0.07, PLAT.z); add(parapet);
   const glass = new THREE.Mesh(keep(new THREE.CylinderGeometry(PR - 0.06, PR - 0.06, 0.85, 72, 1, true)),
     keep(new THREE.MeshBasicMaterial({ color: "#9fb0ff", transparent: true, opacity: 0.07, side: THREE.DoubleSide, depthWrite: false })));
@@ -213,21 +239,32 @@ export default function build(ctx) {
   const rail = new THREE.Mesh(keep(new THREE.TorusGeometry(PR - 0.06, 0.022, 4, 96)), railMat);
   rail.rotation.x = Math.PI / 2; rail.position.set(PLAT.x, 0.98, PLAT.z); add(rail);
   { const posts = []; for (let i = 0; i < 36; i++) { const a = i / 36 * Math.PI * 2; posts.push(boxAt(0.03, 0.92, 0.03, PLAT.x + Math.sin(a) * (PR - 0.06), 0.5, PLAT.z + Math.cos(a) * (PR - 0.06))); }
-    add(new THREE.Mesh(merged(posts), std("#3b4370", { metalness: 0.5, roughness: 0.4 }))); }
+    const pm = std("#3b4370", { metalness: 0.5, roughness: 0.4 }); darkMats.push([pm, "#3b4370"]); add(new THREE.Mesh(merged(posts), pm)); }
   // lysliste i dækket langs kanten
   const edgeGlowMat = basic(C.core, { transparent: true, opacity: 0.35 });
   const edgeGlow = new THREE.Mesh(keep(new THREE.TorusGeometry(PR - 0.3, 0.012, 3, 96)), edgeGlowMat);
   edgeGlow.rotation.x = Math.PI / 2; edgeGlow.position.set(PLAT.x, 0.006, PLAT.z); add(edgeGlow);
 
+  let exitGlowMat, exitFloorMat, roomSign, DOOR_POS;
   // trappehus med døren tilbage til forhallen
   {
-    const kx = -2.4, kz = 4.4, kr = 150;
+    // trappehuset står forrest til venstre på terrassen, med døren vendt ind mod terrassens midte
+    const DOOR_PSI = -52, dr = PR - 0.55;
+    const kx = PLAT.x + Math.sin(DOOR_PSI * D2R) * dr, kz = PLAT.z - Math.cos(DOOR_PSI * D2R) * dr;
+    const kr = Math.atan2(PLAT.x - kx, PLAT.z - kz) / D2R;
     const kg = kit.grp(root, `${kx} 0 ${kz}`, { rotation: `0 ${kr} 0` });
     const shell = merged([boxAt(0.25, 2.9, 1.5, -1.05, 1.45, -0.55), boxAt(0.25, 2.9, 1.5, 1.05, 1.45, -0.55), boxAt(2.35, 0.25, 1.75, 0, 2.95, -0.55), boxAt(2.35, 2.9, 0.2, 0, 1.45, -1.3)]);
-    kg.object3D.add(new THREE.Mesh(shell, std("#2a3058", { roughness: 0.6 })));
+    const shellMat = std("#2a3058", { roughness: 0.6 }); darkMats.push([shellMat, "#2a3058"]);
+    kg.object3D.add(new THREE.Mesh(shell, shellMat));
+    // lyset fra trappen ned til forhallen: en lavendel glød i døråbningen, som står tilbage, når platformen er mørk
+    exitGlowMat = additive(keep(K.glowTex(C.core)), 0.35);
+    const eg = new THREE.Mesh(keep(new THREE.PlaneGeometry(2.6, 3.2)), exitGlowMat); eg.position.set(0, 1.3, -0.9); kg.object3D.add(eg);
+    exitFloorMat = additive(keep(K.glowTex(C.core)), 0.3);
+    const ef = new THREE.Mesh(keep(new THREE.PlaneGeometry(2.4, 2.4)), exitFloorMat); ef.rotation.x = -Math.PI / 2; ef.position.set(0, 0.01, 0.6); kg.object3D.add(ef);
+    DOOR_POS = new THREE.Vector3(kx, 1.3, kz);
     ctx.door(ctx.room.parent, { position: `${r3(kx)} 0 ${r3(kz)}`, rotation: `0 ${kr} 0`, width: 1.5, height: 2.4 });
     // rummets navn hænger ude over pladsen, bag tårnet
-    ctx.sign(ctx.room.name, { sub: ctx.room.sub, position: "-2.6 6.2 -14", width: 3.4, color: C.core });
+    roomSign = ctx.sign(ctx.room.name, { sub: ctx.room.sub, position: "-3.2 6.0 -14", width: 3.4, color: C.core });
   }
 
   /* ---------- Kernen i lille størrelse ---------- */
@@ -263,18 +300,20 @@ export default function build(ctx) {
   /* ---------- Stationer og views: brugeren står ved rækværket; stationen er en lille plade på håndlisten ---------- */
   // psi: retning fra terrassens centrum (0 = lige ud mod pladsen, + = mod højre); look: hvor blikket går hen
   const VIEWS = {
-    s1: { psi: 0, look: [0.2, 0, -10] },
-    s2: { psi: -16, look: [CORE.x, CORE.y, CORE.z] },
-    s3: { psi: 16, look: [0.6, 0, -10] },
-    s4: { psi: -32, look: [CORE.x + 0.9, CORE.y - 0.3, CORE.z] },
+    s1: { psi: 0, look: [0.2, 0, -10], pitch: -9 },
+    s2: { psi: -10, look: [CORE.x, CORE.y, CORE.z], pitch: 3 },
+    s3: { psi: 10, ur: PR - 1.7, look: [0.2, 0, -10], pitch: -8 },
+    s4: { psi: 180, ur: 0.5, look: [-1.25, 1.5, -4.0], pitch: 2 },
   };
   const plaqueGeo = keep(new THREE.BoxGeometry(0.66, 0.17, 0.03));
   const plaqueMat = std("#2a3160", { roughness: 0.45, metalness: 0.4 });
   const viewAt = {}, plaques = {};
+  const dotGeo = keep(new THREE.SphereGeometry(0.035, 8, 6)); dotGeo.translate(0, 0.03, 0);
+  const dotMat = basic(C.core);
   for (const s of ctx.steps) {
     const v = VIEWS[s.id]; if (!v) continue;
     const d = [Math.sin(v.psi * D2R), -Math.cos(v.psi * D2R)];
-    const rr = PR - 0.06, ur = PR - 1.05;
+    const rr = PR - 0.06, ur = v.ur ?? PR - 1.05;
     const ux = PLAT.x + d[0] * ur, uz = PLAT.z + d[1] * ur;
     // pladen ligger på håndlisten, præcis hvor blikket krydser den
     let lx = v.look[0] - ux, lz = v.look[2] - uz; const ll = Math.hypot(lx, lz); lx /= ll; lz /= ll;
@@ -285,11 +324,12 @@ export default function build(ctx) {
     const g = kit.grp(root, `${r3(x)} 1.0 ${r3(z)}`, { rotation: `0 ${r3(face)} 0` });
     const tilt = kit.grp(g, "0 0.03 0", { rotation: "-90 0 0" });
     tilt.object3D.add(new THREE.Mesh(plaqueGeo, plaqueMat));
-    ctx.sign(s.title, { parent: tilt, position: "0 0 0.017", width: 0.64, color: C.core, size: 74 });
+    const sign = ctx.sign(s.title, { parent: tilt, position: "0 0 0.017", width: 0.64, color: C.core, size: 74 });
+    const dot = new THREE.Mesh(dotGeo, dotMat); g.object3D.add(dot);      // lille lysprik: her ligger en station
     ctx.station(s.id, g);
-    ctx.view(s.id, { position: [r3(ux), 0, r3(uz)], lookAt: v.look.map(r3) });
+    ctx.view(s.id, { position: [r3(ux), 0, r3(uz)], lookAt: v.look.map(r3), pitch: v.pitch });
     viewAt[s.id] = new THREE.Vector3(ux, 1.6, uz);
-    plaques[s.id] = { tilt: tilt.object3D, k: 0 };
+    plaques[s.id] = { tilt: tilt.object3D, sign, dot, k: 0 };
   }
   const VIEWS_POS = id => viewAt[id];
 
@@ -302,9 +342,10 @@ export default function build(ctx) {
   const s1View = VIEWS_POS("s1");
   for (const w of WINGS) {
     const p = w.top.clone(); p.y += w.key === "b" ? 0.75 : 0.95;
-    if (w.key === "b") p.y = Math.min(p.y, 2.0);
-    const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(2.3, 2.3 * 300 / 1024)),
-      labelMat(keep(K.labelTex(ANGLE[w.key][0], w.color, { w: 1024, h: 300, size: 74, sub: ANGLE[w.key][1], ink: "#eef1ff" }))));
+    if (w.key === "b") p.y = w.top.y + 1.0;
+    const sw = 2.1 * p.distanceTo(s1View) / 8.5;
+    const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(sw, sw * 300 / 1024)),
+      labelMat(keep(K.labelTex(ANGLE[w.key][0], w.color, { w: 1024, h: 300, size: 80, sub: ANGLE[w.key][1], ink: "#eef1ff" }))));
     m.position.copy(p); m.lookAt(s1View.x, p.y, s1View.z); m.renderOrder = 20; add(m);
     // en tynd lodlinje fra skiltet ned til taget
     const lineMat = basic(w.color, { transparent: true, opacity: 0 });
@@ -314,38 +355,43 @@ export default function build(ctx) {
   }
 
   /* ---------- S2: fem målplader samler sig om kernen ---------- */
-  const GOALS = [
-    ["a", "Skabe iterativt og begrunde sine valg"],
-    ["b", "Programmering som sprog og værktøj"],
-    ["b", "Modellers perspektiver og bias"],
-    ["c", "Undersøge digitale fænomener i hverdagen"],
-    ["c", "Tage stilling til fænomenernes betydning"],
+  const GOALS = [   // samme ord som speaken
+    ["a", "Arbejder iterativt med at skabe og argumenterer for deres valg"],
+    ["b", "Bruger programmering som sprog og værktøj"],
+    ["b", "Undersøger modellers perspektiver og bias"],
+    ["c", "Undersøger digitale fænomener i deres hverdag"],
+    ["c", "Tager gradvist stilling til fænomenernes betydning"],
   ];
+  const RING_C = CORE.clone().add(new THREE.Vector3(0, 0.35, 0));
   const s2Look = VIEWS_POS("s2");
   const ringQ = new THREE.Quaternion(); { const o = new THREE.Object3D(); o.position.copy(CORE); o.lookAt(s2Look); ringQ.copy(o.quaternion); }
   const SLOT_A = [90, 162, 18, 234, 306];   // A øverst, B til venstre, C til højre (grader, mod uret fra +x)
   const ORDER = [0, 1, 3, 2, 4];             // målenes plads i kredsen: a, b1, c1, b2, c2
   const plates = GOALS.map(([k, txt], i) => {
     const w = WING[k], col = w.color;
-    const t = tex(1024, 400, (g, W, H) => {
-      g.fillStyle = "rgba(12,16,34,0.94)"; K.roundRect(g, 8, 8, W - 16, H - 16, 36); g.fill();
+    const t = tex(1024, 420, (g, W, H) => {
+      g.fillStyle = "rgba(12,16,34,0.95)"; K.roundRect(g, 8, 8, W - 16, H - 16, 36); g.fill();
       g.strokeStyle = col; g.lineWidth = 8; g.stroke();
-      g.fillStyle = col; g.fillRect(40, 44, 90, 10);
-      g.font = '600 46px "JetBrains Mono", monospace'; g.textBaseline = "middle"; g.textAlign = "left"; g.fillText(`MÅL ${i + 1}`, 150, 50);
-      g.fillStyle = "#eef1ff"; g.font = '700 76px "Familjen Grotesk", "Segoe UI", sans-serif';
-      K.wrap(g, txt, W - 90).slice(0, 2).forEach((l, j, arr) => g.fillText(l, 45, 200 + (j - (arr.length - 1) / 2) * 86));
+      g.fillStyle = col; g.fillRect(44, 50, 80, 10);
+      g.font = '600 46px "JetBrains Mono", monospace'; g.textBaseline = "middle"; g.textAlign = "left"; g.fillText(`MÅL ${i + 1}`, 144, 56);
+      g.fillStyle = "#eef1ff"; g.font = '700 68px "Familjen Grotesk", "Segoe UI", sans-serif';
+      const ls = K.wrap(g, txt, W - 100); ls.forEach((l, j) => g.fillText(l, 48, 250 + (j - (ls.length - 1) / 2) * 78));
     });
-    const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.45, 0.567)), labelMat(t, { side: THREE.DoubleSide }));
+    const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.5, 0.615)), labelMat(t, { side: THREE.DoubleSide }));
     m.renderOrder = 21; add(m);
     const a = SLOT_A[ORDER.indexOf(i)] * D2R;
-    const slot = new THREE.Vector3(Math.cos(a) * 1.75, Math.sin(a) * 1.12, 0).applyQuaternion(ringQ).add(CORE);
+    const slot = new THREE.Vector3(Math.cos(a) * 2.05, Math.sin(a) * 1.0, 0).applyQuaternion(ringQ).add(RING_C);
     const from = w.top.clone().add(new THREE.Vector3((i % 2 ? 0.3 : -0.3), 0, 0));
     const mid = from.clone().lerp(slot, 0.5); mid.y = Math.max(from.y, slot.y) + 0.8;
-    return { m, curve: new THREE.QuadraticBezierCurve3(from, mid, slot), delay: 400 + i * 550, col };
+    // en svag lysstreng fra pladen ned til den fløj, den steg op fra
+    const sg = keep(new THREE.BufferGeometry()); sg.setAttribute("position", new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, 0], 3));
+    const strMat = keep(new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0, toneMapped: false }));
+    const str = new THREE.Line(sg, strMat); add(str);
+    return { m, curve: new THREE.QuadraticBezierCurve3(from, mid, slot), delay: 600 + [0, 2, 3, 5, 6][i] * 900, col, from, str, strMat };
   });
   const ringMat = basic(C.core, { transparent: true, opacity: 0 });
   const ring = new THREE.Mesh(keep(new THREE.TorusGeometry(1, 0.008, 3, 72)), ringMat);
-  ring.position.copy(CORE); ring.quaternion.copy(ringQ); ring.scale.set(1.75, 1.12, 1); add(ring);
+  ring.position.copy(RING_C); ring.quaternion.copy(ringQ); ring.scale.set(2.05, 1.0, 1); add(ring);
 
   /* ---------- Erkendeformernes tegn (kredser om kernen; i S3 lægger de sig langs stien) ---------- */
   function drawIcon(g, kind, label, lit) {
@@ -433,31 +479,54 @@ export default function build(ctx) {
   const s3View = VIEWS_POS("s3");
   const pathLabels = PATH_STEPS.map(([k, txt], i) => {
     const w = WING[k];
-    const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(2.6, 2.6 * 200 / 1024)), labelMat(keep(K.labelTex(txt, w.color, { w: 1024, h: 200, size: 62, ink: "#eef1ff" }))));
-    const p = k === "b" ? w.grp.position.clone().add(new THREE.Vector3(1.9, 2.6, 0.4)) : w.grp.position.clone().add(new THREE.Vector3(0, 0, 1.7));
-    if (k !== "b") p.y = w.top.y + 0.75;
+    // mærket står mellem fløjen og pladsens midte, så alle tre er inden for billedet; bredden følger afstanden
+    const mid = new THREE.Vector3(0.6, 0, -8.6);
+    const p = w.grp.position.clone().lerp(mid, k === "b" ? 0.15 : 0.45); p.y = k === "b" ? w.top.y + 0.35 : w.top.y + 0.55;
+    const lw = 1.9 * p.distanceTo(s3View) / 8.5;
+    const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(lw, lw * 220 / 1024)), labelMat(keep(K.labelTex(txt, w.color, { w: 1024, h: 220, size: txt.length > 30 ? 56 : 66, ink: "#eef1ff" }))));
     m.position.copy(p); m.lookAt(s3View.x, p.y, s3View.z); m.renderOrder = 20; add(m);
     return { m, t: [0.04, 0.5, 0.93][i] };
   });
 
   /* ---------- S4: det åbne felt ---------- */
   const s4View = VIEWS_POS("s4");
-  const dashTex = tex(1024, 640, (g, W, H) => {
+  // et stiplet felt: en tidslinje, hvor det meste endnu ikke er skrevet. Kun overskrifter, ingen brødtekst.
+  const MILE = [["Undervisning og evaluering", "pladsholder"], ["Afprøvning", "efterår 2026"], ["Ikrafttræden", "2027/28"], ["Prøve", "året efter"]];
+  const dashTex = tex(1600, 900, (g, W, H) => {
     g.clearRect(0, 0, W, H);
-    g.strokeStyle = C.core; g.lineWidth = 10; g.setLineDash([42, 30]); g.lineCap = "round";
-    K.roundRect(g, 14, 14, W - 28, H - 28, 44); g.stroke();
-    g.setLineDash([18, 24]); g.lineWidth = 7; g.globalAlpha = 0.45;
-    [0.34, 0.5, 0.66].forEach((v, i) => { g.beginPath(); g.moveTo(110, H * v); g.lineTo(W - 110 - i * 160, H * v); g.stroke(); });
+    g.fillStyle = "rgba(9,12,28,0.55)"; K.roundRect(g, 14, 14, W - 28, H - 28, 50); g.fill();
+    g.strokeStyle = C.core; g.lineWidth = 9; g.setLineDash([40, 28]); g.lineCap = "round";
+    K.roundRect(g, 14, 14, W - 28, H - 28, 50); g.stroke();
+    g.fillStyle = C.core; g.font = '700 70px "Familjen Grotesk", "Segoe UI", sans-serif'; g.textAlign = "left"; g.textBaseline = "middle";
+    g.fillText("Endnu ikke på plads", 80, 110);
+    const y = 470, x0 = 150, x1 = W - 150;
+    g.setLineDash([22, 22]); g.lineWidth = 8; g.globalAlpha = 0.8; g.beginPath(); g.moveTo(x0 - 40, y); g.lineTo(x1 + 40, y); g.stroke(); g.globalAlpha = 1; g.setLineDash([]);
+    MILE.forEach(([a, b], i) => {
+      const x = x0 + i * (x1 - x0) / 3;
+      g.strokeStyle = C.core; g.lineWidth = 7; g.setLineDash(i === 0 ? [10, 10] : []);
+      g.fillStyle = i === 0 ? "rgba(9,12,28,1)" : C.core; g.beginPath(); g.arc(x, y, 24, 0, 7); g.fill(); g.stroke(); g.setLineDash([]);
+      g.textAlign = "center"; g.fillStyle = "#eef1ff"; g.font = '700 54px "Familjen Grotesk", "Segoe UI", sans-serif';
+      K.wrap(g, a, 330).forEach((l, j, arr) => g.fillText(l, x, y - 90 - (arr.length - 1 - j) * 60));
+      g.fillStyle = C.core; g.font = '500 48px "Source Sans 3", "Segoe UI", sans-serif'; g.fillText(b, x, y + 80);
+    });
+    // et tomt, stiplet felt nederst: her skrives det, der kommer
+    g.strokeStyle = C.core; g.globalAlpha = 0.6; g.lineWidth = 6; g.setLineDash([18, 18]);
+    K.roundRect(g, 120, 650, W - 240, 160, 26); g.stroke(); g.globalAlpha = 1; g.setLineDash([]);
   });
-  const field = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.9, 1.19)), labelMat(dashTex, { side: THREE.DoubleSide }));
-  field.position.copy(CORE).add(new THREE.Vector3(1.55, -0.05, 0.45)); field.lookAt(s4View); field.renderOrder = 20; add(field);
-  const fieldCap = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.9, 1.9 * 150 / 1024)), labelMat(keep(K.labelTex("endnu ikke skrevet", C.core, { w: 1024, h: 150, size: 64, bg: false, weight: 500 }))));
-  fieldCap.position.copy(field.position).add(new THREE.Vector3(0, -0.78, 0)); fieldCap.quaternion.copy(field.quaternion); fieldCap.renderOrder = 20; add(fieldCap);
+  const FW = 2.9;
+  const field = new THREE.Mesh(keep(new THREE.PlaneGeometry(FW, FW * 900 / 1600)), labelMat(dashTex, { side: THREE.DoubleSide }));
+  field.position.copy(CORE).add(new THREE.Vector3(-1.75, 0.05, 1.55)); field.lookAt(s4View); field.renderOrder = 20; add(field);
+
+  // S4: tegnene i en bue over kernen, vendt mod S4-blikket
+  const satPos = (() => {
+    const o = new THREE.Object3D(); o.position.copy(CORE); o.lookAt(VIEWS_POS("s4")); o.updateMatrixWorld();
+    return [[-0.95, 0.15], [0, 0.85], [0.95, 0.15]].map(([x, y]) => new THREE.Vector3(x, y, 0.15).applyMatrix4(o.matrixWorld));
+  })();
 
   /* ---------- Tilstand pr. trin ---------- */
   let step = null, stepAt = 0;
   const now = () => performance.now();
-  const S = { core: 1, arcs: 0.5, dark: 0, plates: 0, path: 0, field: 0 };
+  const S = { core: 1, arcs: 0.5, dark: 0, plates: 0, path: 0, field: 0, sat: 0, hideIcons: 0 };
   const T = { ...S };
   function onStep(id) {
     step = id; stepAt = now();
@@ -466,6 +535,8 @@ export default function build(ctx) {
     T.plates = id === "s2" ? 1 : 0;
     T.path = id === "s3" ? 1 : 0;
     T.field = id === "s4" ? 1 : 0;
+    T.sat = id === "s4" ? 1 : 0;              // S4: tegnene samler sig som tydelige satellitter om kernen (som i forhallen)
+    T.hideIcons = id === "s1" ? 1 : 0;        // S1 handler om fløjene; tegnene ville kun være støj
     T.arcs = id === "s1" ? 0.35 : id === "s3" ? 0.15 : 0.5;
   }
 
@@ -479,16 +550,22 @@ export default function build(ctx) {
     const dark = ease(S.dark);
 
     // himmel, stjerner og terrasse bliver mørkere i S4
-    sky.material.color.setScalar(1 - 0.72 * dark);
+    // S4: platformen bliver rigtig mørk; kun kernen, feltet, tegnene og udgangen lyser til sidst
+    sky.material.color.setScalar(1 - 0.9 * dark);
     starMat.opacity = 0.35 + 0.6 * dark;
-    deckMat.color.setScalar(1 - 0.75 * dark);
-    groundMat.color.setScalar(1 - 0.7 * dark);
-    railMat.opacity = 0.85 * (1 - 0.6 * dark); edgeGlowMat.opacity = 0.35 * (1 - 0.7 * dark);
+    deckMat.color.setScalar(1 - 0.88 * dark);
+    groundMat.color.setScalar(1 - 0.92 * dark);
+    farMat.color.set("#0b0d1f").multiplyScalar(1 - 0.6 * dark);
+    railMat.opacity = 0.85 * (1 - 0.85 * dark); edgeGlowMat.opacity = 0.35 * (1 - 0.9 * dark);
+    darkMats.forEach(([m, c]) => m.color.set(c).multiplyScalar(1 - 0.85 * dark));
+    drumMat.emissiveIntensity = 0.3 * (1 - 0.9 * dark); drumMat.color.set("#252b50").multiplyScalar(1 - 0.8 * dark);
 
     // stationspladerne: den aktive rejser sig fra håndlisten, de andre ligger fladt
     for (const [id, pq] of Object.entries(plaques)) {
       pq.k = approach(pq.k, id === step ? 1 : 0, dt, 5);
-      pq.tilt.rotation.x = (-90 + 30 * ease(pq.k)) * D2R; pq.tilt.position.y = 0.03 + 0.03 * ease(pq.k);
+      const e = ease(pq.k);
+      pq.tilt.rotation.x = (-90 + 30 * e) * D2R; pq.tilt.position.y = 0.03 + 0.03 * e;
+      pq.tilt.scale.setScalar(Math.max(0.001, e)); pq.tilt.visible = e > 0.02; pq.dot.visible = e < 0.5;
     }
     // fløjene
     for (const w of WINGS) {
@@ -499,9 +576,11 @@ export default function build(ctx) {
       else lit = 0.3;
       w.lit = step === "s1" ? lit : approach(w.lit, lit, dt, 3);
       const L = w.lit * (1 - dark);
-      w.bodyMat.emissiveIntensity = (0.3 + 1.0 * L) * (1 - 0.85 * dark);
-      w.edgeMat.opacity = 0.18 + 0.8 * L;
-      w.plinthMat.emissiveIntensity = 0.06 + 0.7 * L;
+      w.bodyMat.emissiveIntensity = (0.3 + 1.0 * L) * (1 - 0.95 * dark);
+      w.bodyMat.color.set("#2d3358").multiplyScalar(1 - 0.8 * dark);
+      w.edgeMat.opacity = (0.18 + 0.8 * L) * (1 - 0.85 * dark);
+      w.plinthMat.emissiveIntensity = (0.06 + 0.7 * L) * (1 - dark); w.plinthMat.color.set(w.color).multiplyScalar(1 - 0.85 * dark);
+      if (w.cableMat) w.cableMat.emissiveIntensity = (0.2 + 0.6 * L) * (1 - dark);
       w.poolMat.opacity = 0.75 * L;
       if (w.lampMat) w.lampMat.color.set("#ffe0d0").multiplyScalar(0.3 + 0.7 * (1 - dark));
       const sv = step === "s1" ? ease((el - WING_AT[w.key] - 200) / 700) : approach(w.angleSign.material.opacity, 0, dt, 6);
@@ -510,7 +589,7 @@ export default function build(ctx) {
     }
     // lysbuerne: tændes, når alle tre fløje er nævnt i S1 (samme samspil)
     const arcBoost = step === "s1" ? ease((el - 9000) / 1500) : 0;
-    arcs.forEach(a => { a.mat.opacity = (S.arcs + 0.6 * arcBoost) * (1 - 0.8 * dark); });
+    arcs.forEach(a => { a.mat.opacity = (S.arcs + 0.6 * arcBoost) * (1 - dark); });
 
     // kernen
     coreSpin.rotation.set(0.4, t * 0.00025, 0.15);
@@ -518,7 +597,7 @@ export default function build(ctx) {
     const cg = S.core;
     coreMat.emissiveIntensity = 0.05 + 0.45 * cg; coreMat.color.set(C.core).multiplyScalar(0.3 + 0.7 * cg);
     coreEdgeMat.opacity = 0.1 + 0.55 * cg;
-    haloMat.opacity = 0.1 + 0.5 * cg; coreLight.intensity = 3 * cg;
+    haloMat.opacity = 0.08 + 0.5 * cg; coreLight.intensity = 3 * cg;
     plazaGlowMat.opacity = 0.5 * cg; tetherMat.opacity = 0.25 * cg;
 
     // S2: målpladerne
@@ -527,6 +606,8 @@ export default function build(ctx) {
       p.vis = step === "s2" ? k : approach(p.vis || 0, 0, dt, 6);      // egen tilstand, så udfadningen ikke modvirkes
       p.m.visible = p.vis > 0.01; p.m.material.opacity = Math.min(1, p.vis * 1.4);
       if (step === "s2") { p.curve.getPoint(k, tmp); p.m.position.copy(tmp); p.m.quaternion.copy(ringQ); p.m.scale.setScalar(0.35 + 0.65 * k); }
+      const pa = p.str.geometry.attributes.position; pa.setXYZ(0, p.from.x, p.from.y, p.from.z); pa.setXYZ(1, p.m.position.x, p.m.position.y - 0.3 * p.m.scale.y, p.m.position.z); pa.needsUpdate = true;
+      p.strMat.opacity = p.vis * 0.55; p.str.visible = p.vis > 0.01;
     });
     ringMat.opacity = (step === "s2" ? ease((el - 3200) / 1000) : 0) * 0.45; ring.visible = ringMat.opacity > 0.01;
 
@@ -539,25 +620,29 @@ export default function build(ctx) {
     pathLabels.forEach(l => { const o = step === "s3" ? ease((pk - l.t + 0.08) / 0.1) : 0; l.m.material.opacity = o; l.m.visible = o > 0.01; });
 
     // erkendeformernes tegn
-    const onPath = ease(S.path);
+    const onPath = ease(S.path), sat = ease(S.sat), hideI = ease(S.hideIcons);
     ICONS.forEach((ic, i) => {
       const a = ic.ph + t * 0.0003;
       const orbit = tmp.set(Math.sin(a) * 0.75, 0.12 * Math.sin(a * 2 + ic.ph), Math.cos(a) * 0.75).add(coreRig.position);
-      ic.pos.copy(orbit).lerp(iconPathPos[i], onPath);
+      ic.pos.copy(orbit).lerp(iconPathPos[i], onPath).lerp(satPos[i], sat);
       ic.s.position.copy(ic.pos);
       const litNow = step === "s3" && pk >= ICON_T[i] ? 1 : 0;
       ic.lit = approach(ic.lit, litNow, dt, 6);
       const base = 0.26 + 0.12 * onPath;
-      const sz = base + 0.62 * onPath * (0.6 + 0.4 * ic.lit) + 0.2 * ic.lit;
-      ic.s.scale.set(sz, sz, 1);
-      ic.mat.opacity = (0.75 + 0.25 * ic.lit) * (onPath > 0.05 ? (0.45 + 0.55 * ic.lit) : 1) * (1 - 0.5 * dark);
-      ic.mat.color.setScalar(0.65 + 0.35 * Math.max(ic.lit, 1 - onPath));
+      const pulse = ic.lit > 0.5 ? 1 + 0.08 * Math.sin(t * 0.006 + i) : 1;
+      const sz = (base + 0.5 * onPath * (0.5 + 0.5 * ic.lit) + 0.35 * ic.lit) * pulse;
+      const ssz = sz * (1 - sat) + 0.62 * sat;
+      ic.s.scale.set(ssz, ssz, 1);
+      ic.mat.opacity = (0.75 + 0.25 * ic.lit) * (onPath > 0.05 ? (0.45 + 0.55 * ic.lit) : 1) * (1 - hideI);
+      ic.mat.color.setScalar(0.65 + 0.35 * Math.max(ic.lit, 1 - onPath, sat)); ic.s.visible = ic.mat.opacity > 0.01;
     });
 
     // S4: det stiplede felt; stregerne "løber"
     const fv = ease((S.field - 0.05) / 0.95);
-    field.material.opacity = fv * (0.75 + 0.25 * Math.sin(t * 0.003)); field.visible = fv > 0.01;
-    fieldCap.material.opacity = fv * 0.8; fieldCap.visible = field.visible;
+    field.material.opacity = fv * (0.9 + 0.1 * Math.sin(t * 0.003)); field.visible = fv > 0.01;
+    // udgangen: gløden står tilbage, når platformen bliver mørk
+    exitGlowMat.opacity = 0.3 + 0.5 * dark; exitFloorMat.opacity = 0.25 + 0.5 * dark;
+    const rsm = roomSign.getObject3D("mesh"); if (rsm) { const o = step === "s2" || step === "s4" ? 0 : 1; rsm.material.opacity = approach(rsm.material.opacity, o, dt, 4); roomSign.object3D.visible = rsm.material.opacity > 0.02; }
   }
 
   function dispose() { disposables.forEach(d => d && d.dispose && d.dispose()); }

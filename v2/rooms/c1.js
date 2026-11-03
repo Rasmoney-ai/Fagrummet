@@ -107,6 +107,7 @@ export default function build(ctx) {
   S.cyl(0.18, 0.18, 0.03, "#2a2228", [LAMP[0], 0.015, LAMP[1]], [0, 0, 0], 10);
   G.cyl(0.16, 0.24, 0.3, "#ffd9a6", [LAMP[0], 1.66, LAMP[1]], [0, 0, 0], 12);
   const BEAN = { x: -4.5, z: -3.25 };
+  S.cyl(0.24, 0.26, 0.42, "#a35a6f", [TB.x + 0.7, 0.21, TB.z - 0.15], [0, 0, 0], 14);   // puf
   S.sph(0.42, "#5a7a8c", [BEAN.x, 0.25, BEAN.z], 10, [1, 0.62, 1]);
   /* skænk mod bagvæggen med to skuffer (station for brugseksperimentet), tv over den, konsol og højttaler */
   const SB = { x: -3.3, z: ZB + 0.3 };
@@ -223,7 +224,7 @@ export default function build(ctx) {
       off: [SOF.x + 0.05, SOF.z - 0.6, 90, true] },
     { who: "Far", use: "opskrifter og nyheder", kind: "tablet", h: 1.82, cloth: "#5a7a9c", legs: "#3a3440",
       from: [W - 1.2, ZB + 1.0, -90, false], at: [ISL.x, ISL.z - 0.75, 0, false], home: [ISL.x + 0.25, 0.98, ISL.z - 0.1, -90, 0], label: [ISL.x - 0.9, 2.0, ISL.z - 0.9],
-      off: [TB.x + 0.55, TB.z - 0.95, -40, false] },
+      off: [TB.x + 0.62, TB.z - 0.15, -90, true] },   // sætter sig på puffen ved sofabordet
     { who: "Storesøster", use: "klassechat og video", kind: "phone", h: 1.6, cloth: "#d89a4a", legs: "#40384e",
       from: [-2.2, 1.6, -120, false], at: [SOF.x + 0.05, SOF.z + 0.6, 90, true], home: [TB.x + 0.1, 0.44, TB.z + 0.3, -90, 0], label: [SOF.x + 0.55, 1.6, SOF.z + 0.9],
       off: [SOF.x + 0.05, SOF.z + 0.6, 90, true] },

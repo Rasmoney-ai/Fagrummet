@@ -80,6 +80,7 @@ function makeDoor(kit, root, to, { position = "0 0 -4", rotation = "0 0 0", labe
   const name = label || (up ? `Tilbage: ${r.name}` : r.name);
   makeSign(kit, name, { parent: g, position: `0 ${height + 0.55} 0`, width: 1.9, color: col, sub: up ? null : (r.sub !== r.name ? r.sub : null) });
   portal.addEventListener("click", () => goRoom(to));
+  if (rctx) rctx.doors.push({ to, portal });
   return g;
 }
 const RING_TEX = {};
@@ -105,7 +106,7 @@ async function loadRoom(id, stepId, { instant = false } = {}) {
   cameFrom = curRoom; curRoom = id; VISITED.add(id); const room = ROOMS[id];
   const root = document.createElement("a-entity"); root.id = `room-${id}`; roomsRoot.appendChild(root);
   const kit = K.makeKit(root);
-  rctx = { stations: {}, views: {}, beacon: makeBeacon(kit, room.color) };
+  rctx = { stations: {}, views: {}, doors: [], beacon: makeBeacon(kit, room.color) };
   const ctx = {
     THREE, AFRAME, root, room, C, K, kit, el: kit.el,
     rooms: ROOMS,   // opslag af andre rum (navn, sub, farve) — kun til læsning
@@ -280,6 +281,9 @@ async function init() {
   window.__fagrum = {
     stats() { const i = scene.renderer.info; return { room: curRoom, step: cur, triangles: i.render.triangles, calls: i.render.calls, geometries: i.memory.geometries, textures: i.memory.textures }; },
     setStep, goRoom: goRoom2, ready: () => !busy && !!curRoom,
+    doors: () => rctx ? rctx.doors.map(d => d.to) : [],
+    clickDoor: to => { const d = rctx && rctx.doors.find(x => x.to === to); if (d) d.portal.emit("click"); return !!d; },
+    next, current: () => ({ room: curRoom, step: cur }),
   };
 }
 const ready = () => (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(init);

@@ -102,7 +102,7 @@ export default function build(ctx) {
     S.box(0.45, 2.2, 1.4, "#b48a63", [-W + 0.25, 1.1, z]);
     for (let y = 0.3; y < 2.1; y += 0.5) { S.box(0.42, 0.03, 1.36, "#9c7a5a", [-W + 0.27, y, z]); for (let i = 0; i < 3; i++) S.box(0.34, 0.3, 0.38, ["#e2d6c0", "#c7d3db", "#e8c9b9"][(i + Math.round(y * 2)) % 3], [-W + 0.28, y + 0.165, z - 0.45 + i * 0.45]); }
   }
-  for (const [x, z, sc] of [[W - 0.5, 6.6, 1], [-W + 0.6, 2.9, 0.8], [W - 0.5, -5.4, 0.9]]) {
+  for (const [x, z, sc] of [[W - 0.5, 6.6, 1], [-W + 0.6, 6.4, 0.8], [W - 0.5, -5.4, 0.9]]) {
     S.cyl(0.2 * sc, 0.15 * sc, 0.38 * sc, "#c7764f", [x, 0.19 * sc, z], [0, 0, 0], 10);
     for (let i = 0; i < 9; i++) S.sph(0.17 * sc, i % 2 ? "#5d8f5a" : "#6fa26a", [x + Math.cos(i * 1.9) * 0.16 * sc, (0.55 + (i % 3) * 0.2) * sc, z + Math.sin(i * 1.9) * 0.16 * sc], 6, [1, 1.3, 1]);
   }
@@ -117,7 +117,7 @@ export default function build(ctx) {
   /* ---------- Skilt med rummets navn og dør tilbage til Gaden ---------- */
   const DOORX = 4.0;
   ctx.door(ctx.room.parent, { position: `${DOORX} 0 ${ZB + 0.14}` });
-  ctx.sign(ctx.room.name, { position: `${PEG.x} 3.05 ${ZB + 0.12}`, width: 2.6, sub: ctx.room.sub });
+  const roomSign = ctx.sign(ctx.room.name, { position: `${PEG.x} 2.85 ${ZB + 0.12}`, width: 2.4, sub: ctx.room.sub });
 
   /* hulpladens tekstur: huller, værktøjssilhuetter og fem kort med Hjorths spørgsmål */
   const QWORDS = ["interaktion", "anvendelse", "formål", "begrundelse", "konsekvens"];
@@ -139,6 +139,42 @@ export default function build(ctx) {
     if (i >= 3) q.position.x = PEG.x - 0.36 + (i - 3) * 0.72;
     q.rotation.z = ((i * 37) % 7 - 3) * D; addObj(q); return q;
   });
+
+  /* ---------- Vejen tilbage: et lille klikbart skilt i hvert view med en pil mod døren til forælderen ---------- */
+  const VIEWS = {};
+  const view = (id, o) => { VIEWS[id] = o; ctx.view(id, o); };
+  function makeBackHint(doorPos) {
+    const g = new THREE.Group();
+    const name = ctx.rooms[ctx.room.parent].name;
+    const tex = K.canvasTexture(640, 150, (c, w, h) => {
+      c.fillStyle = "rgba(14,12,26,0.9)"; K.roundRect(c, 4, 4, w - 8, h - 8, 60); c.fill(); c.strokeStyle = ctx.rooms[ctx.room.parent].color; c.lineWidth = 6; c.stroke();
+      c.fillStyle = "#ffffff"; c.font = `600 54px "Source Sans 3", "Segoe UI", sans-serif`; c.textBaseline = "middle"; c.fillText(`Tilbage: ${name}`, 150, h / 2 + 2);
+    });
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(0.64, 0.15), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.85 }));
+    g.add(panel);
+    const ar = new THREE.Shape(); ar.moveTo(-0.012, -0.04); ar.lineTo(0.012, -0.04); ar.lineTo(0.012, 0.005); ar.lineTo(0.03, 0.005); ar.lineTo(0, 0.045); ar.lineTo(-0.03, 0.005); ar.lineTo(-0.012, 0.005); ar.closePath();
+    const arrowM = new THREE.Mesh(new THREE.ShapeGeometry(ar), new THREE.MeshBasicMaterial({ color: ctx.rooms[ctx.room.parent].color, transparent: true, depthWrite: false }));
+    arrowM.position.set(-0.24, 0, 0.002); g.add(arrowM);
+    g.renderOrder = 30; panel.renderOrder = 30; arrowM.renderOrder = 31;
+    const e = addObj(g);
+    ctx.onClick(e, () => ctx.goRoom(ctx.room.parent));
+    return {
+      place(id) {
+        const v = VIEWS[id]; if (!v) { g.visible = false; return; }
+        g.visible = true;
+        const p = v.position, la = v.lookAt || [p[0], 1.6, p[2] - 1];
+        const fx = la[0] - p[0], fz = la[2] - p[2], fl = Math.hypot(fx, fz) || 1, ux = fx / fl, uz = fz / fl;
+        // nede til venstre i synsfeltet, vippet op mod øjet
+        const pitch = typeof v.pitch === "number" ? v.pitch : 0;
+        const px = p[0] + ux * 1.3 + uz * 0.95, pz = p[2] + uz * 1.3 - ux * 0.95;
+        g.position.set(px, 1.6 + Math.tan(pitch * D) * 1.3 - 0.8, pz);
+        g.rotation.set(0, Math.atan2(-ux, -uz), 0, "YXZ"); g.rotateX((pitch - 22) * D);
+        // pilens retning: vinkel fra blikretningen til døren (positiv = til venstre)
+        const dx = doorPos[0] - p[0], dz = doorPos[2] - p[2];
+        arrowM.rotation.z = Math.atan2(ux * dz - uz * dx, ux * dx + uz * dz) * -1;
+      },
+    };
+  }
 
   /* ---------- c2-0: telefonen folder sig ud i lag ---------- */
   const LAYERS = [
@@ -183,18 +219,19 @@ export default function build(ctx) {
     const edge = new THREE.Mesh(roundBox(LW, LH, 0.012, 0.05), new THREE.MeshStandardMaterial({ color: L.c, transparent: true, opacity: 0.35, depthWrite: false })); edge.position.z = -0.008; grp.add(edge);
     // mærket: en lille fane over laget
     const tagTex = K.canvasTexture(320, 96, (g, w, h) => { g.fillStyle = L.c; K.roundRect(g, 3, 3, w - 6, h - 6, 22); g.fill(); g.fillStyle = "#1a1424"; g.font = FONT(700, 50); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(L.name, w / 2, h / 2 + 2); });
-    const tag = quad(0.36, 0.108, basic({ map: tagTex, side: THREE.DoubleSide })); tag.position.set(0, LH / 2 + 0.1, 0.01); grp.add(tag);
+    const tag = quad(0.5, 0.15, basic({ map: tagTex, side: THREE.DoubleSide })); tag.position.set(LW / 2 + 0.32, 0, 0.01); grp.add(tag);
     return { grp, face, edge, tag };
   });
   // et tyndt bundstykke (telefonens ramme), som ligger tilbage på bordet
   const shell = new THREE.Mesh(roundBox(LW + 0.03, LH + 0.03, 0.03, 0.06), new THREE.MeshStandardMaterial({ color: "#20232c", roughness: 0.5 }));
   shell.rotation.x = -90 * D; shell.position.set(TBL.x, TBL.y + 0.015, TBL.z); addObj(shell);
   // stiplede linjer, der viser, at lagene hører sammen
-  const explodeLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineDashedMaterial({ color: "#8a7a90", dashSize: 0.04, gapSize: 0.03, transparent: true }));
+  const explodeLine = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(new Array(8).fill(0).map(() => new THREE.Vector3())), new THREE.LineDashedMaterial({ color: "#6a5a70", dashSize: 0.04, gapSize: 0.03, transparent: true }));
   addObj(explodeLine);
   // lagenes to tilstande: samlet (fladt på bordet) og foldet ud (diagonalt i luften)
   const compactPose = i => ({ p: [TBL.x, TBL.y + 0.035 + (3 - i) * 0.012, TBL.z], r: [-90, 0, 0] });
-  const explodedPose = i => ({ p: [TBL.x - 1.0 + i * 0.66, TBL.y + 0.7 + i * 0.04, TBL.z + 0.35 - i * 0.28], r: [0, 12, 0] });
+  // foldet ud: en stak lige over telefonen, hvert lag lidt højere og vippet mod beskueren, så man ser dem lag på lag
+  const explodedPose = i => ({ p: [TBL.x, TBL.y + 0.32 + (3 - i) * 0.34, TBL.z + 0.05 * (3 - i)], r: [-62, 0, 0] });
   function setLayers(k) {
     layerObjs.forEach((o, i) => {
       const a = compactPose(i), b = explodedPose(i);
@@ -203,15 +240,18 @@ export default function build(ctx) {
       o.grp.rotation.set(lerp(a.r[0], b.r[0], ki) * D, lerp(a.r[1], b.r[1], ki) * D, 0);
       o.ki = ki;
     });
-    const p0 = layerObjs[0].grp.position, p3 = layerObjs[3].grp.position;
-    explodeLine.geometry.setFromPoints([p0.clone(), p3.clone()]); explodeLine.computeLineDistances();
-    explodeLine.material.opacity = ease((k - 0.6) / 0.3) * 0.8;
+    // fire lodrette stiplede linjer fra telefonens hjørner op gennem lagene
+    const pts = [];
+    for (const [cx, cz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { pts.push(new THREE.Vector3(TBL.x + cx * LW / 2, TBL.y + 0.03, TBL.z + cz * LH / 2)); const top = layerObjs[0].grp; pts.push(new THREE.Vector3(cx * LW / 2, cz * -LH / 2, 0).applyEuler(top.rotation).add(top.position)); }
+    explodeLine.geometry.setFromPoints(pts); explodeLine.computeLineDistances();
+    explodeLine.material.opacity = ease((k - 0.6) / 0.3) * 0.7;
   }
+  const back = makeBackHint([DOORX, 0, ZB + 0.14]);
   const st0 = kit.grp(root, `${TBL.x} 0 ${TBL.z}`);
   kit.box(st0, `0 ${TBL.y + 0.5} 0`, 3.0, 1.2, 1.4, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c2-0", st0);
-  const s20 = ctx.sign(ctx.step("c2-0").title, { position: `${TBL.x - 0.1} 2.75 ${TBL.z - 0.6}`, width: 2.0 });
-  ctx.view("c2-0", { position: [TBL.x + 0.25, 0, TBL.z + 3.0], lookAt: [TBL.x - 0.15, 1.45, TBL.z] });
+  const s20 = ctx.sign(ctx.step("c2-0").title, { position: `${TBL.x} 2.95 ${TBL.z - 0.3}`, width: 2.1 });
+  view("c2-0", { position: [TBL.x + 0.35, 0, TBL.z + 3.2], lookAt: [TBL.x, 1.55, TBL.z], pitch: 0 });
 
   /* ---------- c2-1: luppen og spørgsmålene ---------- */
   const lens = new THREE.Group(); addObj(lens);
@@ -223,10 +263,10 @@ export default function build(ctx) {
   }
   // spørgsmålene: ét pr. lag (fra manus)
   const QUEST = [
-    { layer: 0, q: "Hvad sker der, hvis jeg trykker her?", at: [0.05, 0.12] },
-    { layer: 2, q: "Hvad ved appen om mig?", at: [0.0, 0.05] },
-    { layer: 1, q: "Hvornår fandt den ud af det?", at: [0.0, -0.18] },
-    { layer: 3, q: "Hvad sker der uden internet?", at: [0.13, 0.32] },
+    { layer: 0, q: "Hvad sker der, hvis jeg trykker her?", at: [-0.1, 0.1] },
+    { layer: 1, q: "Hvornår fandt den ud af det?", at: [0.08, 0.0] },
+    { layer: 2, q: "Hvad ved appen om mig?", at: [-0.08, -0.05] },
+    { layer: 3, q: "Hvad sker der uden internet?", at: [0.12, 0.3] },
   ];
   const qmTex = K.canvasTexture(256, 256, (g, w, h) => {
     const gr = g.createRadialGradient(w / 2, h / 2, 10, w / 2, h / 2, w / 2); gr.addColorStop(0, "rgba(232,99,140,0.95)"); gr.addColorStop(0.55, "rgba(232,99,140,0.55)"); gr.addColorStop(1, "rgba(232,99,140,0)");
@@ -234,15 +274,15 @@ export default function build(ctx) {
   });
   QUEST.forEach(Q => {
     Q.mark = quad(0.2, 0.2, basic({ map: qmTex, opacity: 0, side: THREE.DoubleSide })); layerObjs[Q.layer].grp.add(Q.mark); Q.mark.position.set(Q.at[0], Q.at[1], 0.03);
-    const tx = K.canvasTexture(1000, 150, (g, w, h) => { g.fillStyle = "rgba(255,255,255,0.96)"; K.roundRect(g, 4, 4, w - 8, h - 40, 30); g.fill(); g.beginPath(); g.moveTo(w / 2 - 24, h - 37); g.lineTo(w / 2, h - 4); g.lineTo(w / 2 + 24, h - 37); g.fill(); g.strokeStyle = C.c; g.lineWidth = 5; K.roundRect(g, 4, 4, w - 8, h - 40, 30); g.stroke(); g.fillStyle = "#2b2230"; g.font = BODY(600, 50); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(Q.q, w / 2, (h - 36) / 2 + 4); });
-    Q.bubble = quad(1.0, 0.15, basic({ map: tx, opacity: 0, side: THREE.DoubleSide, depthTest: false })); Q.bubble.renderOrder = 20; addObj(Q.bubble);
+    const tx = K.canvasTexture(1000, 150, (g, w, h) => { g.fillStyle = "rgba(255,255,255,0.96)"; K.roundRect(g, 4, 4, w - 40, h - 40, 30); g.fill(); g.beginPath(); g.moveTo(w - 60, 30); g.lineTo(w - 2, (h - 36) / 2); g.lineTo(w - 60, h - 70); g.fill(); g.strokeStyle = C.c; g.lineWidth = 5; K.roundRect(g, 4, 4, w - 40, h - 40, 30); g.stroke(); g.fillStyle = "#2b2230"; g.font = BODY(600, 50); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(Q.q, (w - 36) / 2, (h - 36) / 2 + 4); });
+    Q.bubble = quad(1.05, 0.158, basic({ map: tx, opacity: 0, side: THREE.DoubleSide, depthTest: false })); Q.bubble.renderOrder = 20; addObj(Q.bubble);
   });
   let pointed = -1, pointedAt = 0;   // hvis brugeren klikker på et lag, peger luppen dér
   const st1 = kit.grp(root, `${TBL.x + 0.6} 0 ${TBL.z + 0.4}`);
   kit.box(st1, "0 1.5 0", 0.4, 0.4, 0.4, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c2-1", st1);
-  const s21 = ctx.sign(ctx.step("c2-1").title, { position: `${TBL.x + 1.25} 2.6 ${TBL.z + 0.35}`, width: 1.3, rotation: "0 -20 0" });
-  ctx.view("c2-1", { position: [TBL.x - 0.1, 0, TBL.z + 2.25], lookAt: [TBL.x - 0.05, 1.55, TBL.z] });
+  const s21 = ctx.sign(ctx.step("c2-1").title, { position: `${TBL.x} 2.95 ${TBL.z - 0.28}`, width: 2.1 });
+  view("c2-1", { position: [TBL.x + 0.2, 0, TBL.z + 3.0], lookAt: [TBL.x, 1.55, TBL.z] });
   // klikbare lag: et usynligt plan pr. lag, der følger laget
   layerObjs.forEach((o, i) => {
     const hit = kit.plane(root, "0 0 0", LW, LH, "opacity: 0; transparent: true; depthWrite: false; side: double");
@@ -305,7 +345,7 @@ export default function build(ctx) {
   kit.box(st2, "0 0.7 0", 0.9, 1.4, 5.0, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c2-2", st2);
   const s22 = ctx.sign(ctx.step("c2-2").title, { position: `${MX + 0.05} 2.55 ${MACH[1].z}`, width: 2.1, rotation: "0 90 0" });
-  ctx.view("c2-2", { position: [MX + 3.5, 0, MACH[1].z], lookAt: [MX, 1.3, MACH[1].z] });
+  view("c2-2", { position: [MX + 3.5, 0, MACH[1].z], lookAt: [MX, 1.3, MACH[1].z] });
   // output for maskine m ved kørsel r: [geometri-indeks, farve]
   function outputOf(key, r) {
     if (key === "det") return [0, "#f2a541"];
@@ -372,7 +412,7 @@ export default function build(ctx) {
   kit.box(st3, "0 1.3 0", 0.4, 2.6, MIR.w, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c2-3", st3);
   const s23 = ctx.sign(ctx.step("c2-3").title, { position: `${MIR.x - 0.14} 3.0 ${MIR.z}`, width: 3.0, size: 60, rotation: "0 -90 0" });
-  ctx.view("c2-3", { position: [MIR.x - 3.3, 0, MIR.z], lookAt: [MIR.x, 1.5, MIR.z] });
+  view("c2-3", { position: [MIR.x - 3.3, 0, MIR.z], lookAt: [MIR.x, 1.5, MIR.z] });
 
   /* ---------- c2-4: to versioner af samme (opdigtede) app ---------- */
   const AP = { z: ZF - 0.08, y: 1.55, xa: 1.6, xb: -1.4, w: 0.95, h: 1.8 };   // på forvæggen, set indefra (A til venstre)
@@ -451,14 +491,14 @@ export default function build(ctx) {
   kit.box(st4, "0 1.5 0.3", 4.2, 2.0, 0.3, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c2-4", st4);
   const s24 = ctx.sign(ctx.step("c2-4").title, { position: `${midX} 3.05 ${AP.z - 0.12}`, width: 2.3, rotation: "0 180 0" });
-  ctx.view("c2-4", { position: [midX, 0, AP.z - 3.6], lookAt: [midX, 1.6, AP.z] });
+  view("c2-4", { position: [midX, 0, AP.z - 3.6], lookAt: [midX, 1.6, AP.z] });
 
   /* ---------- Tilstand og animation ---------- */
   let cur = null, t0 = null, now = 0;
   const tmpV = new THREE.Vector3(), tmpQ = new THREE.Quaternion(), M4 = new THREE.Matrix4();
   const camPos = () => { root.sceneEl.camera.getWorldPosition(tmpV); return tmpV; };
   return {
-    onStep(id) { cur = id; t0 = null; pointed = -1; },
+    onStep(id) { cur = id; t0 = null; pointed = -1; back.place(id); },
     tick(t, dt) {
       now = t; if (t0 === null) t0 = t;
       const kf = 1 - Math.exp(-(dt || 16) / 1000 * 7);   // tidsbaseret udjævning (uafhængig af billedfrekvens)
@@ -490,13 +530,18 @@ export default function build(ctx) {
         lens.position.lerp(tp, kf);
         lens.quaternion.slerp(lo.grp.getWorldQuaternion(tmpQ), kf);
       } else { lens.visible = cur === "c2-0" ? false : true; lens.position.set(TBL.x + 0.95, TBL.y + 0.05, TBL.z + 0.3); lens.rotation.set(-90 * D, 0, 30 * D); }
+      // hvert lag får sit spørgsmål; et spørgsmål, luppen har været ved, bliver hængende (svagere), så alle fire ses til sidst
+      const visited = L1 ? Math.min(QUEST.length, Math.floor(Math.max(0, e - 1.0) / 2.4) + 1) : 0;
       QUEST.forEach((Q, i) => {
         const on = L1 && i === qi && lens.position.distanceTo(tp) < 0.15;
-        Q.mark.material.opacity = L1 ? (on ? 1 : 0.28) : 0;
-        Q.mark.scale.setScalar(on ? 1 + 0.12 * Math.sin(s * 6) : 0.75);
-        const bo = Q.bubble.material.opacity; Q.bubble.material.opacity = lerp(bo, on ? 1 : 0, kf);
-        const lw = new THREE.Vector3(); Q.mark.getWorldPosition(lw); Q.bubble.position.set(lw.x, lw.y + 0.3, lw.z + 0.25);
+        const seen = L1 && i < visited;
+        Q.mark.material.opacity = L1 ? (on ? 1 : seen ? 0.7 : 0.3) : 0;
+        Q.mark.scale.setScalar(on ? 1 + 0.12 * Math.sin(s * 6) : 0.8);
+        const bo = Q.bubble.material.opacity; Q.bubble.material.opacity = lerp(bo, on ? 1 : seen ? 0.6 : 0, kf);
+        // boblen står ud for laget, til venstre for stakken (fri af lagene og mærkerne)
+        const lp = layerObjs[Q.layer].grp.position; Q.bubble.position.set(TBL.x - LW / 2 - 0.62, lp.y + 0.05, lp.z + 0.1);
         Q.bubble.quaternion.copy(root.sceneEl.camera.getWorldQuaternion(tmpQ));
+        Q.bubble.scale.setScalar(on ? 1.08 : 0.92);
       });
 
       /* maskinerne */
@@ -558,7 +603,9 @@ export default function build(ctx) {
       apps.forEach(a => a.g.children[1].material.color.setScalar(L4 ? 1 : 0.85));
 
       // skilte: aktive tydelige, øvrige dæmpede
-      [[s20, "c2-0"], [s21, "c2-1"], [s22, "c2-2"], [s23, "c2-3"], [s24, "c2-4"]].forEach(([sg, id]) => setSignOpacity(sg, cur === id ? 1 : 0.6));
+      // dæmpningsregime: kun det aktive trins skilt er synligt; de andre er næsten skjult, så de ikke konkurrerer
+      [[s20, "c2-0"], [s21, "c2-1"], [s22, "c2-2"], [s23, "c2-3"], [s24, "c2-4"]].forEach(([sg, id]) => { setSignOpacity(sg, cur === id ? 1 : 0.12); });
+      setSignOpacity(roomSign, cur === "c2-0" ? 1 : 0.35);
     },
   };
 }
