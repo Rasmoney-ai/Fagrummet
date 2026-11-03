@@ -344,7 +344,7 @@ export default function build(ctx) {
   });
 
   ctx.sign(ctx.room.name, { sub: ctx.room.sub, position: "0 4.7 -6.42", width: 4.2 });
-  const erk = T.erkendeformer(ctx.root, "-3.0 4.7 -6.38", "0 0 0", 1.8);
+  const erk = T.erkendeformer(ctx.root, "-3.7 4.7 -6.38", "0 0 0", 1.8);
 
   /* ---------- Views ---------- */
   ctx.view("a0-1", { position: [0, 0, 6.6], lookAt: [0, 1.35, -2.5] });

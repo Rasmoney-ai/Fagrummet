@@ -603,7 +603,7 @@ export default function build(ctx) {
     const mål = T.mesh(g, T.hold(new THREE.PlaneGeometry(0.05, 0.3).translate(0, 0.15, 0)), målM, `0 ${Y + 0.05} 0.012`);
     const RB2 = new Batch({ uv: true }); for (let k = 0; k <= 6; k++) RB2.plane([0.034, 0.05 + k * 0.05, 0], [0.012, 0.004]);
     T.mesh(g, RB2.merge(), T.hold(new THREE.MeshBasicMaterial({ color: "#a9b0d6" })), `0 ${Y} 0.012`);
-    const målTekst = kit.textPlane(g, `0 ${Y + 0.47} 0.03`, "skærmtid", A, { width: 0.3, aspect: 0.25, size: 150, bg: true, ink: "#eef1ff" });
+    const målTekst = kit.textPlane(g, `0.1 ${Y + 0.47} 0.03`, "skærmtid", A, { width: 0.3, aspect: 0.25, size: 150, bg: true, ink: "#eef1ff" });
     // skærmtid flyder fra telefonen til måleren og videre til lampens sensor som små lysprikker
     const prikM = T.hold(new THREE.MeshBasicMaterial({ color: "#9fb6ff", transparent: true, opacity: 0 }));
     const prikker = [0, 1, 2, 3, 4, 5].map(() => T.mesh(g, T.hold(new THREE.SphereGeometry(0.012, 6, 4)), prikM));
