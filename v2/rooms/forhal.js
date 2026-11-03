@@ -50,7 +50,7 @@ export default function build(ctx) {
     f1: { phi: 0, vr: 5.4, pitch: 6 },
     f2: { phi: 222, vr: 4.6, pitch: 12 },
     f3: { phi: 138, vr: 4.7, pitch: 6 },
-    f4: { phi: 300, vr: 4.5, pitch: 13 },
+    f4: { phi: 232, vr: 4.5, pitch: 13 },
     f5: { phi: 95, vr: 4.6, pitch: 14 },
     f6: { phi: 180, vr: 1.75, pitch: 6, out: true, plq: 180, plqR: 3.6 },
   };
@@ -367,7 +367,7 @@ export default function build(ctx) {
     // navn over rodens fod i ca. 1 m højde, vendt mod F3-stationen, med en tynd lodlinje ned
     // navnet står i en ordnet række i F3-blikket, med en tynd streg ned til rodens fod
     const foot = new THREE.Vector3(Math.sin(a0) * 2.55, 0.03, Math.cos(a0) * 2.55);
-    const lbl = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.3, 0.28)), label(keep(K.labelTex(name, col, { w: 1024, h: 220, size: 72, bg: true }))));
+    const lbl = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.6, 0.344)), label(keep(K.labelTex(name, col, { w: 1024, h: 220, size: 72, bg: true }))));
     lbl.renderOrder = 15; add(lbl);
     const stemMat = basic(col, { transparent: true, opacity: 0 });
     const stem = new THREE.Mesh(keep(new THREE.CylinderGeometry(0.005, 0.005, 1, 3, 1, true)), stemMat); add(stem);
