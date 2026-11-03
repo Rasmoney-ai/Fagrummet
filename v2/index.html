@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fagrummet 2: teknologiforståelse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=Source+Sans+3:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<script src="vendor/aframe-v1.6.0.min.js"></script>
+<style>
+:root{ color-scheme:dark; --night:#0b0f1e; --panel:#141a30; --line:#2a3358; --ink:#eef1ff; --muted:#a9b0d6;
+  --core:#c9d1ff; --a:#f2a541; --b:#4fd1c5; --c:#e8638c;
+  --display:"Familjen Grotesk","Segoe UI",system-ui,sans-serif; --body:"Source Sans 3","Segoe UI",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace; }
+*{box-sizing:border-box} [hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--night);color:var(--ink);font-family:var(--body);overflow:hidden}
+.stage{position:fixed;inset:0} .stage a-scene{width:100%;height:100%}
+.card{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));
+  width:min(470px,calc(100% - 32px));max-height:min(64vh,600px);display:flex;flex-direction:column;gap:10px;
+  background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--line);border-radius:14px;padding:16px 18px;backdrop-filter:blur(8px);z-index:5}
+.meta{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.chip{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid currentColor;color:var(--core);max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.count{font-family:var(--mono);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+.card h1{font-family:var(--display);font-weight:700;font-size:23px;line-height:1.15;margin:0;text-wrap:balance}
+.body{font-size:16px;line-height:1.5;overflow-y:auto;min-height:0;max-width:62ch;margin:0}
+.controls{display:flex;flex-wrap:wrap;gap:8px}
+button{font:600 14px var(--body);color:var(--ink);background:#1d2546;border:1px solid var(--line);border-radius:9px;padding:8px 12px;cursor:pointer}
+button:hover{border-color:var(--muted)} button:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+button.primary{background:var(--ink);color:var(--night);border-color:var(--ink)}
+button[aria-pressed="true"]{border-color:var(--b);color:var(--b)}
+details.rooms{border-top:1px solid var(--line);padding-top:8px}
+details.rooms summary{cursor:pointer;font-size:13px;color:var(--muted)}
+#roomnav{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+#roomnav button{font-size:12.5px;padding:5px 9px;background:transparent;color:var(--c,var(--ink));border-color:color-mix(in srgb,var(--c) 45%,var(--line))}
+#roomnav button.sub{font-weight:500}
+#roomnav button.on{background:#232c52}
+.note{font-size:12px;color:var(--muted);margin:0}
+.hint{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));font-family:var(--mono);font-size:11px;color:var(--muted);
+  background:color-mix(in srgb,var(--panel) 85%,transparent);border:1px solid var(--line);border-radius:8px;padding:6px 10px;z-index:5;max-width:60vw}
+.start{position:fixed;inset:0;z-index:10;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 40%,#18204a 0%,var(--night) 70%);padding:0 16px}
+.start-inner{max-width:580px;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.start h2{font-family:var(--display);font-size:clamp(34px,7vw,56px);line-height:1.02;margin:0;font-weight:700}
+.start h2 span{display:block} .start h2 .a{color:var(--a)} .start h2 .b{color:var(--b)} .start h2 .c{color:var(--c)}
+.start p{font-size:17px;line-height:1.5;color:var(--muted);margin:0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.start button.primary{font-size:16px;padding:12px 18px}
+#ver{font-family:var(--mono);font-size:11px;color:#6b7299}
+@media (max-width:560px){ .card{max-height:50vh;padding:14px} .card h1{font-size:19px} .body{font-size:15px} .hint{display:none} }
+</style>
+</head>
+<body>
+<div class="stage">
+<a-scene id="scene" embedded room-ticker
+  renderer="antialias: true; colorManagement: true; maxCanvasWidth: 1920; maxCanvasHeight: 1920"
+  background="color: #0b0f1e"
+  loading-screen="dotsColor: #c9d1ff; backgroundColor: #0b0f1e"
+  cursor="rayOrigin: mouse" raycaster="objects: .klik, .vrbtn"
+  xr-mode-ui="enabled: true" vr-mode-ui="enabled: true">
+  <a-entity light="type: hemisphere; color: #c9d1ff; groundColor: #1a1f3a; intensity: 0.75"></a-entity>
+  <a-entity light="type: directional; color: #ffffff; intensity: 0.85" position="3 8 4"></a-entity>
+  <a-entity id="rooms"></a-entity>
+  <a-entity id="rig" position="0 0 5" wasd-controls="acceleration: 25">
+    <a-entity id="cam" camera position="0 1.6 0" look-controls="pointerLockEnabled: false">
+      <a-sphere id="fader" radius="0.4" visible="false" material="shader: flat; color: #000; side: back; transparent: true; opacity: 0; depthTest: false" segments-width="12" segments-height="8" render-order="999"></a-sphere>
+    </a-entity>
+    <a-entity id="handR" laser-controls="hand: right; model: false" raycaster="objects: .klik, .vrbtn; lineColor: #f2a541; lineOpacity: 0.8" stick-move></a-entity>
+    <a-entity id="handL" laser-controls="hand: left; model: false" raycaster="objects: .klik, .vrbtn; lineColor: #4fd1c5; lineOpacity: 0.8" stick-move></a-entity>
+    <a-entity id="vrPanelWrap" position="0 0.95 -1.2" rotation="-38 0 0" scale="0.6 0.6 0.6" visible="false">
+      <a-plane id="vrPanel" width="1.8" height="0.504" material="shader: flat; transparent: true; side: double"></a-plane>
+      <a-plane class="vrbtn" data-action="up" position="-0.84 -0.42 0" width="0.4" height="0.2" material="shader: flat; transparent: true"></a-plane>
+      <a-plane class="vrbtn" data-action="prev" position="-0.28 -0.42 0" width="0.4" height="0.2" material="shader: flat; transparent: true"></a-plane>
+      <a-plane class="vrbtn" data-action="replay" position="0.28 -0.42 0" width="0.4" height="0.2" material="shader: flat; transparent: true"></a-plane>
+      <a-plane class="vrbtn" data-action="next" position="0.84 -0.42 0" width="0.4" height="0.2" material="shader: flat; transparent: true"></a-plane>
+    </a-entity>
+  </a-entity>
+</a-scene>
+</div>
+
+<div class="hint" id="hint">Træk for at se dig om · WASD for at gå · ← → skifter trin · klik på døre og stationer</div>
+
+<section class="card" id="card" aria-live="polite">
+  <div class="meta"><span class="chip" id="chip">Forhallen</span><span class="count" id="count"></span></div>
+  <h1 id="title">Velkommen</h1>
+  <p class="body" id="bodyText"></p>
+  <div class="controls">
+    <button id="prev" type="button">Forrige</button>
+    <button id="next" type="button" class="primary">Næste</button>
+    <button id="tts" type="button" aria-pressed="true">Lyd til</button>
+    <button id="replay" type="button">Hør igen</button>
+    <button id="up" type="button" hidden>Tilbage</button>
+  </div>
+  <details class="rooms"><summary>Alle rum</summary><div id="roomnav"></div></details>
+  <p class="note" id="voiceNote"></p>
+</section>
+
+<div class="start" id="start">
+  <div class="start-inner">
+    <div class="eyebrow">Valgfag · andet udkast til fagplan · juni 2026</div>
+    <h2><span>Teknologiforståelse</span><span class="a">skabe</span><span class="b">programmere</span><span class="c">tage stilling</span></h2>
+    <p>En bygning med 13 rum: en forhal, tre fløje, ét rum for hvert af fagplanens otte delområder og en udsigt over det hele. Følg den anbefalede rute med "Næste", eller gå selv gennem dørene.</p>
+    <div class="row">
+      <button class="primary" id="go" type="button">Start rundvisningen</button>
+      <button id="goSilent" type="button">Start uden lyd</button>
+      <button id="goVR" type="button" hidden>Start i VR</button>
+    </div>
+    <div id="ver"></div>
+  </div>
+</div>
+
+<script type="module" src="js/core.js"></script>
+</body>
+</html>
