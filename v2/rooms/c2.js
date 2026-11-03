@@ -313,21 +313,32 @@ export default function build(ctx) {
     g.add(B.build(litMat));
     const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 6), new THREE.MeshBasicMaterial({ color: "#3a3f4a" })); lamp.position.set(0.36, 1.27, 0.25); g.add(lamp);
     // navneplade på maskinens front
-    const plate = quad(0.78, 0.29, basic({ map: K.canvasTexture(640, 240, (c, w, h) => {
+    const plate = quad(0.96, 0.36, basic({ map: K.canvasTexture(640, 240, (c, w, h) => {
       c.fillStyle = "#fbf7ef"; K.roundRect(c, 4, 4, w - 8, h - 8, 22); c.fill(); c.strokeStyle = C.c; c.lineWidth = 6; c.stroke();
-      c.textAlign = "center"; c.fillStyle = "#2b2230"; c.font = FONT(700, 70); c.fillText(m.name, w / 2, 100); c.fillStyle = "#6a5a66"; c.font = BODY(500, 46); c.fillText(m.sub, w / 2, 178);
+      c.textAlign = "center"; c.fillStyle = "#2b2230"; c.font = FONT(700, 88); c.fillText(m.name, w / 2, 108); c.fillStyle = "#6a5a66"; c.font = BODY(600, 50); c.fillText(m.sub, w / 2, 190);
     }), depthWrite: true }));
-    plate.position.set(-0.05, 0.56, 0.405); g.add(plate);
+    plate.position.set(0, 0.55, 0.405); g.add(plate);
     // input-terningen (den samme for alle tre)
-    const inp = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshStandardMaterial({ color: "#f4f1ea", roughness: 0.4 })); g.add(inp);
+    const inp = new THREE.Mesh(new THREE.SphereGeometry(0.07, 14, 10), new THREE.MeshStandardMaterial({ color: "#f4f1ea", roughness: 0.35, emissive: "#ffffff", emissiveIntensity: 0.25 })); g.add(inp);
     // fire pladser til output på hylden
     const outs = [0, 1, 2, 3].map(j => { const o = new THREE.Mesh(GEOS[0], new THREE.MeshStandardMaterial({ color: "#fff", roughness: 0.45, flatShading: true })); o.position.set(-0.33 + j * 0.22, 0.92, 0.58); g.add(o); return o; });
     // feedback-pil for den adaptive maskine: fra hylden tilbage til tragten
     let loop = null;
     if (m.key === "ada") {
-      const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(0.38, 0.95, 0.6), new THREE.Vector3(0.62, 1.35, 0.45), new THREE.Vector3(0.45, 1.75, 0.1), new THREE.Vector3(0.15, 1.6, 0)]);
-      loop = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.012, 5), basic({ color: C.c, opacity: 0.85 })); g.add(loop);
-      const head = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.08, 8), basic({ color: C.c, opacity: 0.85 })); head.position.set(0.15, 1.58, 0); head.rotation.z = 70 * D; g.add(head); loop.userData.head = head;
+      // brugeren står ved siden af maskinen og vælger én af outputtene; valget sendes tilbage til tragten (løkken)
+      const user = new THREE.Group(); user.position.set(0.98, 0, 0.62); user.rotation.y = -35 * D; g.add(user);
+      const um = new THREE.MeshStandardMaterial({ color: "#5a7a9c", roughness: 0.85, flatShading: true, emissive: "#5a7a9c", emissiveIntensity: 0.15 });
+      const sk = new THREE.MeshStandardMaterial({ color: "#d9a88a", roughness: 0.8, flatShading: true, emissive: "#5a3a30", emissiveIntensity: 0.2 });
+      user.add(new THREE.Mesh(mergeClean([capsule([0, 0.95, 0], [0, 1.3, 0], 0.15), capsule([0.08, 0.08, 0], [0.08, 0.82, 0], 0.065), capsule([-0.08, 0.08, 0], [-0.08, 0.82, 0], 0.065), capsule([0, 0.82, 0], [0, 0.98, 0], 0.13), capsule([0.19, 1.32, 0], [0.22, 0.85, 0.02], 0.045)]), um));
+      const arm = new THREE.Mesh(mergeClean([capsule([-0.19, 1.32, 0], [-0.42, 1.12, 0.22], 0.045)]), um); user.add(arm);
+      const hd = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 8), sk); hd.position.set(0, 1.5, 0); user.add(hd);
+      const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(0.55, 1.12, 0.78), new THREE.Vector3(0.5, 1.65, 0.55), new THREE.Vector3(0.25, 1.95, 0.25), new THREE.Vector3(0.1, 1.62, 0)]);
+      loop = new THREE.Mesh(new THREE.TubeGeometry(curve, 28, 0.016, 5), basic({ color: C.c, opacity: 0.85 })); g.add(loop);
+      const head = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.09, 8), basic({ color: C.c, opacity: 0.85 })); head.position.set(0.1, 1.6, 0); head.rotation.z = -160 * D; g.add(head); loop.userData.head = head;
+      loop.userData.curve = curve;
+      const choice = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshBasicMaterial({ color: C.c })); g.add(choice); loop.userData.choice = choice;
+      const lt = K.canvasTexture(440, 100, (c, w, h) => { c.fillStyle = "#fbf7ef"; K.roundRect(c, 3, 3, w - 6, h - 6, 40); c.fill(); c.strokeStyle = C.c; c.lineWidth = 5; c.stroke(); c.fillStyle = "#2b2230"; c.font = BODY(700, 48); c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("brugerens valg", w / 2, h / 2 + 2); });
+      const ltq = quad(0.8, 0.18, basic({ map: lt })); ltq.position.set(0.62, 2.08, 0.45); g.add(ltq);
     }
     const sparks = m.key === "gen" ? (() => { const n = 18, geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3), 3)); const p = new THREE.Points(geo, new THREE.PointsMaterial({ map: K.glowTex("#ffffff"), color: "#ffe2a0", size: 0.06, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); g.add(p); return p; })() : null;
     return { ...m, g, lamp, inp, outs, loop, sparks };
@@ -338,14 +349,16 @@ export default function build(ctx) {
     for (const m of MACH) B.box(0.04, 0.3, 0.04, "#3a4150", [MX, 2.4, m.z]);
     B.box(0.04, 1.2, 0.04, "#3a4150", [MX - 0.3, 2.85, MACH[0].z - 0.3]); B.box(0.04, 1.2, 0.04, "#3a4150", [MX - 0.3, 2.85, MACH[2].z + 0.3]);
     addObj(B.build(litMat));
-    const inLab = quad(0.9, 0.2, basic({ map: K.canvasTexture(450, 100, (c, w, h) => { c.fillStyle = "#fbf7ef"; K.roundRect(c, 3, 3, w - 6, h - 6, 40); c.fill(); c.strokeStyle = "#3a4150"; c.lineWidth = 5; c.stroke(); c.fillStyle = "#2b2230"; c.font = FONT(700, 54); c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("samme input", w / 2, h / 2 + 2); }) }));
-    inLab.position.set(MX + 0.05, 2.02, MACH[1].z - 1.0); inLab.rotation.y = 90 * D; addObj(inLab);
+    const inLab = quad(1.1, 0.244, basic({ map: K.canvasTexture(450, 100, (c, w, h) => { c.fillStyle = "#fbf7ef"; K.roundRect(c, 3, 3, w - 6, h - 6, 40); c.fill(); c.strokeStyle = "#3a4150"; c.lineWidth = 5; c.stroke(); c.fillStyle = "#2b2230"; c.font = FONT(700, 54); c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("samme input", w / 2, h / 2 + 2); }) }));
+    inLab.position.set(MX + 0.05, 2.75, MACH[1].z); inLab.rotation.y = 90 * D; addObj(inLab);
+    // tragt-rør fra skinnen ned i hver maskines tragt
+    const T = batch(); for (const m of MACH) T.cyl(0.03, 0.03, 0.62, "#8e98a8", [MX, 1.82, m.z], [0, 0, 0], 8); addObj(T.build(litMat));
   }
   const st2 = kit.grp(root, `${MX} 0 ${MACH[1].z}`);
   kit.box(st2, "0 0.7 0", 0.9, 1.4, 5.0, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c2-2", st2);
-  const s22 = ctx.sign(ctx.step("c2-2").title, { position: `${MX + 0.05} 2.55 ${MACH[1].z}`, width: 2.1, rotation: "0 90 0" });
-  view("c2-2", { position: [MX + 3.5, 0, MACH[1].z], lookAt: [MX, 1.3, MACH[1].z] });
+  const s22 = ctx.sign(ctx.step("c2-2").title, { position: `${MX + 0.05} 3.25 ${MACH[1].z}`, width: 2.1, rotation: "0 90 0" });
+  view("c2-2", { position: [MX + 4.1, 0, MACH[1].z], lookAt: [MX, 1.5, MACH[1].z], pitch: 1 });
   // output for maskine m ved kørsel r: [geometri-indeks, farve]
   function outputOf(key, r) {
     if (key === "det") return [0, "#f2a541"];
@@ -357,26 +370,31 @@ export default function build(ctx) {
   const MIR = { x: W - 0.06, z: 0.2, w: 2.6, h: 2.45 };
   const mirror = new THREE.Group(); mirror.position.set(MIR.x, 0, MIR.z); mirror.rotation.y = -90 * D; addObj(mirror);
   {
-    const B = batch();
-    B.box(MIR.w + 0.2, MIR.h + 0.2, 0.06, "#b48a63", [0, 0.1 + MIR.h / 2, -0.02]);
-    B.box(MIR.w + 0.3, 0.08, 0.2, "#9c7a5a", [0, 0.1, 0.06]);
-    mirror.add(B.build(litMat));
-    const mt = K.canvasTexture(256, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, "#2a3446"); gr.addColorStop(0.45, "#3e4c63"); gr.addColorStop(0.5, "#56657d"); gr.addColorStop(0.56, "#3a475d"); gr.addColorStop(1, "#202838"); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
-    const glassP = quad(MIR.w, MIR.h, new THREE.MeshBasicMaterial({ map: mt })); glassP.position.set(0, 0.1 + MIR.h / 2, 0.015); mirror.add(glassP);
+    // en spejlvæg uden ramme: glasset går fra gulv til næsten loft, med kølig glans og diagonale refleksstriber
+    const mt = K.canvasTexture(256, 512, (g, w, h) => {
+      const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, "#3a4458"); gr.addColorStop(0.5, "#4c5870"); gr.addColorStop(1, "#2a3244"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      g.globalAlpha = 0.18; g.fillStyle = "#ffffff"; for (const [x, wd] of [[40, 30], [90, 10], [170, 46], [220, 8]]) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + wd, 0); g.lineTo(x + wd - 140, h); g.lineTo(x - 140, h); g.fill(); }
+      g.globalAlpha = 1;
+    });
+    const glassP = quad(MIR.w + 0.6, 3.2, new THREE.MeshBasicMaterial({ map: mt })); glassP.position.set(0, 1.6, 0.015); mirror.add(glassP);
+    const B = batch(); B.box(MIR.w + 0.6, 0.03, 0.05, "#c9cfd8", [0, 0.015, 0.03]); B.box(MIR.w + 0.6, 0.03, 0.05, "#c9cfd8", [0, 3.2, 0.03]); mirror.add(B.build(litMat));
   }
-  // figurerne som 2D-kapsler (meter; fødder i y = 0). Brugeren har en guitarkasse; dobbeltgængeren har en indkøbspose og kigger ned i telefonen.
+  // figurerne som 2D-kapsler (meter; fødder i y = 0). De er næsten ens: dobbeltgængeren har bøjet hoved over en telefon
+  // og en løftet arm; brugeren står rank med en bog under armen. Forskellene markeres med mærkater.
   const body = [[[0.1, 0.06], [0.1, 0.88], 0.075], [[-0.1, 0.06], [-0.1, 0.88], 0.075], [[0, 0.92], [0, 1.38], 0.17], [[0, 1.42], [0, 1.5], 0.05]];
   const userShape = [...body, [[0, 1.62], [0, 1.62], 0.115], [[0.21, 1.4], [0.27, 0.86], 0.05], [[-0.21, 1.4], [-0.27, 0.86], 0.05],
-    [[0.44, 0.2], [0.44, 0.78], 0.15], [[0.44, 0.8], [0.44, 1.12], 0.06], [[0.3, 0.86], [0.44, 0.86], 0.02]];
-  const twinShape = [...body, [[0.04, 1.59], [0.04, 1.59], 0.12], [[0.21, 1.4], [0.22, 1.14], 0.05], [[0.22, 1.14], [0.07, 1.24], 0.045], [[0.05, 1.26], [0.05, 1.26], 0.05],
-    [[-0.21, 1.4], [-0.29, 0.88], 0.05], [[-0.36, 0.5], [-0.36, 0.78], 0.13]];
+    [[-0.3, 0.95], [-0.3, 1.2], 0.06]];
+  const twinShape = [...body, [[0.06, 1.57], [0.06, 1.57], 0.12], [[0.21, 1.4], [0.22, 1.14], 0.05], [[0.22, 1.14], [0.07, 1.24], 0.045], [[0.05, 1.26], [0.05, 1.26], 0.05],
+    [[-0.21, 1.4], [-0.27, 0.86], 0.05]];
   const inShape = (sh, x, y) => sh.some(([a, b, r]) => { const dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy; let t = L2 ? ((x - a[0]) * dx + (y - a[1]) * dy) / L2 : 0; t = Math.max(0, Math.min(1, t)); const px = a[0] + t * dx - x, py = a[1] + t * dy - y; return px * px + py * py <= r * r; });
   const FIG_Y = 0.25, FIG_S = 1.2;    // figurerne skaleres lidt op, så de fylder spejlet
   // brugerens omrids (hvid streg) tegnet på spejlet
   const outlineTex = K.canvasTexture(512, 768, (g, w, h) => {
     const sx = w / 1.6, ox = w / 2, oy = h;      // 1,6 m bredt, 2,4 m højt
     const seg = (lw, sh) => sh.forEach(([a, b, r]) => { g.lineWidth = (r * 2) * sx + lw; g.lineCap = "round"; g.beginPath(); g.moveTo(ox + a[0] * sx, oy - a[1] * sx); g.lineTo(ox + b[0] * sx + 0.01, oy - b[1] * sx); g.stroke(); });
-    g.clearRect(0, 0, w, h); g.strokeStyle = "#ffffff"; seg(10, userShape); g.globalCompositeOperation = "destination-out"; seg(0, userShape); g.globalCompositeOperation = "source-over";
+    g.clearRect(0, 0, w, h); g.strokeStyle = "#ffffff"; seg(9, userShape); g.globalCompositeOperation = "destination-out"; seg(0, userShape); g.globalCompositeOperation = "source-over";
+    // bogen under armen (en del af "dig", som modellen ikke har med)
+    g.fillStyle = "rgba(255,255,255,0.9)"; g.save(); g.translate(ox - 0.33 * sx, oy - 1.08 * sx); g.rotate(-0.15); g.fillRect(-0.07 * sx, -0.11 * sx, 0.14 * sx, 0.22 * sx); g.restore();
   });
   const outline = quad(1.6 * FIG_S, 2.4 * FIG_S, basic({ map: outlineTex, opacity: 0 })); outline.position.set(0, FIG_Y + 1.2 * FIG_S, 0.04); mirror.add(outline);
   // dobbeltgængeren: punkter samplet inden for figurens form
@@ -398,8 +416,20 @@ export default function build(ctx) {
     const side = i % 2 ? 1 : -1; q.userData.from = [side * (1.15 + (i % 3) * 0.08), FIG_Y + 0.3 + (i * 0.27) % 2.0]; q.userData.to = [(Math.random() - 0.5) * 0.3, FIG_Y + 0.5 + Math.random() * 1.3]; return q;
   });
   // forskelle: pulserende ringe der, hvor dobbeltgængeren og brugeren ikke passer sammen
-  const DIFF = [[0.44 * FIG_S, FIG_Y + 0.62 * FIG_S], [-0.36 * FIG_S, FIG_Y + 0.64 * FIG_S], [0.06 * FIG_S, FIG_Y + 1.25 * FIG_S]];
-  const diffRings = DIFF.map(([x, y]) => { const r = new THREE.Mesh(new THREE.RingGeometry(0.17, 0.2, 32), basic({ color: C.c, opacity: 0 })); r.position.set(x, y, 0.11); mirror.add(r); return r; });
+  // forskelle: små mærkater, der viser, hvad modellen gætter forkert
+  const DIFF = [
+    { at: [0.07 * FIG_S, FIG_Y + 1.6 * FIG_S], lab: "gætter: 25 år", side: 1 },
+    { at: [0.14 * FIG_S, FIG_Y + 1.22 * FIG_S], lab: "interesse: fodbold?", side: 1 },
+    { at: [-0.32 * FIG_S, FIG_Y + 1.08 * FIG_S], lab: "læser bøger: mangler", side: -1 },
+  ];
+  const diffRings = DIFF.map(d => {
+    const g2 = new THREE.Group(); g2.position.set(d.at[0], d.at[1], 0.11); mirror.add(g2);
+    const r = new THREE.Mesh(new THREE.RingGeometry(0.11, 0.135, 28), basic({ color: C.c, opacity: 0 })); g2.add(r);
+    const tx = K.canvasTexture(520, 110, (c, w, h) => { c.fillStyle = "rgba(20,24,40,0.92)"; K.roundRect(c, 3, 3, w - 6, h - 6, 44); c.fill(); c.strokeStyle = C.c; c.lineWidth = 6; c.stroke(); c.fillStyle = "#fff"; c.font = BODY(700, 50); c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(d.lab, w / 2, h / 2 + 2); });
+    const lab = quad(0.72, 0.152, basic({ map: tx, opacity: 0 })); lab.position.set(d.side * 0.62, 0.05, 0.01); g2.add(lab);
+    const ln = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.012), basic({ color: C.c, opacity: 0 })); ln.position.set(d.side * 0.2, 0.02, 0); g2.add(ln);
+    return { r, lab, ln, material: r.material, scale: g2.scale };
+  });
   // forklaring under spejlet
   const legendTex = K.canvasTexture(560, 300, (g, w, h) => {
     g.fillStyle = "rgba(20,24,40,0.9)"; K.roundRect(g, 3, 3, w - 6, h - 6, 30); g.fill(); g.textBaseline = "middle"; g.font = BODY(600, 48);
@@ -407,19 +437,19 @@ export default function build(ctx) {
     for (let i = 0; i < 9; i++) { g.fillStyle = ["#ff6f9e", "#ffc56b", "#8fb2ff"][i % 3]; g.fillRect(38 + (i % 3) * 16, 176 + Math.floor(i / 3) * 18, 11, 11); }
     g.fillStyle = "#fff"; g.fillText("tjenestens", 110, 190); g.fillText("model af dig", 110, 240);
   });
-  const mLegend = quad(0.84, 0.45, basic({ map: legendTex })); mLegend.position.set(-MIR.w / 2 - 0.62, 1.45, 0.02); mirror.add(mLegend);
+  const mLegend = quad(0.84, 0.45, basic({ map: legendTex })); mLegend.position.set(-1.2, 0.35, 0.05); mLegend.scale.setScalar(0.85); mirror.add(mLegend);
   const st3 = kit.grp(root, `${MIR.x - 0.3} 0 ${MIR.z}`);
   kit.box(st3, "0 1.3 0", 0.4, 2.6, MIR.w, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c2-3", st3);
-  const s23 = ctx.sign(ctx.step("c2-3").title, { position: `${MIR.x - 0.14} 3.0 ${MIR.z}`, width: 3.0, size: 60, rotation: "0 -90 0" });
-  view("c2-3", { position: [MIR.x - 3.3, 0, MIR.z], lookAt: [MIR.x, 1.5, MIR.z] });
+  const s23 = ctx.sign(ctx.step("c2-3").title, { position: `${MIR.x - 0.14} 2.95 ${MIR.z}`, width: 3.0, size: 60, rotation: "0 -90 0" });
+  view("c2-3", { position: [MIR.x - 3.2, 0, MIR.z], lookAt: [MIR.x, 1.55, MIR.z] });
 
   /* ---------- c2-4: to versioner af samme (opdigtede) app ---------- */
-  const AP = { z: ZF - 0.08, y: 1.55, xa: 1.6, xb: -1.4, w: 0.95, h: 1.8 };   // på forvæggen, set indefra (A til venstre)
+  const AP = { z: ZF - 0.08, y: 1.85, xa: 1.65, xb: -1.45, w: 0.95, h: 1.8 };   // på forvæggen, set indefra (A til venstre)
   // fire designvalg; hvert har et område på hver telefon (x0, y0, x1, y1 i brøkdele af skærmen) og to korte ord
   const CHOICES = [
     { t: "sortering", a: "algoritme", b: "tid", ra: [0.04, 0.1, 0.96, 0.17], rb: [0.04, 0.1, 0.96, 0.17] },
-    { t: "indtægt", a: "reklamer", b: "abonnement", ra: [0.04, 0.42, 0.96, 0.6], rb: [0.04, 0.02, 0.36, 0.09] },
+    { t: "indtægt", a: "reklamer", b: "abonnement", ra: [0.04, 0.42, 0.96, 0.6], rb: [0.43, 0.02, 0.73, 0.075] },
     { t: "scroll", a: "uendelig", b: "slutter", ra: [0.04, 0.84, 0.96, 0.98], rb: [0.04, 0.84, 0.96, 0.98] },
     { t: "notifikationer", a: "løbende", b: "samlet kl. 18", ra: [0.74, 0.015, 0.96, 0.09], rb: [0.74, 0.015, 0.96, 0.09] },
   ];
@@ -430,7 +460,7 @@ export default function build(ctx) {
     g.fillStyle = "#2b3352"; g.beginPath(); g.arc(60, 45, 26, 0, 7); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 5;
     for (const dy of [-7, 7]) { g.beginPath(); g.moveTo(44, 45 + dy); g.bezierCurveTo(54, 35 + dy, 66, 55 + dy, 76, 45 + dy); g.stroke(); }
     g.fillStyle = "#2b3352"; g.font = FONT(700, 40); g.textBaseline = "middle"; g.fillText("Strøm", 100, 47);
-    if (!A) { g.fillStyle = "#5fb878"; K.roundRect(g, 26, 20, 140, 50, 25); g.globalAlpha = 0; g.fill(); g.globalAlpha = 1; }
+    if (!A) { g.fillStyle = "#5fb878"; K.roundRect(g, 220, 22, 140, 46, 23); g.fill(); g.fillStyle = "#fff"; g.font = BODY(700, 24); g.textAlign = "center"; g.fillText("abonnent", 290, 46); g.textAlign = "left"; }
     // klokke
     g.strokeStyle = "#2b3352"; g.lineWidth = 5; g.beginPath(); g.arc(w - 70, 44, 18, Math.PI, 0); g.lineTo(w - 50, 60); g.lineTo(w - 90, 60); g.closePath(); g.stroke();
     if (A) { g.fillStyle = "#e0384d"; g.beginPath(); g.arc(w - 52, 28, 17, 0, 7); g.fill(); g.fillStyle = "#fff"; g.font = FONT(700, 22); g.textAlign = "center"; g.fillText("27", w - 52, 29); g.textAlign = "left"; }
@@ -454,7 +484,7 @@ export default function build(ctx) {
     const B = batch(); B.rbox(AP.w + 0.08, AP.h + 0.1, 0.06, 0.12, "#1d1f27", [0, 0, 0]); g.add(B.build(litMat));
     const scr = quad(AP.w, AP.h, new THREE.MeshBasicMaterial({ map: appTex(v) })); scr.position.z = 0.032; g.add(scr);
     const lab = quad(0.5, 0.12, basic({ map: K.canvasTexture(400, 96, (c, w, h) => { c.fillStyle = "#2b2230"; K.roundRect(c, 3, 3, w - 6, h - 6, 40); c.fill(); c.fillStyle = "#fff"; c.font = FONT(700, 54); c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(`version ${v}`, w / 2, h / 2 + 2); }) }));
-    lab.position.set(0, -AP.h / 2 - 0.15, 0.03); g.add(lab);
+    lab.position.set(0, -AP.h / 2 - 0.12, 0.03); lab.scale.setScalar(1.2); g.add(lab);
     // en ramme pr. designvalg (tændes én ad gangen)
     const hl = CHOICES.map(ch => {
       const r = i ? ch.rb : ch.ra; const wq = (r[2] - r[0]) * AP.w, hq = (r[3] - r[1]) * AP.h;
@@ -465,19 +495,28 @@ export default function build(ctx) {
   });
   {
     const bd = quad(5.0, 2.7, new THREE.MeshBasicMaterial({ map: K.canvasTexture(512, 280, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#efe9df"); gr.addColorStop(1, "#ddd5c8"); c.fillStyle = gr; c.fillRect(0, 0, w, h); c.strokeStyle = "#b48a63"; c.lineWidth = 10; c.strokeRect(5, 5, w - 10, h - 10); }) }));
-    bd.position.set((AP.xa + AP.xb) / 2, AP.y + 0.05, AP.z - 0.01); bd.rotation.y = Math.PI; addObj(bd);
+    bd.scale.set(1.15, 1.25, 1); bd.position.set((AP.xa + AP.xb) / 2, AP.y - 0.3, AP.z - 0.01); bd.rotation.y = Math.PI; addObj(bd);
   }
-  // midterkolonne: én plade pr. designvalg med "A-ord · B-ord"
+  // midten: én plade ad gangen med designvalgets navn og en tæller; værdierne står ved hver sin telefon (A ved A, B ved B)
   const midX = (AP.xa + AP.xb) / 2;
   const mids = CHOICES.map((ch, i) => {
-    const tx = K.canvasTexture(640, 230, (c, w, h) => {
-      c.fillStyle = "rgba(20,18,30,0.92)"; K.roundRect(c, 4, 4, w - 8, h - 8, 26); c.fill(); c.strokeStyle = C.c; c.lineWidth = 5; c.stroke();
-      c.textAlign = "center"; c.textBaseline = "middle"; c.fillStyle = C.c; c.font = FONT(700, 52); c.fillText(ch.t, w / 2, 62);
-      c.font = BODY(600, 44); c.fillStyle = "#fff"; c.textAlign = "right"; c.fillText(ch.a, w / 2 - 34, 160); c.textAlign = "left"; c.fillText(ch.b, w / 2 + 34, 160);
-      c.fillStyle = "#a9b0d6"; c.textAlign = "center"; c.fillText("·", w / 2, 160);
+    const tx = K.canvasTexture(640, 260, (c, w, h) => {
+      c.fillStyle = "rgba(20,18,30,0.94)"; K.roundRect(c, 4, 4, w - 8, h - 8, 30); c.fill(); c.strokeStyle = C.c; c.lineWidth = 6; c.stroke();
+      c.textAlign = "center"; c.textBaseline = "middle"; c.fillStyle = "#a9b0d6"; c.font = BODY(600, 40); c.fillText(`designvalg ${i + 1} af ${CHOICES.length}`, w / 2, 70);
+      c.fillStyle = "#fff"; c.font = FONT(700, 82); c.fillText(ch.t, w / 2, 160);
     });
-    const q = quad(1.3, 0.467, basic({ map: tx, opacity: 0 })); q.position.set(midX, AP.y + 0.72 - i * 0.5, AP.z - 0.12); q.rotation.y = Math.PI; addObj(q); return q;
+    const q = quad(1.3, 0.528, basic({ map: tx, opacity: 0 })); q.position.set(midX, AP.y + 0.1, AP.z - 0.12); q.rotation.y = Math.PI; addObj(q); return q;
   });
+  // værdi-mærker ved hver telefon (A-værdi lige under/ved telefon A, B-værdi ved telefon B)
+  const valTex = (txt, ver) => K.canvasTexture(560, 140, (c, w, h) => { c.fillStyle = "#ffffff"; K.roundRect(c, 4, 4, w - 8, h - 8, 50); c.fill(); c.strokeStyle = C.c; c.lineWidth = 8; c.stroke(); c.fillStyle = "#2b2230"; c.font = FONT(700, 64); c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(txt, w / 2, h / 2 + 3); });
+  const vals = CHOICES.map(ch => [["A", ch.a], ["B", ch.b]].map(([v, t]) => {
+    const q = quad(0.9, 0.225, basic({ map: valTex(t, v), opacity: 0, depthTest: false })); q.renderOrder = 12; q.rotation.y = Math.PI;
+    q.position.set(v === "A" ? AP.xa : AP.xb, AP.y + AP.h / 2 + 0.2, AP.z - 0.14); addObj(q); return q; }));
+  // lup-forstørrelse: en kopi af det fremhævede område, forstørret ved siden af telefonen
+  const zoomA = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: appTex("A"), transparent: true, opacity: 0, depthTest: false }));
+  const zoomB = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: appTex("B"), transparent: true, opacity: 0, depthTest: false }));
+  [zoomA, zoomB].forEach(z => { z.material.map = z.material.map.clone(); z.material.map.needsUpdate = true; z.renderOrder = 11; z.rotation.y = Math.PI; addObj(z); });
+  const zoomFrames = [0, 1].map(() => { const f = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), basic({ color: C.c, opacity: 0, depthTest: false })); f.renderOrder = 10; f.rotation.y = Math.PI; addObj(f); return f; });
   // forbindelseslinjer fra midterpladen ud til rammerne
   const links = CHOICES.map(() => { const l = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineBasicMaterial({ color: C.c, transparent: true, opacity: 0 })); addObj(l); return l; });
   root.object3D.updateMatrixWorld(true);
@@ -485,13 +524,13 @@ export default function build(ctx) {
     const pa = new THREE.Vector3(), pb = new THREE.Vector3(); apps[0].hl[i].getWorldPosition(pa); apps[1].hl[i].getWorldPosition(pb);
     const m = mids[i].position;
     pa.x -= ((CHOICES[i].ra[2] - CHOICES[i].ra[0]) * AP.w) / 2; pb.x += ((CHOICES[i].rb[2] - CHOICES[i].rb[0]) * AP.w) / 2;
-    links[i].geometry.setFromPoints([pa, new THREE.Vector3(m.x + 0.65, m.y, m.z), new THREE.Vector3(m.x - 0.65, m.y, m.z), pb]);
+    links[i].geometry.setFromPoints([pa, pa, pb, pb]); links[i].visible = false;
   });
   const st4 = kit.grp(root, `${midX} 0 ${AP.z - 0.5}`);
   kit.box(st4, "0 1.5 0.3", 4.2, 2.0, 0.3, "opacity: 0; transparent: true; depthWrite: false");
   ctx.station("c2-4", st4);
-  const s24 = ctx.sign(ctx.step("c2-4").title, { position: `${midX} 3.05 ${AP.z - 0.12}`, width: 2.3, rotation: "0 180 0" });
-  view("c2-4", { position: [midX, 0, AP.z - 3.6], lookAt: [midX, 1.6, AP.z] });
+  const s24 = ctx.sign(ctx.step("c2-4").title, { position: `${midX} 3.35 ${AP.z - 0.12}`, width: 2.4, rotation: "0 180 0" });
+  view("c2-4", { position: [midX, 0, AP.z - 3.9], lookAt: [midX, 1.6, AP.z], pitch: 2 });
 
   /* ---------- Tilstand og animation ---------- */
   let cur = null, t0 = null, now = 0;
@@ -549,9 +588,15 @@ export default function build(ctx) {
       const cycle = 2.2, run = L2 ? Math.max(0, e - 0.8) / cycle : 4.2;
       const r = Math.floor(run), ph = run - r;
       machines.forEach((m, mi) => {
-        // input: samme hvide terning falder i tragten
-        if (L2 && r < 4) { const k = ease(ph / 0.35); m.inp.visible = ph < 0.45; m.inp.position.set(0.1, lerp(2.15, 1.3, k), 0); m.inp.rotation.set(s, s * 1.3, 0); }
-        else if (!L2) { m.inp.visible = true; m.inp.position.set(0.1, 2.15, 0); }
+        // input: tre ens hvide kugler kører samtidig ud langs skinnen og falder ned i hver sin tragt
+        if (L2 && r < 4) {
+          const k1 = ease(ph / 0.25), k2 = ease((ph - 0.25) / 0.2);
+          m.inp.visible = ph < 0.5;
+          m.inp.position.set(0.1, lerp(2.33, 1.3, k2), 0);
+          // kuglen kører langs skinnen fra midten: lokal +x peger mod verdens −z (maskinen er drejet 90°)
+          m.inp.position.x = 0.1 + (m.z - MACH[1].z) * (1 - k1);
+        }
+        else if (!L2) { m.inp.visible = true; m.inp.position.set(0.1, 2.33, 0); }
         else m.inp.visible = false;
         m.lamp.material.color.set(L2 && ph > 0.3 && ph < 0.65 && r < 4 ? C.c : "#3a3f4a");
         m.outs.forEach((o, j) => {
@@ -566,7 +611,12 @@ export default function build(ctx) {
           o.scale.setScalar(Math.max(0.01, pop) * 1.35 * (m.key === "ada" ? 0.85 + j * 0.15 : 1));
           o.rotation.y = s * 0.6 + j;
         });
-        if (m.loop) { const k = L2 ? 0.45 + 0.4 * (0.5 + 0.5 * Math.sin(s * 4)) : 0.25; m.loop.material.opacity = k; m.loop.userData.head.material.opacity = k; }
+        if (m.loop) {
+          const k = L2 ? 0.85 : 0.25; m.loop.material.opacity = k; m.loop.userData.head.material.opacity = k;
+          // brugerens valg: en rosa kugle løber fra brugerens hånd langs løkken op i tragten (efter hvert output)
+          const ch = m.loop.userData.choice, u = L2 && r >= 0 && r < 4 && ph > 0.75 ? (ph - 0.75) / 0.25 : -1;
+          ch.visible = u >= 0; if (u >= 0) ch.position.copy(m.loop.userData.curve.getPoint(u));
+        }
         if (m.sparks) {
           const pa = m.sparks.geometry.attributes.position;
           for (let i = 0; i < pa.count; i++) { const a = i * 2.4 + s * 2, rr = 0.1 + ((s * 0.8 + i * 0.13) % 1) * 0.35; pa.setXYZ(i, -0.33 + Math.cos(a) * rr * 0.6, 1.0 + ((s * 0.8 + i * 0.13) % 1) * 0.5, 0.45 + Math.sin(a) * rr * 0.3); }
@@ -586,19 +636,30 @@ export default function build(ctx) {
         q.scale.setScalar(1 - 0.6 * kk);
       });
       outline.material.opacity = L3 ? ease((e - 5.4) / 0.8) : 0.0;
-      diffRings.forEach((rg, i) => { const k = L3 ? ease((e - 6.2 - i * 0.5) / 0.4) : 0; rg.material.opacity = k * (0.65 + 0.35 * Math.sin(s * 5 + i)); rg.scale.setScalar(0.8 + 0.2 * k + 0.06 * Math.sin(s * 5 + i)); });
+      diffRings.forEach((rg, i) => { const k = L3 ? ease((e - 6.2 - i * 0.7) / 0.4) : 0; rg.r.material.opacity = k * (0.7 + 0.3 * Math.sin(s * 5 + i)); rg.lab.material.opacity = k; rg.ln.material.opacity = k; });
 
       /* de to apps */
+      // ét designvalg ad gangen, i en løkke; kun det aktive er tændt (også når alle er vist én gang)
       const L4 = cur === "c2-4";
-      const ci = L4 ? Math.floor(Math.max(0, e - 0.8) / 2.4) : -1;
+      const SLOT = 3.2, ci = L4 ? Math.floor(Math.max(0, e - 0.8) / SLOT) % CHOICES.length : -1;
+      const ph4 = L4 ? (Math.max(0, e - 0.8) % SLOT) / SLOT : 0;
+      const fade4 = L4 ? Math.min(ease(ph4 / 0.1), ease((1 - ph4) / 0.08)) : 0;
       CHOICES.forEach((ch, i) => {
-        const shown = L4 && ci >= i;
-        const active = L4 && (ci % CHOICES.length) === i || (L4 && ci >= CHOICES.length);
-        const k = shown ? ease((e - 0.8 - i * 2.4) / 0.4) : 0;
-        mids[i].material.opacity = L4 ? (k * (ci === i || ci >= CHOICES.length ? 1 : 0.55)) : 0;
-        apps.forEach(a => { a.hl[i].material.opacity = k * (ci === i ? 1 : ci >= CHOICES.length ? 0.6 : 0.25); });
-        links[i].material.opacity = k * (ci === i ? 0.9 : 0.2);
-        void active;
+        const on = L4 && ci === i;
+        mids[i].material.opacity = on ? fade4 : 0;
+        apps.forEach(a => { a.hl[i].material.opacity = on ? fade4 : 0; });
+        vals[i].forEach(q => { q.material.opacity = on ? fade4 : 0; });
+      });
+      // zoom: det fremhævede område forstørres ved siden af hver telefon
+      [zoomA, zoomB].forEach((z, k) => {
+        if (!L4) { z.material.opacity = 0; zoomFrames[k].material.opacity = 0; return; }
+        const r = k ? CHOICES[ci].rb : CHOICES[ci].ra, map = z.material.map;
+        map.offset.set(r[0], 1 - r[3]); map.repeat.set(r[2] - r[0], r[3] - r[1]);
+        const wq = (r[2] - r[0]) * AP.w, hq = (r[3] - r[1]) * AP.h, sc = Math.min(1.6 / wq, 0.62 / hq, 2.4);
+        z.scale.set(wq * sc, hq * sc, 1); zoomFrames[k].scale.set(wq * sc + 0.05, hq * sc + 0.05, 1);
+        const zx = k ? AP.xb - 0.05 : AP.xa + 0.05;
+        z.position.set(zx, AP.y - AP.h / 2 - 0.68, AP.z - 0.2); zoomFrames[k].position.set(zx, AP.y - AP.h / 2 - 0.68, AP.z - 0.19);
+        z.material.opacity = fade4; zoomFrames[k].material.opacity = fade4;
       });
       apps.forEach(a => a.g.children[1].material.color.setScalar(L4 ? 1 : 0.85));
 

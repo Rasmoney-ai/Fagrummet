@@ -249,7 +249,7 @@ export default function build(ctx) {
   // trappehus med døren tilbage til forhallen
   {
     // trappehuset står forrest til venstre på terrassen, med døren vendt ind mod terrassens midte
-    const DOOR_PSI = -62, dr = PR - 0.5;
+    const DOOR_PSI = -40, dr = PR - 0.5;
     const kx = PLAT.x + Math.sin(DOOR_PSI * D2R) * dr, kz = PLAT.z - Math.cos(DOOR_PSI * D2R) * dr;
     const kr = Math.atan2(PLAT.x - kx, PLAT.z - kz) / D2R;
     const kg = kit.grp(root, `${kx} 0 ${kz}`, { rotation: `0 ${kr} 0` });
@@ -303,7 +303,7 @@ export default function build(ctx) {
     s1: { psi: 0, look: [0.2, 0, -10], pitch: -9 },
     s2: { psi: -10, look: [CORE.x, CORE.y, CORE.z], pitch: 3 },
     s3: { psi: 10, look: [0.2, 0, -10], pitch: -9 },
-    s4: { psi: 180, ur: 2.2, look: [-0.55, 1.35, -4.0], pitch: 2 },
+    s4: { psi: 0, ur: 0.25, look: [0.1, 1.75, -5.6], pitch: true },
   };
   const plaqueGeo = keep(new THREE.BoxGeometry(0.66, 0.17, 0.03));
   const plaqueMat = std("#2a3160", { roughness: 0.45, metalness: 0.4 });
@@ -343,7 +343,7 @@ export default function build(ctx) {
   for (const w of WINGS) {
     const p = w.top.clone(); p.y += w.key === "b" ? 0.75 : 0.95;
     if (w.key === "b") p.y = w.top.y + 1.0;
-    const sw = 2.1 * p.distanceTo(s1View) / 8.5;
+    const sw = (w.key === "b" ? 2.6 : 2.1) * p.distanceTo(s1View) / 8.5;   // Tårnets tekst er længst
     const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(sw, sw * 300 / 1024)),
       labelMat(keep(K.labelTex(ANGLE[w.key][0], w.color, { w: 1024, h: 300, size: 80, sub: ANGLE[w.key][1], ink: "#eef1ff" }))));
     m.position.copy(p); m.lookAt(s1View.x, p.y, s1View.z); m.renderOrder = 20; add(m);
@@ -499,23 +499,23 @@ export default function build(ctx) {
     K.roundRect(g, 14, 14, W - 28, H - 28, 50); g.stroke();
     g.fillStyle = C.core; g.font = '700 70px "Familjen Grotesk", "Segoe UI", sans-serif'; g.textAlign = "left"; g.textBaseline = "middle";
     g.fillText("Endnu ikke på plads", 80, 110);
-    const y = 470, x0 = 150, x1 = W - 150;
+    const y = 470, x0 = 230, x1 = W - 230;
     g.setLineDash([22, 22]); g.lineWidth = 8; g.globalAlpha = 0.8; g.beginPath(); g.moveTo(x0 - 40, y); g.lineTo(x1 + 40, y); g.stroke(); g.globalAlpha = 1; g.setLineDash([]);
     MILE.forEach(([a, b], i) => {
       const x = x0 + i * (x1 - x0) / 3;
       g.strokeStyle = C.core; g.lineWidth = 7; g.setLineDash(i === 0 ? [10, 10] : []);
       g.fillStyle = i === 0 ? "rgba(9,12,28,1)" : C.core; g.beginPath(); g.arc(x, y, 24, 0, 7); g.fill(); g.stroke(); g.setLineDash([]);
       g.textAlign = "center"; g.fillStyle = "#eef1ff"; g.font = '700 54px "Familjen Grotesk", "Segoe UI", sans-serif';
-      K.wrap(g, a, 330).forEach((l, j, arr) => g.fillText(l, x, y - 90 - (arr.length - 1 - j) * 60));
+      K.wrap(g, a, 360).forEach((l, j, arr) => g.fillText(l, x, y - 90 - (arr.length - 1 - j) * 60));
       g.fillStyle = C.core; g.font = '500 48px "Source Sans 3", "Segoe UI", sans-serif'; g.fillText(b, x, y + 80);
     });
     // et tomt, stiplet felt nederst: her skrives det, der kommer
     g.strokeStyle = C.core; g.globalAlpha = 0.6; g.lineWidth = 6; g.setLineDash([18, 18]);
     K.roundRect(g, 120, 650, W - 240, 160, 26); g.stroke(); g.globalAlpha = 1; g.setLineDash([]);
   });
-  const FW = 2.9;
+  const FW = 3.3;
   const field = new THREE.Mesh(keep(new THREE.PlaneGeometry(FW, FW * 900 / 1600)), labelMat(dashTex, { side: THREE.DoubleSide }));
-  field.position.copy(CORE).add(new THREE.Vector3(1.95, -0.05, 1.2)); field.lookAt(s4View); field.renderOrder = 20; add(field);
+  field.position.copy(CORE).add(new THREE.Vector3(2.45, -0.1, 0.3)); field.lookAt(s4View); field.renderOrder = 20; add(field);
 
   // S4: tegnene i en bue over kernen, vendt mod S4-blikket
   const satPos = (() => {
