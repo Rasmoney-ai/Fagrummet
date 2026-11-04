@@ -52,9 +52,41 @@ function pickVoice() {
 }
 if ("speechSynthesis" in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
 function stopSpeech() { if (player) { player.pause(); player = null; } if ("speechSynthesis" in window) speechSynthesis.cancel(); }
+/* ---------- Fortællingens tid og stikord (til animationer) ----------
+   Med indspillet lyd: tidspunkter pr. ord fra audio/<trin>.json (lavet af scripts/lav-lyd.js).
+   Uden: et skøn ud fra tegnets placering i teksten (ca. 15 tegn pr. sekund), og tiden går fra trinstart. */
+const CPS = 15;
+const TIMINGS = {};       // trin-id -> [{w, s, e}] (ord, start, slut i sekunder)
+let stepStart = 0;
+const norm = t => String(t).toLowerCase().replace(/[^0-9a-zæøåé]+/g, " ").trim();
+function loadTimings(id) {
+  if (!AUDIO.has(id) || TIMINGS[id] !== undefined) return;
+  TIMINGS[id] = null;
+  fetch(`audio/${id}.json`).then(r => r.ok ? r.json() : null).then(j => { if (j && j.words) TIMINGS[id] = j.words; }).catch(() => {});
+}
+function narrationTime() {
+  if (player && (player.currentTime > 0 || !player.paused)) return player.ended ? player.duration + (performance.now() - player._endedAt) / 1000 : player.currentTime;
+  return (performance.now() - stepStart) / 1000;
+}
+function cueTime(id, phrase, nth = 1) {
+  const s = BYID[id]; if (!s) return 0;
+  const want = norm(phrase).split(" ");
+  const words = TIMINGS[id];
+  if (words && words.length) {
+    let hit = 0;
+    for (let i = 0; i + want.length <= words.length; i++) {
+      if (want.every((w, k) => norm(words[i + k].w) === w) && ++hit === nth) return words[i].s;
+    }
+  }
+  // skøn: find ordet i den oplæste tekst
+  const full = norm(`${s.title}. ${s.text}`); let at = -1;
+  for (let k = 0; k < nth; k++) { at = full.indexOf(want.join(" "), at + 1); if (at < 0) break; }
+  if (at < 0) { console.warn(`Stikordet "${phrase}" findes ikke i ${id}`); return 0; }
+  return at / CPS;
+}
 function speak(s, force = false) {
   stopSpeech(); if (!s || (!ttsOn && !force)) return;
-  if (AUDIO.has(s.id)) { player = new Audio(`audio/${s.id}.mp3`); player.play().catch(() => {}); return; }
+  if (AUDIO.has(s.id)) { player = new Audio(`audio/${s.id}.mp3`); player.addEventListener("ended", () => { player && (player._endedAt = performance.now()); }); player.play().catch(() => {}); return; }
   if (!("speechSynthesis" in window)) return;
   const u = new SpeechSynthesisUtterance(`${s.title}. ${s.text}`); u.lang = "da-DK"; if (daVoice) u.voice = daVoice; u.rate = 1.0;
   speechSynthesis.speak(u);
@@ -126,6 +158,10 @@ async function loadRoom(id, stepId, { instant = false } = {}) {
     onClick(entity, fn) { entity.classList.add("klik"); entity.addEventListener("click", ev => { ev.stopPropagation(); fn(ev); }); return entity; },
     env({ background, fog } = {}) { if (background) scene.setAttribute("background", `color: ${background}`); if (fog) scene.setAttribute("fog", fog); },
     goStep: sid => setStep(sid), goRoom,
+    // Fortællingens tid i sekunder siden det aktuelle trin startede (følger lydfilen, når den spiller).
+    time: () => narrationTime(),
+    // Sekund hvor et ord/en frase siges i et trin: ctx.cue("b0-1", "samspil") eller ctx.cue("b0-1", "lag", 2) for 2. forekomst.
+    cue: (sid, phrase, nth = 1) => cueTime(sid, phrase, nth),
   };
   try {
     const mod = await import(`../rooms/${id}.js?v=${APP_VERSION}`);
@@ -157,7 +193,7 @@ function goRoom(to) {
 function setStep(id, { fromLoad = false } = {}) {
   const s = BYID[id]; if (!s) return;
   if (s.room !== curRoom) { loadRoom(s.room, id); return; }
-  cur = id;
+  cur = id; stepStart = performance.now(); loadTimings(id);
   // beacon under den aktuelle station
   const st = rctx.stations[id], b = rctx.beacon;
   if (st && st.object3D) { const v = new THREE.Vector3(); st.object3D.getWorldPosition(v); b.object3D.position.set(v.x, 0, v.z); b.setAttribute("visible", true); }
@@ -286,7 +322,7 @@ async function init() {
     setStep, goRoom: goRoom2, ready: () => !busy && !!curRoom,
     doors: () => rctx ? rctx.doors.map(d => d.to) : [],
     clickDoor: to => { const d = rctx && rctx.doors.find(x => x.to === to); if (d) d.portal.emit("click"); return !!d; },
-    next, current: () => ({ room: curRoom, step: cur }),
+    next, current: () => ({ room: curRoom, step: cur }), cue: cueTime, time: narrationTime,
   };
 }
 const ready = () => (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(init);

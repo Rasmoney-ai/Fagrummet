@@ -38,6 +38,8 @@ export default function build(ctx) {
 | `ctx.view(stepId, {position:[x,y,z], lookAt:[x,y,z], pitch})` | hvor brugeren stilles og kigger hen i trinnet (y ignoreres for position; øjenhøjde er 1,6 m). Uden view bliver brugeren stående. `pitch`: grader op/ned (negativ = ned), eller `true` = sigt mod lookAt's højde. Uden pitch kigger man vandret. Pitch virker kun på skærm; i VR styrer hovedet selv |
 | `ctx.rooms` | alle rum (`name`, `sub`, `color`, `area`) til skilte o.l.; kun til læsning |
 | `ctx.visited`, `ctx.cameFrom` | Set med rum-id'er besøgt i sessionen (inkl. det nuværende) og id på rummet, man kom fra (`null` ved start) |
+| `ctx.time()` | fortællingens tid i sekunder siden det aktuelle trin startede. Følger lydfilen, når den spiller; ellers uret fra trinstart |
+| `ctx.cue(stepId, frase, nth?)` | sekundet hvor et ord eller en frase siges i trinnet (fra lydens tidskoder; uden lyd et skøn på ca. 15 tegn/s). Brug fx `if (ctx.time() > ctx.cue("f6", "programmering og modellering"))` i `tick` for at synkronisere en animation med speaken |
 | `ctx.onClick(entity, fn)` | gør en entitet klikbar. Klikket stopper her og bobler ikke op til en omgivende station |
 | `ctx.goStep(id)`, `ctx.goRoom(id)` | skift trin i rummet / gå til et andet rum (bruges sjældent; døre og stationer klarer det) |
 | `ctx.env({background, fog})` | baggrundsfarve og evt. tåge (A-Frame fog-streng) for rummet |

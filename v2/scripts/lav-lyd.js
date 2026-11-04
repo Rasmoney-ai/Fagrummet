@@ -8,7 +8,7 @@
  *   node v2/scripts/lav-lyd.js --tael          viser antal tegn, uden at kalde API'et
  *
  * Teksten, der læses op, er "<titel>. <tekst>" fra v2/manus.json, ligesom browserstemmen i siden.
- * Filer: v2/audio/<trin-id>.mp3. v2/audio/index.json lister de færdige trin (siden bruger den liste),
+ * Filer: v2/audio/<trin-id>.mp3 og v2/audio/<trin-id>.json (tidspunkt for hvert ord). v2/audio/index.json lister de færdige trin (siden bruger den liste),
  * og v2/audio/hashes.json husker, hvilken tekst og stemme hver fil blev lavet med, så kun ændrede trin laves om.
  *
  * API-nøglen læses fra miljøvariablen ELEVENLABS_API_KEY eller fra .env i roden af repoet (samme som version 1).
@@ -56,14 +56,32 @@ async function stemmeFraV1() {
 }
 
 let medSprogkode = true;
+/* Tegn-tidspunkter -> ord: [{w, s, e}] i sekunder. */
+function ordTider(a) {
+  if (!a || !a.characters) return [];
+  const ord = []; let w = "", s0 = 0, e0 = 0;
+  a.characters.forEach((c, i) => {
+    if (/\s/.test(c)) { if (w) ord.push({ w, s: +s0.toFixed(3), e: +e0.toFixed(3) }); w = ""; return; }
+    if (!w) s0 = a.character_start_times_seconds[i];
+    w += c; e0 = a.character_end_times_seconds[i];
+  });
+  if (w) ord.push({ w, s: +s0.toFixed(3), e: +e0.toFixed(3) });
+  return ord;
+}
 async function tts(tekst, fil) {
   const body = { text: tekst, model_id: MODEL };
   if (medSprogkode) body.language_code = "da";
   for (let forsoeg = 1; ; forsoeg++) {
-    const r = await fetch(`${API}/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {
-      method: "POST", headers: { "xi-api-key": KEY, "Content-Type": "application/json", Accept: "audio/mpeg" }, body: JSON.stringify(body),
+    // "with-timestamps" giver lyden (base64) plus tidspunkt for hvert tegn, så animationerne kan følge speaken.
+    const r = await fetch(`${API}/text-to-speech/${voiceId}/with-timestamps?output_format=mp3_44100_128`, {
+      method: "POST", headers: { "xi-api-key": KEY, "Content-Type": "application/json" }, body: JSON.stringify(body),
     });
-    if (r.ok) { fs.writeFileSync(fil, Buffer.from(await r.arrayBuffer())); return; }
+    if (r.ok) {
+      const j = await r.json();
+      fs.writeFileSync(fil, Buffer.from(j.audio_base64, "base64"));
+      fs.writeFileSync(fil.replace(/\.mp3$/, ".json"), JSON.stringify({ words: ordTider(j.alignment || j.normalized_alignment) }));
+      return;
+    }
     const fejl = await r.text();
     if (medSprogkode && r.status >= 400 && r.status < 500 && /language/i.test(fejl)) { console.warn("API'et afviste language_code; fortsætter uden."); medSprogkode = false; delete body.language_code; continue; }
     if ((r.status === 429 || r.status >= 500) && forsoeg < 4) { const vent = 4000 * forsoeg; console.warn(`${r.status}, prøver igen om ${vent / 1000} s`); await new Promise(x => setTimeout(x, vent)); continue; }
@@ -79,7 +97,7 @@ async function main() {
   const gem = () => {
     fs.writeFileSync(hashFil, JSON.stringify(hashes, null, 1));
     // index.json = trin, hvis fil findes og passer til den nuværende tekst
-    const ok = MANUS.filter(s => fs.existsSync(path.join(AUDIO, `${s.id}.mp3`)) && hashes[s.id] && hashes[s.id].tekst === hash(tale(s))).map(s => s.id);
+    const ok = MANUS.filter(s => fs.existsSync(path.join(AUDIO, `${s.id}.mp3`)) && fs.existsSync(path.join(AUDIO, `${s.id}.json`)) && hashes[s.id] && hashes[s.id].tekst === hash(tale(s))).map(s => s.id);
     fs.writeFileSync(idxFil, JSON.stringify(ok));
   };
   const hash = t => crypto.createHash("sha1").update(t).digest("hex").slice(0, 12);
