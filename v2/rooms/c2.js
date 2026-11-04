@@ -653,7 +653,7 @@ export default function build(ctx) {
       });
       // "dig" lægges ovenpå på "sammenligner med"; forskellene på "hvem de selv mener, de er"
       outline.material.opacity = L3 ? ease((e - CQ("sammenligner med")) / 0.6) : 0.0;
-      const DQ = [CQ("hvem de selv mener"), CQ("hvem de selv mener") + 0.35, CQ("mener de er")];
+      const DQ = L3 ? [CQ("hvem de selv mener"), CQ("hvem de selv mener") + 0.35, CQ("mener de er")] : [0, 0, 0];
       diffRings.forEach((rg, i) => { const k = L3 ? ease((e - DQ[i]) / 0.4) : 0; rg.r.material.opacity = k * (0.7 + 0.3 * Math.sin(s * 5 + i)); rg.lab.material.opacity = k; rg.ln.material.opacity = k; });
 
       /* de to apps */
