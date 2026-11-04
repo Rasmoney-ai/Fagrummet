@@ -559,6 +559,10 @@ export default function build(ctx) {
   }
   const lerp3 = (a, b, f) => a.map((v, i) => v + (b[i] - v) * f);
 
+  let part1Cue = [0, 0, 0, 0, 0];
+  // stikord i speaken (sekunder i trinnet). Slås op hver frame: tidskoderne hentes asynkront, når trinnet starter,
+  // så et tidligt opslag kan være et skøn, der senere bliver erstattet af den rigtige tid.
+  const Q = (id, ph, n = 1) => ctx.cue(id, ph, n);
   return {
     onStep(id) { mode = id; fresh = true; picked = -1;
       stationIds.forEach(k => dim(ST[k].g, id === "b2-0" || k === id ? 1 : 0.3)); },
@@ -566,10 +570,11 @@ export default function build(ctx) {
       now = t;
       if (fresh) { t0 = t; fresh = false; }
       // testkrog: window.__roomS låser animationstiden (bruges kun af skærmbilledværktøjet)
-      const s = typeof window.__roomS === "number" ? window.__roomS : (t - t0) / 1000;
+      const s = typeof window.__roomS === "number" ? window.__roomS : ctx.time();   // fortællingens tid (følger speaken)
 
       /* flowdiagrammet kører altid; i b2-0 er det tydeligst */
-      const fOn = mode === "b2-0" ? 1 : 0;
+      // diagrammet blusser op, når speaken nævner "logik"
+      const fOn = mode === "b2-0" ? 0.35 + 0.65 * ease((s - Q("b2-0", "den logik") + 0.3) / 0.6) : 0;
       flowMat.opacity = 0.05 + 0.95 * fOn;
       token.object3D.visible = mode === "b2-0";
       // én gennemkørsel tager 16 s; tokenet holder 2 s ved "Slut", før det starter forfra
@@ -584,32 +589,37 @@ export default function build(ctx) {
 
       /* stationernes lamper: i b2-0 tænder de én efter én; ellers kun den aktive */
       stationIds.forEach((id, i) => {
-        const on = mode === "b2-0" ? ease((s - 0.6 - i * 0.55) / 0.4) : (id === mode ? 1 : 0);
+        // de fem stationer tænder én efter én ved "Laget har fem punkter"
+        const on = mode === "b2-0" ? ease((s - Q("b2-0", "laget har fem punkter") + 0.3 - i * 0.22) / 0.3) : (id === mode ? 1 : 0);
         ST[id].mat.emissiveIntensity = 0.12 + 1.4 * on;
       });
 
+      if (mode === "b2-1") part1Cue = [Q("b2-1", "tal"), Q("b2-1", "tekst"), Q("b2-1", "sand eller falsk"), Q("b2-1", "gentagelser"), Q("b2-1", "hvis det regner")];
       /* B2.1: brikkerne samles til et program, og en prik kører rundt i løkken */
       const a1 = mode === "b2-1";
       parts1.forEach((p, i) => {
-        const f = a1 ? ease((s - 0.4 - i * 0.45) / 0.7) : 0;
+        // kasserne lander ved "tal", "tekst", "sand eller falsk"; løkken ved "gentagelser"; forgreningen ved "hvis det regner"
+        const f = a1 ? ease((s - (part1Cue[i] - 0.7)) / 0.7) : 0;
         const v = lerp3(p.a, p.b, f);
         p.e.object3D.position.set(v[0], v[1] + Math.sin(f * Math.PI) * 0.25, v[2]);
         p.e.object3D.rotation.set(v[3] * D2R, v[4] * D2R, v[5] * D2R);
       });
-      const r1 = a1 && s > 3.2; run1.object3D.visible = r1;
+      const r1 = a1 && s > Q("b2-1", "ti gange") - 0.3; run1.object3D.visible = r1;
       if (r1) {   // rundt i løkkens klamme: ned langs venstre side, hen over bunden og tilbage
-        const u = ((s - 3.2) / 1.6) % 1, L = parts1[3].b;
+        const u = ((s - Q("b2-1", "ti gange") + 0.3) / 1.6) % 1, L = parts1[3].b;
         const pts = [[-0.72, 0.42], [-0.72, -0.42], [-0.25, -0.42], [-0.72, -0.42], [-0.72, 0.42]];
         const q = polyAt(pts, u); run1.object3D.position.set(L[0] + q[0], L[1] + q[1], L[2] + 0.1);
         brMat.emissive = brMat.emissive || new T.Color(); brMat.emissive.set(B); brMat.emissiveIntensity = Math.abs(u - 0.45) < 0.1 ? 0.9 : 0.1;
       } else { brMat.emissiveIntensity = 0; }
-      brLbl.forEach(l => l.object3D.visible = !a1 || s > 2.7);
-      act.object3D.visible = !a1 || s > 2.7;
-      wire1Mat.opacity = a1 ? 0.85 * ease((s - 3.0) / 0.5) : 0.5;
+      const brOn = !a1 || s > part1Cue[4];
+      brLbl.forEach(l => l.object3D.visible = brOn);
+      act.object3D.visible = brOn;
+      wire1Mat.opacity = a1 ? 0.85 * ease((s - part1Cue[4]) / 0.5) : 0.5;
 
       /* B2.2: figuren følger kortene og går forkert ved den uklare instruks */
       const a2 = mode === "b2-2";
-      const c2 = a2 ? s % 17 : 0;
+      // den uklare instruks (kort 5) rammer, lige når speaken siger "fejler"; sluttilstanden bliver stående
+      const c2 = a2 ? Math.min(16, s - (Q("b2-2", "fejler") - 0.3 - 5.8)) : 0;
       const k2 = a2 ? Math.min(6, Math.floor((c2 - 0.6) / 1.3) + 1) : 0;     // antal kort, der er udført eller i gang
       const cur = a2 && c2 > 0.6 ? Math.min(5, Math.floor((c2 - 0.6) / 1.3)) : -1;
       const fr = a2 && c2 > 0.6 ? clamp01(((c2 - 0.6) % 1.3) / 1.0) : 0;
@@ -632,10 +642,11 @@ export default function build(ctx) {
       /* B2.3: samme linje markeres i blokkene og i teksten */
       const a3 = mode === "b2-3";
       // linjerne markeres én ad gangen; derefter vises en stavefejl i tekstversionen (blokkene kan ikke staves forkert)
-      const c3 = a3 ? s % 13 : 99;
-      const r3 = a3 && c3 < 6.6 ? Math.floor(c3 / 1.1) : -1;
+      // linjerne gennemgås fra "blokke eller tekst"; stavefejlen i tekstversionen kommer ved "stavefejl"
+      const c3 = a3 ? s - Q("b2-3", "blokke eller tekst") + 0.3 : 99;
+      const r3 = a3 && c3 >= 0 && c3 < 6.0 ? Math.floor(c3 / 1.0) : -1;
       const hi = r3 >= 0 && r3 < PROG.length ? r3 : -1;
-      drawCode3(hi, a3 && c3 >= 7.0);
+      drawCode3(hi, a3 && s >= Q("b2-3", "stavefejl") - 0.3);
       hlMat.opacity = hi >= 0 ? 0.9 : 0; bridgeMat.opacity = hi >= 0 ? 0.6 : 0;
       if (hi >= 0) {
         const R = blkRect[hi];
@@ -647,12 +658,14 @@ export default function build(ctx) {
 
       /* B2.4: to programmer kører samtidig */
       const a4 = mode === "b2-4";
-      const c4 = a4 ? Math.min(s % 14, 13) : 0;   // sluttilstanden står i lang tid, så pointen ses i et stillbillede
+      // program A stopper ved "ikke kan køre den"; program B når forkert frem ved "noget andet"; sluttilstanden bliver stående
       P4.forEach(p => {
+        const c4 = a4 ? Math.min(13, p.kind === "syntaks" ? s - (Q("b2-4", "ikke kan køre den") - 0.3 - 2.7) : s - (Q("b2-4", "noget andet") - 0.3 - 4.4)) : 0;
         // linje og tilstand ud fra tiden
         let line = -1, state = "idle";
         if (a4) {
-          if (c4 < 0.5) { line = -1; state = "run"; }
+          if (c4 < 0) { line = -1; state = "idle"; }
+          else if (c4 < 0.5) { line = -1; state = "run"; }
           else if (c4 < 1.3) { line = 0; state = "run"; }
           else if (c4 < 2.7) { line = 1; state = "run"; }
           else if (p.kind === "syntaks") { line = 2; state = "error"; }
@@ -678,28 +691,30 @@ export default function build(ctx) {
 
       /* B2.5: talebobblen bliver til kode, og hver linje får et spørgsmålstegn */
       const a5 = mode === "b2-5";
-      const sb = a5 ? ease((s - 2.2) / 0.9) : 0;    // boblen suges ind i modellen
+      // boblen suges ind ved "beder en chatbot"; koden kommer ved "om et program"; spørgsmålstegn ved "linje for linje"; hvorfor-boblen ved "hvilke valg"
+      const k5b = Q("b2-5", "beder en chatbot") - 0.3, k5c = Q("b2-5", "om et program") - 0.3, k5q = Q("b2-5", "linje for linje") - 0.3, k5w = Q("b2-5", "hvilke valg") - 0.3;
+      const sb = a5 ? ease((s - k5b) / 0.9) : 0;    // boblen suges ind i modellen
       bubble.object3D.position.set(-1.15 + 1.1 * sb, 2.2 - 0.45 * sb, 0.0);
       bubble.object3D.scale.setScalar(Math.max(0.001, 1 - 0.95 * sb));
       // boblen står tilbage som et dæmpet aftryk, så sammenhængen bobble → model → kode kan ses i stillbilledet
-      if (a5 && s >= 3.1) { bubble.object3D.position.set(-1.15, 2.2, 0.0); bubble.object3D.scale.setScalar(0.85); }
+      if (a5 && s >= k5b + 0.9) { bubble.object3D.position.set(-1.15, 2.2, 0.0); bubble.object3D.scale.setScalar(0.85); }
       bubble.object3D.visible = true;
-      flow5Mat.opacity = a5 && s > 2.2 ? 0.8 : 0.25;
+      flow5Mat.opacity = a5 && s > k5b ? 0.8 : 0.25;
       flow5Tex.offset.x -= 0.02;
       hub.object3D.rotation.set(t * 0.0007, t * 0.001, 0);
-      const busy = a5 && s > 2.6 && s < 5.2;
+      const busy = a5 && s > k5b + 0.4 && s < k5c + 1.6;
       hubMat.emissiveIntensity = busy ? 1.2 + 0.6 * Math.sin(t * 0.02) : 0.45;
       hub.object3D.scale.setScalar(busy ? 1.25 : 1);
       lines5.forEach((L, i) => {
-        const ap = a5 ? ease((s - 3.3 - i * 0.35) / 0.3) : 1;
+        const ap = a5 ? ease((s - k5c - i * 0.25) / 0.3) : 1;
         L.m.opacity = 0.15 + 0.85 * ap;
         L.e.object3D.position.x = PX + (1 - ap) * -0.4;
-        const qa = a5 ? ease((s - 5.4 - i * 0.25) / 0.25) : 0;
+        const qa = a5 ? ease((s - k5q - i * 0.15) / 0.25) : 0;
         L.q.object3D.visible = qa > 0.02; L.q.object3D.scale.setScalar(0.4 + 0.6 * qa);
       });
       // uden klik vises et "hvorfor sådan?" ad gangen; et klik på en linje vælger den
       let sel = -1;
-      if (a5 && s > 6.8) sel = picked >= 0 && t - pickedAt < 8000 ? picked : [2, 0, 3, 1, 4][Math.floor((s - 6.8) / 2.6) % 5];
+      if (a5 && s > k5w) sel = picked >= 0 && t - pickedAt < 8000 ? picked : [2, 0, 3, 1, 4][Math.floor((s - k5w) / 2.6) % 5];
       drawWhy(sel);
       whyE.object3D.visible = sel >= 0; lineHl.object3D.visible = sel >= 0;
       whyLink.object3D.visible = sel >= 0;

@@ -593,15 +593,20 @@ export default function build(ctx) {
   }
 
   const qSpin = new THREE.Quaternion(), eul = new THREE.Euler();
-  let yaw = 0;
+  let yaw = 0, f4k = 0;
+  const wordK = [0, 0], iconK = [0, 0, 0];
   const signMat = el => { const m = el.getObject3D("mesh"); return m && m.material; };
   function tick(t, dt) {
     if (!step) return;
     dt = Math.min(dt, 250);
-    const el = now() - stepAt;
     for (const k of Object.keys(T)) if (k !== "rootGrow") S[k] = approach(S[k], T[k], dt, 3.5);
-    // kernen: drejer langsomt; i F4 stiller den sig med det åbne hjørne mod brugeren
-    const k4 = ease(S.facets);
+    // Synkronisering med speaken: at(frase) går fra 0 til 1, idet frasen siges (startende 0,3 s før)
+    const tt = ctx.time();
+    const at = (ph, dur = 0.8, lead = 0.3) => ease((tt - (ctx.cue(step, ph) - lead)) / dur);
+    const isF = id => step === id;
+    // kernen: drejer langsomt; i F4 stiller den sig med det åbne hjørne mod brugeren, når "fire ting" nævnes
+    f4k = isF("f4") ? at("Fagplanen nævner fire ting", 1.4) : approach(f4k, 0, dt, 3.5);
+    const k4 = f4k;
     yaw += dt * 0.00018 * (1 - k4);
     qSpin.setFromEuler(eul.set(0.35, yaw, 0.12));
     coreSpin.quaternion.copy(qSpin).slerp(Q4.q, k4);
@@ -622,13 +627,17 @@ export default function build(ctx) {
       const m = signMat(p.sign); if (m) m.opacity = 0.1 + 0.9 * e;
     }
     // F2: ordene
-    words.forEach(m => { m.material.opacity = S.words; m.visible = S.words > 0.01; });
-    wordLinks.forEach(l => { l.material.opacity = S.words * 0.55; l.visible = S.words > 0.01; });
+    // F2: "med" og "om" kommer frem, idet de siges ("både med og om teknologierne")
+    ["med og om", "om teknologierne"].forEach((ph, i) => { wordK[i] = isF("f2") ? at(ph, 0.6) : approach(wordK[i], 0, dt, 4); });
+    words.forEach((m, i) => { m.material.opacity = wordK[i]; m.visible = wordK[i] > 0.01; });
+    wordLinks.forEach((l, i) => { l.material.opacity = wordK[i] * 0.55; l.visible = wordK[i] > 0.01; });
     // F3: rødderne; bagefter trækkes de ind til stammen og dæmpes kraftigt
-    if (step === "f3") S.rootGrow = ease(el / 2300);
+    // F3: hver rod vokser op ad kernen, idet dens fag nævnes; i senere trin står de færdige
     rootBaseMat.opacity = S.roots * 0.7 * S.rootDim;
+    const ROOT_CUE = ["naturvidenskab", "samfundsvidenskab", "humanvidenskab", "tekniske", "æstetiske"];
     roots.forEach((r, i) => {
-      const gr = clamp01(S.rootGrow * 1.15 - i * 0.03);
+      const gr = isF("f3") ? at(ROOT_CUE[i], 1.4) : (S.rootGrow > 0.5 ? 1 : 0);
+      r.g = gr;
       const end = Math.floor(r.count * gr / 3) * 3;
       const start = Math.floor(r.count * 0.27 * (1 - S.rootDim) / 3) * 3;
       r.geo.setDrawRange(start, Math.max(0, end - start));
@@ -636,23 +645,29 @@ export default function build(ctx) {
       r.mat.color.set(r.col).multiplyScalar(0.3 + 0.7 * S.rootDim);
       r.mat.emissiveIntensity = 0.06 + 0.42 * S.rootDim;
       r.mat.opacity = 0.35 + 0.65 * S.rootDim;
-      const lo = (step === "f3" ? ease((el - 600) / 900) : 0);
+      const lo = isF("f3") ? at(ROOT_CUE[i], 0.5) : 0;
       r.lbl.material.opacity = lo; r.lbl.visible = lo > 0.01; r.stemMat.opacity = lo * 0.5;
     });
     // F4: klapperne folder sig ud, én ad gangen, og viser deres figur
+    // F4: hver klap folder sig ud, idet dens ord siges
+    const FACET_CUE = ["kultur", "historie", "intentioner", "materielt grundlag"];
     ordered.forEach((p, i) => {
-      const kk = ease(clamp01(S.facets * 1.5 - i * 0.12));
+      p.k = isF("f4") ? at(FACET_CUE[i], 0.9) : approach(p.k || 0, 0, dt, 3.5);
+      const kk = p.k;
       p.flap.rotation.x = p.sign * PETAL_T * kk;
       const sc = 1 + (PETAL_S - 1) * ease((kk - 0.4) / 0.6);
       p.flap.scale.set(sc, sc, 1);
       p.figMat.opacity = ease((kk - 0.55) / 0.45); p.fig.visible = p.figMat.opacity > 0.01;
-      const lo = ease((S.facets - 0.7) / 0.3);
+      const lo = ease((kk - 0.6) / 0.4);
       facetLabels[i].material.opacity = lo; facetLabels[i].visible = lo > 0.01;
     });
     petalMat.emissiveIntensity = 0.15 + k4 * 0.25;
     // F5: tegnene står i en bue; ellers kredser de småt om kernen
-    const big = ease(S.iconBig);
+    // F5: hvert tegn træder frem i buen over kernen, idet dets erkendeform nævnes
+    ["selv at skabe", "omskabe", "nytænke"].forEach((ph, i) => { iconK[i] = isF("f5") ? at(ph, 0.8) : approach(iconK[i], 0, dt, 3.5); });
+    const big = (iconK[0] + iconK[1] + iconK[2]) / 3;
     ICONS.forEach(({ s, mat, ph }, i) => {
+      const big = iconK[i];
       const a = ph + t * 0.00024;
       const ox = Math.sin(a) * 1.05, oz = Math.cos(a) * 1.05, oy = 0.05 * Math.sin(a * 2);
       s.position.set(ox + (ARC[i].x - ox) * big, oy + (ARC[i].y - oy) * big, oz + (ARC[i].z - oz) * big);
@@ -661,12 +676,13 @@ export default function build(ctx) {
     });
     orbit.scale.setScalar(1.05); orbitMat.opacity = S.icons * 0.22 * (1 - big); orbit.visible = orbitMat.opacity > 0.01;
     // portene: på klem fra start; i F6 åbner de én ad gangen, når de nævnes; hjemvendt står de åbne
-    const GATE_AT = [1600, 5600, 10400];
+    const GATE_CUE = ["Digital kreativitet og design", "Programmering og modellering", "Undersøgelse og stillingtagen"];
     ["hal-a", "hal-b", "hal-c"].forEach((key, i) => {
       const gt = gates[key];
-      const full = returned ? 1 : (step === "f6" ? 0.16 + 0.84 * ease((el - GATE_AT[i]) / 900) : 0.16);
-      gt.open = approach(gt.open, full, dt, step === "f6" ? 9 : 4);
-      const o = gt.open, lit = step === "f6" ? ease((el - GATE_AT[i]) / 900) : 0;   // F6: det store lysøjeblik
+      const lit = isF("f6") ? at(GATE_CUE[i], 0.9) : 0;   // F6: det store lysøjeblik, når porten nævnes
+      const full = returned ? 1 : (isF("f6") ? 0.16 + 0.84 * lit : 0.16);
+      gt.open = approach(gt.open, full, dt, isF("f6") ? 12 : 4);
+      const o = gt.open;
       const glow = Math.max(0.25 * o, lit);
       gt.leaves.forEach(({ hinge, s }) => { hinge.rotation.y = s * -o * 1.75; });
       gt.archMat.emissiveIntensity = 0.12 + glow * 0.5;

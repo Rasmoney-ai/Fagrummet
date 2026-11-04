@@ -352,18 +352,31 @@ export default function build(ctx) {
 
   /* ---------- Trin og animation ---------- */
   let aktiv = null, t0 = null;
+  // stikord fra speaken (sekunder i trinnet). Tidskoderne hentes asynkront, når et trin starter,
+  // så stikordene slås op igen i hver frame (billigt) i stedet for én gang ved opbygningen.
+  const mkQ = () => { const Q = {
+    bølge: ctx.cue("a0-1", "skabe digitale artefakter"),
+    dørA1: ctx.cue("a0-1", "Værkstedet for processerne"), dørA2: ctx.cue("a0-1", "Metodelaboratoriet for metoderne"),
+    plade: ctx.cue("a0-2", "Området har ét mål"),
+    ord: [ctx.cue("a0-2", "iterativt"), ctx.cue("a0-2", "intentioner"), ctx.cue("a0-2", "kreative metoder"), ctx.cue("a0-2", "argumentation")],
+  };
+    Q.ord[2] += 0.45;   // fremhæv ved selve ordet "metoder"
+    return Q; };
+  let Q = mkQ();
   const lerp = (a, b, k) => a + (b - a) * k;
   return {
     onStep(id) { aktiv = id; t0 = null; },
     tick(t, dt) {
+      Q = mkQ();
       if (t0 === null) t0 = t;
-      const s = (t - t0) / 1000;
+      const s = (t - t0) / 1000, nt = ctx.time();   // nt: fortællingens tid
       erk.tick(dt, aktiv === "a0-1" ? 1 : 0.4);
       // a0-1: prototyperne lyser op én efter én i en bølge rundt om bordene
       const N = protos.length, trin = 0.6, periode = N * trin + 2.2;
       protos.forEach(p => {
         let v = 0;
-        if (aktiv === "a0-1") {
+        const s = nt - Q.bølge;   // bølgen starter, når speaken siger "skabe digitale artefakter"
+        if (aktiv === "a0-1" && s >= -0.2) {
           // hver prototype blusser op på sin tur og bliver ved med at gløde svagt, til runden starter forfra
           const lok = ((s - p.i * trin) % periode + periode) % periode, slut = (N - p.i) * trin + 0.8;
           if (s - p.i * trin >= 0) v = lok < 0.5 ? lok / 0.5 : lok < slut ? 0.3 + 0.7 * Math.exp(-(lok - 0.5) * 3) : Math.max(0, 0.3 * (1 - (lok - slut) / 0.6));
@@ -372,7 +385,7 @@ export default function build(ctx) {
         p.poolMat.opacity = 0.9 * v;
         const sk = 1 + 0.08 * v; p.body.object3D.scale.set(sk, sk, sk);
         // buen fra oplægget tegnes frem, når prototypen tændes, og bliver stående svagt
-        const bu = buer[p.i], lok = aktiv === "a0-1" ? s - p.i * trin : -1;
+        const bu = buer[p.i], lok = aktiv === "a0-1" && s >= -0.2 ? s - p.i * trin : -1;
         const fr = aktiv === "a0-1" ? Math.min(1, Math.max(0, (((lok % periode) + periode) % periode) / 0.45)) : 0;
         bu.geo.setDrawRange(0, Math.floor(fr * bu.n / 3) * 3);
         bu.m.opacity = aktiv === "a0-1" && lok >= 0 ? 0.25 + 0.65 * v : 0;
@@ -381,18 +394,23 @@ export default function build(ctx) {
       oplægM.color.setScalar(intro ? 1 : 0.6);
       oplægGlød.opacity = intro ? 0.35 + 0.15 * Math.sin(s * 2) : 0;
       kegleMat.opacity = intro ? 0.12 : 0.22;
+      // dørene fremhæves, når de nævnes: lysstribe og symbol blusser op og bliver stående tydelige
+      [Q.dørA1, Q.dørA2].forEach((c, i) => {
+        const d = intro ? nt - c + 0.2 : -1, k = d < 0 ? 0 : Math.min(1, d / 0.3), puls = d > 0 && d < 1.2 ? Math.sin(d / 1.2 * Math.PI) : 0;
+        striber[i].opacity = 0.25 + 0.5 * k + 0.25 * puls; symM[i].opacity = 0.6 + 0.4 * k;
+      });
       // a0-2: pladen tændes, og nøgleordene fremhæves ét ad gangen
       const on = aktiv === "a0-2";
-      const k = on ? Math.min(s / 0.8, 1) : 0;
+      const k = on ? Math.min(Math.max(0, nt - Q.plade + 0.3) / 0.8, 1) : 0;   // pladen tændes ved "Området har ét mål"
       const c = lerp(0.42, 1, k); pladeMat.color.setRGB(c, c, c);
       haloMat.opacity = on ? 0.55 * k + 0.08 * Math.sin(s * 2.2) * k : 0;
       T.lys(lysPlade, on ? 1.6 * k : 0);
       T.lys(lysBord, on ? 0.7 : intro ? 1.5 : 2.0);
       tavleM.color.setScalar(on ? 0.35 : 1);
-      prikM.opacity = on && s > 2.6 ? 0.9 : 0;
+      prikM.opacity = on && nt > Q.ord[3] + 0.4 ? 0.9 : 0;   // løkken løber, når alle fire ord er nævnt
       { const a = s * 1.1 - Math.PI / 2; prik.object3D.position.set(Math.cos(a) * LRX / CW * PW + (LCX - CW / 2) / CW * PW, (CH / 2 - LCY - Math.sin(a) * LRY) / CH * PH, 0.03); }
       ordFelter.forEach((o, i) => {
-        const ki = on ? Math.max(0, Math.min((s - 0.6 - i * 0.45) / 0.3, 1)) : 0;
+        const ki = on ? Math.max(0, Math.min((nt - Q.ord[i] + 0.3) / 0.3, 1)) : 0;   // tændt, når ordet siges
         o.m.opacity = ki;
         const pop = 1 + 0.2 * Math.sin(Math.PI * ki); o.e.object3D.scale.set(pop, pop, 1);
       });

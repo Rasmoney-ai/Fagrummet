@@ -344,7 +344,7 @@ export default function build(ctx) {
     const lab = quad(0.9, 0.194, basic({ map: binLabTex(c), depthTest: false })); lab.renderOrder = 9; lab.position.set(0.15, 0.12, 0.34); lab.rotation.x = -55 * D; g.add(lab);
     const B = batch(); B.box(0.46, 0.06, 0.46, "#3a2a35", [0, 0.03, 0]); B.box(0.46, 0.18, 0.04, "#4a3843", [0, 0.09, -0.21]); B.box(0.46, 0.18, 0.04, "#4a3843", [0, 0.09, 0.21]); g.add(B.build(litMat));
     const bar = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1, 0.32).translate(0, 0.5, 0), new THREE.MeshBasicMaterial({ color: c.c })); bar.position.y = 0.06; bar.scale.y = 0.001; g.add(bar);
-    dialG.add(g); return { bar, n: LOG.filter(l => l[1] === i).length };
+    dialG.add(g); return { bar, lab, n: LOG.filter(l => l[1] === i).length };
   });
   addObj(dialG);
   const legendTex = K.canvasTexture(800, 300, (g, w, h) => {
@@ -500,15 +500,16 @@ export default function build(ctx) {
     onStep(id) { cur = id; t0 = null; back.place(id); },
     tick(t) {
       if (t0 === null) t0 = t;
-      const e = (t - t0) / 1000, s = t / 1000;
+      // e følger speaken (ctx.time); fremhævninger starter 0,2 s før deres stikord (ctx.cue)
+      const e = ctx.time(), s = t / 1000, Q = (ph, n) => ctx.cue(cur, ph, n) - 0.2;
       /* familien */
       fam.forEach((m, i) => {
         const [ax, az, ay, asit] = m.at;
         devOn(m, true);
-        if (cur === "c1-0" && (m.who === "Mor" || m.who === "Far") && e > 4.8) {
+        if (cur === "c1-0" && (m.who === "Mor" || m.who === "Far") && e > Q("brugspraksis")) {
           // efter ankomsten går Mor og Far videre mellem tingene: Mor hen til højttaleren, Far hen til sofabordet; så tilbage
           const tgt = m.who === "Mor" ? [SPK.x + 0.35, SB.z + 0.95] : [ISL.x - 1.6, ISL.z + 0.6];   // Far går fra øen hen mod højttaleren og tilbage
-          const L = Math.hypot(tgt[0] - ax, tgt[1] - az), walkT = L / 0.9, T = (e - 4.8 - (m.who === "Far" ? 1.5 : 0) + 20) % (2 * walkT + 3.0);
+          const L = Math.hypot(tgt[0] - ax, tgt[1] - az), walkT = L / 0.9, T = (e - Q("brugspraksis") - (m.who === "Far" ? 1.5 : 0) + 20) % (2 * walkT + 3.0);
           let k, yaw, moving = false, atThing = false;
           if (T < walkT) { k = T / walkT; yaw = Math.atan2(tgt[0] - ax, tgt[1] - az) / D; moving = true; }
           else if (T < walkT + 1.6) { k = 1; yaw = Math.atan2(tgt[0] - ax, tgt[1] - az) / D; atThing = true; }
@@ -529,8 +530,9 @@ export default function build(ctx) {
           const arrive = ease((k - 0.8) / 0.2);
           const yaw = angLerp(walkYaw * D, ay * D, arrive) / D;
           const walking = k > 0 && k < 1;
-          const pick = ease((t1 - 2.5) / 0.8);
-          pose(m, x, z, yaw, asit && k >= 1, lerp(6, 28, pick), pick > 0.4, ease((t1 - 3.0) / 0.5), walking ? Math.abs(Math.sin(t1 * 7)) * 0.025 : 0);
+          // de tager teknologien op, når speaken siger "menneskelige sider" (én ad gangen)
+          const pk = Q("menneskelige sider") + i * 0.5 - 0.3 - i * 0.6, pick = ease((t1 - pk) / 0.8);
+          pose(m, x, z, yaw, asit && k >= 1, lerp(6, 28, pick), pick > 0.4, ease((t1 - pk - 0.5) / 0.5), walking ? Math.abs(Math.sin(t1 * 7)) * 0.025 : 0);
           devTo(m, pick);
           return;
         }
@@ -538,13 +540,15 @@ export default function build(ctx) {
           if (m.who === "Storesøster") {
             // hun rejser sig, går rundt om skænken, lægger telefonen i skuffen og går tilbage til sofaen
             const path = [[ax, az], [-4.95, -0.45], [-3.7, -0.45], [SB_DRAWER.x, -2.6], [SB_DRAWER.x, SB.z + 0.75]];
-            const out = walkPath(path, e - 0.3, 1.5); out.end = 0.3 + out.dur;   // ud til skuffen
+            // hun går, så telefonen lægges i skuffen præcis på "uden en bestemt app"
+            const ws = Math.max(0.3, Q("uden en bestemt app") - 0.2 - walkPath(path, 0, 1.5).dur);
+            const out = walkPath(path, e - ws, 1.5); out.end = ws + out.dur;   // ud til skuffen
             const put = ease((e - out.end - 0.2) / 1.0);
             const home = walkPath(path.slice().reverse(), e - out.end - 1.5, 1.5); home.end = out.end + 1.5 + home.dur;
             const p = home.t > 0 ? home : out;
             const moving = p.moving;
-            const seated = e < 0.3 || home.done;
-            let yaw = e < 0.3 ? ay : p.yaw;
+            const seated = e < ws || home.done;
+            let yaw = e < ws ? ay : p.yaw;
             if (out.done && home.t <= 0) yaw = 180;
             if (home.done) yaw = ay;
             pose(m, p.x, p.z, yaw, seated, home.t > 0 ? 6 : lerp(28, 6, put), home.t > 0 ? false : put < 0.6, 1 - put, moving ? Math.abs(Math.sin(e * 7)) * 0.025 : 0);
@@ -560,7 +564,7 @@ export default function build(ctx) {
             return;
           }
           // de andre ændrer langsomt adfærd: kigger op, lægger tingen fra sig, vender sig mod hinanden
-          const k = ease((e - 4.8 - i * 0.8) / 2.8);
+          const k = ease((e - Q("hvem i deres omgangskreds") - i * 0.8) / 2.8);   // "hvem … opdagede det?"
           const [ox, oz, oy, osit] = m.off;
           const moving = (ox !== ax || oz !== az) && k > 0 && k < 1;
           const sitNow = (ox === ax && oz === az) ? asit : k <= 0 ? asit : k >= 1 ? osit : false;
@@ -575,12 +579,15 @@ export default function build(ctx) {
         devTo(m, 1);
       });
       speaker.userData.scr.material.color.set(ROSE).multiplyScalar(0.55 + 0.45 * Math.sin(s * 3));
-      tvScreen.material.opacity = cur === "c1-3" ? 1 - 0.7 * ease((e - 5) / 2) : 1;
+      tvScreen.material.opacity = cur === "c1-3" ? 1 - 0.7 * ease((e - Q("hvem i deres omgangskreds")) / 2) : 1;
       fields.forEach(q => { q.material.opacity = cur === "c1-0" ? 1 : 0; q.visible = cur === "c1-0"; });
 
       /* døgnurskiven */
       const D1 = cur === "c1-1";
-      const hours = D1 ? Math.min(24, Math.max(0, (e - 0.5) * 2.6)) : 24;
+      // viseren går døgnet rundt fra "fører log" til "bagefter"; bakkerne fyldes først, når "sorterer" siges
+      const h0 = D1 ? Q("fører log") : 0, h1 = D1 ? Q("bagefter") : 1;
+      const hours = D1 ? Math.min(24, Math.max(0, (e - h0) / (h1 - h0) * 24)) : 24;
+      const sorted = !D1 || e > Q("sorterer");
       handM.rotation.y = -(hours / 24) * 2 * Math.PI; hub.visible = true;
       handM.visible = D1 && hours < 24;
       const M = new THREE.Matrix4(), cnt = [0, 0, 0];
@@ -591,20 +598,28 @@ export default function build(ctx) {
         dots.setMatrixAt(i, M); if (hours >= hh) cnt[cat]++;
       });
       dots.instanceMatrix.needsUpdate = true;
-      bins.forEach((b, i) => { const target = (D1 ? cnt[i] : b.n) * 0.06; b.bar.scale.y = Math.max(0.001, lerp(b.bar.scale.y, target, 0.15)); });
+      const CATQ = ["daglige gøremål", "fællesskaber", "information om verden"];
+      bins.forEach((b, i) => {
+        const target = (sorted ? b.n : 0) * 0.06; b.bar.scale.y = Math.max(0.001, lerp(b.bar.scale.y, target, 0.15));
+        // bakkens navn lyser op, når kategorien nævnes
+        const kq = D1 ? e - Q(CATQ[i]) : -1; b.lab.scale.setScalar(kq > 0 && kq < 1.6 ? 1.22 : 1);
+      });
       dialDisc.material.color.setScalar(D1 ? 1 : 0.75);
       legend.material.opacity = D1 ? 1 : 0.55;
 
       /* lagene */
       // de tre lag ligger først præcis oven på telefonen og glider så skråt fra hinanden: afstanden mellem dem er pointen
-      const L2 = cur === "c1-2" ? ease((e - 1.0) / 2.6) : 0;
-      const sway = cur === "c1-2" ? Math.sin(s * 0.8) * 0.02 * ease((e - 3.6) / 1) : 0;
+      // hvert lag glider ud, når dets slags brug nævnes: "tænkt sig", "faktisk finder sted", "ønskværdig brug"
+      const C2 = cur === "c1-2", LQ = ["tænkt sig", "faktisk finder sted", "ønskværdig brug"];
+      const Lk = LQ.map(q => C2 ? ease((e - Q(q)) / 1.2) : 0);
+      const sway = C2 ? Math.sin(s * 0.8) * 0.02 * ease((e - Q("op mod hinanden")) / 1) : 0;
       const offs = [[-0.42, 0.26, 0.22], [0.0, 0.0, 0.42], [0.42, -0.26, 0.62]];      // tænkt, faktisk, ønsket
       layers.forEach((m, i) => {
         const [ox, oy, oz] = offs[i];
+        const L2 = Lk[i];
         m.position.set(ox * L2 + (i - 1) * sway, 1.5 + oy * L2, 0.06 + i * 0.012 + (oz - 0.06) * L2);
         m.rotation.set(-4 * D, 0, 0);
-        m.material.opacity = cur === "c1-2" ? 0.9 : 0.3;
+        m.material.opacity = C2 ? 0.45 + 0.5 * L2 : 0.3;
       });
       if (cur === "c1-2") {
         // stiplede linjer mellem lagenes øverste venstre hjørner (tænkt→faktisk→ønsket)
@@ -612,7 +627,7 @@ export default function build(ctx) {
         gapLines[0].geometry.setFromPoints([corner(layers[0]), corner(layers[1])]); gapLines[1].geometry.setFromPoints([corner(layers[1]), corner(layers[2])]);
         gapLines.forEach(l => l.computeLineDistances());
       }
-      gapMat.opacity = cur === "c1-2" ? 0.85 * ease((e - 3.0) / 0.6) : 0;
+      gapMat.opacity = C2 ? 0.85 * ease((e - Q("ønskværdig brug") - 1.0) / 0.6) : 0;
       userFig.f.visible = cur === "c1-2"; userPhone.visible = cur === "c1-2";
 
       /* skuffen og ringene */
@@ -623,10 +638,10 @@ export default function build(ctx) {
       dpGlow.material.opacity = C3 && drawerPhone.visible ? 0.8 + 0.2 * Math.sin(s * 3) : 0;
       // "før" vises, mens alle har skærmene fremme; det skifter til "efter", når familien har lagt tingene væk
       phaseBefore.visible = false; phaseAfter.visible = false;   // fravalgt: mærkaterne forvirrede mere, end de forklarede
-      board.material.opacity = C3 ? ease((e - 7.0) / 1.2) : 0;
-      pieces.visible = C3 && e > 7.5;
+      board.material.opacity = C3 ? ease((e - Q("vævet ind")) / 0.6) : 0;      // "vævet ind i fællesskabet"
+      pieces.visible = C3 && e > Q("vævet ind") + 0.3;
       ripples.forEach((r, i) => {
-        const ph = C3 ? (e - 3.6 - i * 1.1) / 1.8 : -1, pr = ph < 0 ? 0 : Math.min(1, ph);
+        const ph = C3 ? (e - Q("opdagede det") - i * 1.1) / 1.8 : -1, pr = ph < 0 ? 0 : Math.min(1, ph);
         r.scale.setScalar(0.2 + pr * 2.4); r.material.opacity = ph < 0 || i > 0 ? 0 : 0.3 * (1 - pr);   // én svag ring, kort
       });
       // dæmpningsregime: kun det aktive trins skilt er fuldt; i intro er stationsskiltene næsten skjult

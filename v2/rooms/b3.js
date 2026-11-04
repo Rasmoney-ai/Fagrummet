@@ -419,17 +419,22 @@ export default function build(ctx) {
         m.transparent = a < 1 ? true : m.userData.baseTr; m.opacity = m.userData.baseOp * a; m.needsUpdate = true; }); });
   }
   const stationEls = { "b3-0": [MT], "b3-1": [DW], "b3-2": [DG], "b3-3": [MV] };
+  // stikord i speaken (sekunder i trinnet). Slås op hver frame: tidskoderne hentes asynkront, når trinnet starter,
+  // så et tidligt opslag kan være et skøn, der senere bliver erstattet af den rigtige tid.
+  const Q = (id, ph, n = 1) => ctx.cue(id, ph, n);
   return {
     onStep(id) { mode = id; fresh = true;
       Object.entries(stationEls).forEach(([k, els]) => els.forEach(e => dim(e, k === id ? 1 : 0.4))); },
     tick(t) {
       if (fresh) { t0 = t; fresh = false; }
       // testkrog: window.__roomS låser animationstiden (bruges kun af skærmbilledværktøjet)
-      const s = typeof window.__roomS === "number" ? window.__roomS : (t - t0) / 1000;
+      const s = typeof window.__roomS === "number" ? window.__roomS : ctx.time();   // fortællingens tid (følger speaken)
 
       /* køen: i b3-0 forlader den bagerste sin plads og stiller sig næsten forrest; den lyser op */
       const a0 = mode === "b3-0";
-      const c0 = a0 ? s % 11 : 0;
+      // springet sker ved "køen under vinduet"; det, modellen mangler, vises ved "ikke taget med"
+      const c0 = a0 ? s - (Q("b3-0", "køen under vinduet") - 0.3 - 1.2) : 0;
+      const missOn = a0 && s > Q("b3-0", "ikke taget med") - 0.3;
       const jump = a0 ? ease((c0 - 1.2) / 2.4) : 0;
       queue.forEach((q, i) => {
         let [x, z] = q.base, ry = -90;
@@ -449,40 +454,43 @@ export default function build(ctx) {
       jumpRingMat.opacity = a0 && c0 > 1.2 ? 0.9 : 0;
       jumpHalo.material.opacity = a0 && c0 > 1.2 ? 0.9 : 0; jumpHalo.position.set(jq.x, CY + 0.8, jq.z);
       missQ.object3D.visible = a0 && c0 > 3.6; missQ.object3D.position.set(jq.x, CY + 1.95, jq.z);
-      miss.object3D.visible = a0 && c0 > 4.4;
-      gapMat.opacity = a0 && c0 > 4.4 ? 0.9 : 0;
+      miss.object3D.visible = missOn;
+      gapMat.opacity = missOn ? 0.9 : 0;
 
       /* diagrammerne tegnes trin for trin */
       const a1 = mode === "b3-1";
-      const c1 = a1 ? s % 14 : 14;
-      const nf = a1 ? Math.min(5, Math.floor(c1 / 0.9) + 1) : 5;
-      const ns = a1 ? Math.max(0, Math.min(5, Math.floor((c1 - 4.8) / 0.9) + 1)) : 5;
-      const missing = a1 && c1 > 10.2;
+      // rutediagrammet tegnes fra "et rutediagram", tilstandsdiagrammet fra "et tilstandsdiagram", det manglende ved "noget mangler"
+      const r0 = Q("b3-1", "et rutediagram") - 0.3, s0 = Q("b3-1", "et tilstandsdiagram") - 0.3, m0 = Q("b3-1", "noget mangler") - 0.3;
+      const nf = a1 ? Math.max(0, Math.min(5, Math.floor((s - r0) / 0.7) + 1)) : 5;
+      const ns = a1 ? Math.max(0, Math.min(5, Math.floor((s - s0) / 0.9) + 1)) : 5;
+      const missing = a1 && s > m0;
       drawDiagrams(nf, ns, missing);
       // tuschen følger det, der lige tegnes
-      pen.object3D.visible = a1 && c1 < 10.8;
+      pen.object3D.visible = a1 && s > r0 && (s < s0 + 4.5 || (s > m0 && s < m0 + 0.8));
       if (a1) {
         let px, py;
-        if (c1 < 4.8) { const n = FL[Math.min(4, nf - 1)]; px = n.x; py = n.y; }
-        else if (c1 < 10.2) { const n = SD[Math.max(0, Math.min(3, ns - 1))]; px = n.x; py = n.y; }
+        if (s < s0) { const n = FL[Math.max(0, Math.min(4, nf - 1))]; px = n.x; py = n.y; }
+        else if (s < m0) { const n = SD[Math.max(0, Math.min(3, ns - 1))]; px = n.x; py = n.y; }
         else { px = 160; py = 280; }
         pen.object3D.position.set((px / 2048 - 0.5) * 5.0 + 0.15, 1.78 + (0.5 - py / 960) * 5.0 * 960 / 2048 + 0.1 + Math.sin(t * 0.02) * 0.02, 0.12);
       }
 
       /* datagørelse: fem stadier, ét ad gangen */
       const a2 = mode === "b3-2";
-      const c2 = a2 ? s % 15 : 0;
-      const stage = a2 ? Math.min(4, Math.floor(c2 / 2.6)) : 0;
-      const f2 = a2 ? (stage === 4 ? clamp01((c2 - 10.4) / 2.2) : ease(clamp01((c2 - stage * 2.6 - 0.8) / 1.4))) : 0;
+      // forenklingen følger speaken: "forenklinger", "repræsenteres som data", "bare ja eller nej", "ven eller ikke ven"
+      const st = [Q("b3-2", "forenklinger"), Q("b3-2", "repræsenteres som data"), Q("b3-2", "bare ja eller nej"), Q("b3-2", "ven eller ikke ven")].map(x => x - 0.3);
+      const stage = a2 ? st.filter(x => s >= x).length : 0;
+      const f2 = a2 && stage ? (stage === 4 ? clamp01((s - st[3]) / 1.6) : ease(clamp01((s - st[stage - 1]) / 0.9))) : 0;
       drawFriends(stage, stage === 0 ? 0 : f2);
       stepMats.forEach((m, i) => { m.emissiveIntensity = a2 && i === stage ? 1.2 : 0; m.color.set(a2 && i <= stage ? "#7fe0d6" : "#9a9282"); });
 
       /* modeller mod verden: de samme seks figurer parres forskelligt på hver side */
       const a3 = mode === "b3-3";
-      const c3 = a3 ? s % 12 : 12;
-      const pf = a3 ? ease((c3 - 0.8) / 2.6) : 1;
-      const showMiss = a3 && c3 > 5.0;
+      // model A parrer ved "fagligt niveau", model B ved "venskaber"; manglerne dukker op ved "bliver det tydeligt"
+      const pfk = [a3 ? ease((s - Q("b3-3", "fagligt niveau") + 0.3) / 1.2) : 1, a3 ? ease((s - Q("b3-3", "venskaber") + 0.3) / 1.2) : 1];
+      const showMiss = a3 && s > Q("b3-3", "bliver det tydeligt") - 0.3;
       boards.forEach((b, k) => {
+        const pf = pfk[k];
         drawModel(b, k, pf, showMiss);
         const pairs = k ? PAIR_B : PAIR_A;
         // figurerne står først i en række, går så sammen i par foran tavlen

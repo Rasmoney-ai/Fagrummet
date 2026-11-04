@@ -39,7 +39,7 @@ export default function build(ctx) {
 | `ctx.rooms` | alle rum (`name`, `sub`, `color`, `area`) til skilte o.l.; kun til læsning |
 | `ctx.visited`, `ctx.cameFrom` | Set med rum-id'er besøgt i sessionen (inkl. det nuværende) og id på rummet, man kom fra (`null` ved start) |
 | `ctx.time()` | fortællingens tid i sekunder siden det aktuelle trin startede. Følger lydfilen, når den spiller; ellers uret fra trinstart |
-| `ctx.cue(stepId, frase, nth?)` | sekundet hvor et ord eller en frase siges i trinnet (fra lydens tidskoder; uden lyd et skøn på ca. 15 tegn/s). Brug fx `if (ctx.time() > ctx.cue("f6", "programmering og modellering"))` i `tick` for at synkronisere en animation med speaken |
+| `ctx.cue(stepId, frase, nth?)` | sekundet hvor et ord eller en frase siges i trinnet (fra lydens tidskoder; uden lyd et skøn på ca. 15 tegn/s). Alle tidskoder er hentet, før rummene bygges, så cue kan slås op i build eller onStep. Brug fx `if (ctx.time() > ctx.cue("f6", "programmering og modellering"))` i `tick` for at synkronisere en animation med speaken |
 | `ctx.onClick(entity, fn)` | gør en entitet klikbar. Klikket stopper her og bobler ikke op til en omgivende station |
 | `ctx.goStep(id)`, `ctx.goRoom(id)` | skift trin i rummet / gå til et andet rum (bruges sjældent; døre og stationer klarer det) |
 | `ctx.env({background, fog})` | baggrundsfarve og evt. tåge (A-Frame fog-streng) for rummet |

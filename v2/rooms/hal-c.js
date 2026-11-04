@@ -314,11 +314,11 @@ export default function build(ctx) {
   const headW = new THREE.Vector3(); headM.getWorldPosition(headW);
   const kioskTerm = new THREE.Vector3(0.75, 1.1, 1.12).applyEuler(new THREE.Euler(0, KS.ry * D, 0)).add(new THREE.Vector3(KS.x, 0, KS.z));
   const targets = [
-    { to: headW.clone().add(new THREE.Vector3(0, 0.02, 0)), lift: 0.12, t: 0.8, d: 0.4, col: "#ffd3e0" },                          // personen
-    { to: new THREE.Vector3(BS.x + 1.42, 1.85, BS.z - 0.3), lift: 0.5, t: 1.1, d: 0.6, col: ROSE },                                     // køreplanen
-    { to: kioskTerm, lift: 0.9, t: 1.3, d: 0.8, col: ROSE },                                                                             // betaling i kiosken
-    { to: new THREE.Vector3(-8.9, 4.9, FZ + 0.1), lift: 1.6, t: 1.5, d: 0.8, col: ROSE },                                              // reklametavlen
-    { to: new THREE.Vector3(SV.x - 0.2, 7.1, -7.0), lift: 1.8, t: 1.7, d: 1.0, col: "#ffb3c9", tail: new THREE.Vector3(SV.x + 1.5, 7.6, SV.z + 1.25) },   // kabelmasten → datacentret
+    { to: headW.clone().add(new THREE.Vector3(0, 0.02, 0)), lift: 0.12, cue: "mennesker", d: 0.4, col: "#ffd3e0" },                          // personen
+    { to: new THREE.Vector3(BS.x + 1.42, 1.85, BS.z - 0.3), lift: 0.5, cue: "digitale teknologier", d: 0.6, col: ROSE },                                     // køreplanen
+    { to: kioskTerm, lift: 0.9, cue: "betale med telefonen", d: 0.8, col: ROSE },                                                                             // betaling i kiosken
+    { to: new THREE.Vector3(-8.9, 4.9, FZ + 0.1), lift: 1.6, cue: "anbefalet videoer", d: 0.8, col: ROSE },                                              // reklametavlen
+    { to: new THREE.Vector3(SV.x - 0.2, 7.1, -7.0), lift: 1.8, cue: "digitale teknologier", d: 1.0, col: "#ffb3c9", tail: new THREE.Vector3(SV.x + 1.5, 7.6, SV.z + 1.25) },   // kabelmasten → datacentret
   ];
   const lines = targets.map(tg => {
     const a = P0.clone(), b = tg.to, m = a.clone().lerp(b, 0.5); m.y += tg.lift;
@@ -476,7 +476,8 @@ export default function build(ctx) {
     onStep(id) { cur = id; t0 = null; back.place(id === "c0-2" ? null : id); },   // i c0-2 er døren til forhallen selv i billedet
     tick(t) {
       now = t; if (t0 === null) t0 = t;
-      const e = (t - t0) / 1000, s = t / 1000;
+      // e følger speaken (ctx.time); fremhævninger starter 0,2 s før deres stikord (ctx.cue)
+      const e = ctx.time(), s = t / 1000, Q = (ph, n) => ctx.cue(cur, ph, n) - 0.2;
       const A1 = cur === "c0-1", A2 = cur === "c0-2";
       const wake = A1 ? e : 99;          // gaden vågner kun i c0-1, ellers er den vågen
       for (const w of windows) {
@@ -501,27 +502,33 @@ export default function build(ctx) {
       const camQ = new THREE.Quaternion(); root.sceneEl.camera.getWorldQuaternion(camQ);
       const lineAlpha = A1 ? 1 : 0.15;
       lines.forEach((l, i) => {
-        const k = A1 ? ease((e - l.t) / l.d) : 1;
+        const k = A1 ? ease((e - Q(l.cue)) / l.d) : 1; l.k = k;
         l.mesh.geometry.setDrawRange(0, Math.floor(l.total * k / 3) * 3);
         l.mat.opacity = lineAlpha * (0.65 + 0.25 * Math.sin(s * 2 + i));
         if (i > 0) { endGlows[i - 1].material.opacity = (k >= 1 ? 0.8 : 0) * lineAlpha; endGlows[i - 1].quaternion.copy(camQ); }
       });
       const pa = pulseGeo.attributes.position;
       // ud: fra telefonen mod verden (rosa); ind: fra verden tilbage mod telefonen og personen (blå) — gensidig påvirkning
-      lines.forEach((l, i) => { for (let j = 0; j < 3; j++) { const u = ((s * (0.32 + 0.06 * i)) + j / 3 + i * 0.13) % 1; const p = l.curve.getPoint(u); pa.setXYZ(i * 3 + j, p.x, p.y, p.z); } });
-      pa.needsUpdate = true; pulseMat.opacity = A1 ? ease((e - 2.0) / 0.5) : 0;
+      // pulserne løber kun på den del af linjen, der er tegnet (u * k)
+      lines.forEach((l, i) => { for (let j = 0; j < 3; j++) { const u = ((s * (0.32 + 0.06 * i)) + j / 3 + i * 0.13) % 1; const p = l.curve.getPoint(u * (l.k ?? 1)); pa.setXYZ(i * 3 + j, p.x, p.y, p.z); } });
+      pa.needsUpdate = true; pulseMat.opacity = A1 ? ease((e - Q("mennesker")) / 0.5) : 0;
       const ia = inGeo.attributes.position;
       lines.forEach((l, i) => { for (let j = 0; j < 2; j++) { const u = ((s * (0.27 + 0.05 * i)) + j / 2 + i * 0.29 + 0.5) % 1; const p = l.curve.getPoint(1 - u); ia.setXYZ(i * 2 + j, p.x, p.y, p.z); } });
-      ia.needsUpdate = true; inMat.opacity = A1 ? ease((e - 3.2) / 0.6) : 0;
+      // "teknologien former omvendt …": først nu løber de blå pulser tilbage mod telefonen
+      ia.needsUpdate = true; inMat.opacity = A1 ? ease((e - Q("omvendt")) / 0.6) : 0;
       // målpladen: kortene tændes, markørerne samles og glider langs pilen ind i "tage stilling", og måleren fyldes
       const g = A2 ? e : -1;
-      const lit = ease((g - 0.2) / 0.5), ar = ease((g - 0.6) / 0.8);
-      const fillK = A2 ? Math.min(1, Math.max(0, (g - 1.2) / 4.4)) : 0;
-      cardL.material.color.setScalar(A2 ? 0.35 + 0.65 * lit : 0.4); cardR.material.color.setScalar(A2 ? 0.35 + 0.65 * ease(fillK * 1.4) : 0.4);
+      const lit = A2 ? ease((g - Q("undersøger")) / 0.5) : 0, ar = A2 ? ease((g - Q("tager stilling")) / 0.8) : 0;
+      // måleren fyldes fra "gradvist" til trinnets sidste "undersøgelser"
+      const f0 = A2 ? Q("gradvist") : 0, f1 = A2 ? Q("undersøgelser", 2) + 0.2 : 1;
+      const fillK = A2 ? Math.min(1, Math.max(0, (g - f0) / (f1 - f0))) : 0;
+      const MARK_CUES = ["gradvist", "egne praktiske undersøgelser", "perspektiver", "bygges op"];
+      cardL.material.color.setScalar(A2 ? 0.35 + 0.65 * lit : 0.4); cardR.material.color.setScalar(A2 ? 0.35 + 0.65 * Math.max(0.35 * ar, ease(fillK * 1.4)) : 0.4);
       arrow.scale.x = A2 ? Math.max(0.02, ar) : 1; arrowMat.opacity = A2 ? 1 : 0.3;
       marks.forEach((q, i) => {   // fire undersøgelser bygger stillingtagen op
-        const k = A2 ? ease((g - 1.2 - i * 1.1) / 1.0) : 0;
-        q.material.opacity = A2 && g > 1.0 + i * 1.1 ? 1 : 0;
+        const c0 = A2 ? Q(MARK_CUES[i]) : 0;
+        const k = A2 ? ease((g - c0) / 1.0) : 0;
+        q.material.opacity = A2 && g > c0 - 0.2 ? 1 : 0;
         // de dukker op i "undersøge"-kortets nederste kant, svæver over pilen og lander i "tage stilling"-kortets måler
         q.position.set(lerp(-0.76 + (i - 1.5) * 0.2, 0.5 + i * 0.17, k), lerp(1.24, 1.25, k) + Math.sin(k * Math.PI) * 0.32, 0.06);
         q.scale.setScalar(1 - 0.35 * k);

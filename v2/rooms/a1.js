@@ -217,32 +217,49 @@ export default function build(ctx) {
 
   /* ---------- Trin og animation ---------- */
   let aktiv = null, t0 = 0, tNu = 0;
+  // stikord fra speaken (sekunder i trinnet). Tidskoderne hentes asynkront, når et trin starter,
+  // så stikordene slås op igen i hver frame (billigt) i stedet for én gang ved opbygningen.
+  const mkQ = () => { const Q = {
+    design: ctx.cue("a1-0", "design"), åbne: ctx.cue("a1-0", "åbne tilgange"), begge: ctx.cue("a1-0", "Begge giver to ting"), valg: ctx.cue("a1-0", "designvalg"),
+    bruger: ctx.cue("a1-1", "udgangspunkt i dem"), skitse: ctx.cue("a1-1", "en lille enhed"), proto: ctx.cue("a1-1", "bygger en prototype"), prøv: ctx.cue("a1-1", "prøver den af"),
+    ud: ctx.cue("a1-2", "rækker processen ud af skolen"), rute: ctx.cue("a1-2", "udvikler en prototype"), dækker: ctx.cue("a1-2", "dækker"), overser: ctx.cue("a1-2", "overser"),
+    tråd: ctx.cue("a1-3", "ledende tråd"), sensor: ctx.cue("a1-3", "sensor kan mærke"),
+    lampe: ctx.cue("a1-4", "lampe, der bliver svagere"), slut4: ctx.cue("a1-4", "registreres i rummet") + 0.9,
+  };
+    return Q; };
+  let Q = mkQ();
   const lerp = (a, b, k) => a + (b - a) * k;
   return {
     onStep(id) { aktiv = id; t0 = null; d3.nulstil(); },
     tick(t, dt) {
+      Q = mkQ();
       tNu = t; if (t0 === null) t0 = t;   // forløbet starter ved første frame efter trinskiftet
       const s = (t - t0) / 1000;
       erk.tick(dt, aktiv === "a1-0" ? 1 : 0.3);
       // a1-0: de to grupper lyser skiftevis; ellers lyser kun den aktive stations lampe
       const intro = aktiv === "a1-0";
-      const fase = intro ? Math.floor(s / 2.6) % 3 : -1;   // 0 design, 1 åbne tilgange, 2 designvalg i en hverdagsting
-      const blødt = intro ? Math.min(1, (s % 2.6) / 0.5) : 1;
-      buer.forEach((m, i) => { m.opacity = intro ? (i === fase ? lerp(0.45, 1, blødt) : 0.35) : 0.4; });
-      polSkilte.forEach((p, i) => { const mm = p.getObject3D("mesh"); if (mm) mm.material.opacity = intro ? (i === fase ? 1 : 0.55) : 0.45; });
-      dv.tick(intro && fase === 2 ? s % 2.6 : -1, intro);
+      // følger speaken: design → åbne tilgange → begge → designvalg i en hverdagsting (bliver stående)
+      const nt = ctx.time();
+      const fase = !intro ? -1 : nt < Q.design - 0.2 ? -1 : nt < Q.åbne - 0.2 ? 0 : nt < Q.begge - 0.2 ? 1 : nt < Q.valg - 0.2 ? 3 : 2;
+      const fStart = [Q.design, Q.åbne, Q.valg, Q.begge][fase] ?? 0;
+      const blødt = intro ? Math.min(1, Math.max(0, nt - fStart + 0.2) / 0.4) : 1;
+      const lyser = gr => fase === gr || fase === 3 || (fase === 2);   // i "begge" og "designvalg" lyser begge grupper
+      buer.forEach((m, i) => { m.opacity = intro ? (i === fase ? lerp(0.45, 1, blødt) : lyser(i) ? 0.75 : 0.35) : 0.4; });
+      polSkilte.forEach((p, i) => { const mm = p.getObject3D("mesh"); if (mm) mm.material.opacity = intro ? (lyser(i) ? 1 : 0.55) : 0.45; });
+      dv.tick(intro && fase === 2 ? nt - Q.valg + 0.2 : -1, intro);
       STATION.forEach((st, i) => {
         const o = stationer[st.id];
         const gruppe = i < 2 ? 0 : 1;
-        const tændt = intro ? (fase < 2 && gruppe === fase ? blødt : 0.12) : st.id === aktiv ? (aktiv === "a1-4" ? 0 : 1) : 0.08;
+        const tændt = intro ? (gruppe === fase ? blødt : fase === 3 ? 0.8 : fase === 2 ? 0.35 : 0.12) : st.id === aktiv ? (aktiv === "a1-4" ? 0 : 1) : 0.08;
         o.kegleMat.opacity = 0.03 + 0.17 * tændt; o.poolMat.opacity = 0.03 + 0.5 * tændt;
-        const sm = o.skilt.getObject3D("mesh"); if (sm) sm.material.opacity = intro ? (fase < 2 && gruppe === fase ? 1 : 0.55) : st.id === aktiv ? 1 : 0.14;
+        const sm = o.skilt.getObject3D("mesh"); if (sm) sm.material.opacity = intro ? (lyser(gruppe) ? 1 : 0.55) : st.id === aktiv ? 1 : 0.14;
         o.pære.getObject3D("mesh").material.color.setScalar(0.35 + 0.65 * tændt).multiply(new THREE.Color("#ffd9a0"));
       });
-      d1.tick(aktiv === "a1-1" ? s : -1, dt);
-      d2.tick(aktiv === "a1-2" ? s : -1, dt);
-      d3.tick(aktiv === "a1-3" ? s : -1, dt);
-      d4.tick(aktiv === "a1-4" ? s : -1, dt, lysRum);
+      // stationerne får fortællingens tid (ctx.time) og styrer selv efter stikordene i Q
+      d1.tick(aktiv === "a1-1" ? nt : -1, dt);
+      d2.tick(aktiv === "a1-2" ? nt : -1, dt);
+      d3.tick(aktiv === "a1-3" ? nt : -1, dt);
+      d4.tick(aktiv === "a1-4" ? nt : -1, dt, lysRum);
       T.syncVis();
     },
     dispose() { T.dispose(); },
@@ -323,13 +340,14 @@ export default function build(ctx) {
         // rækken bygges op én gang og bliver stående: kort → pil → skitse → pil → prototype → brugeren prøver den
         const p = s < 0 ? 99 : s;
         figur.object3D.visible = s >= 0;   // kun i a1-1, så det ikke står tæt på kameraet ved nabostationen
-        const basis = [1, 1, 1.9];
-        elementer.forEach((e, i) => { const k = clamp((p - i * 0.8) / 0.35); e.object3D.scale.setScalar(basis[i] * (0.15 + 0.85 * ease(k))); });
-        pile.forEach((m, i) => { m.opacity = s < 0 ? 0.5 : 0.1 + 0.9 * clamp((p - 0.45 - i * 0.8) / 0.3); });
-        // brugeren rækker ud og trykker; prototypen svarer ved at skifte mellem ledig og optaget
-        const tryk = p < 2.8 ? 0 : Math.max(0, Math.sin((p - 2.8) * 1.6));
+        const basis = [1, 1, 1.9], C = [Q.bruger, Q.skitse, Q.proto];   // brugerkort, skitse, prototype – når de nævnes
+        elementer.forEach((e, i) => { const k = clamp((p - C[i] + 0.3) / 0.35); e.object3D.scale.setScalar(basis[i] * (0.15 + 0.85 * ease(k))); });
+        pile.forEach((m, i) => { m.opacity = s < 0 ? 0.5 : 0.1 + 0.9 * clamp((p - C[i + 1] + 0.3) / 0.3); });
+        // ved "prøver den af" rækker brugeren ud og trykker; prototypen svarer ved at skifte mellem ledig og optaget
+        const tp = p - Q.prøv + 0.3;
+        const tryk = tp < 0 ? 0 : Math.max(0, Math.sin(tp * 1.6));
         arm.object3D.rotation.z = -(1.15 + 0.4 * tryk);
-        const ledig = s < 0 ? true : p < 3.4 || Math.floor((p - 3.4) / 1.96) % 2 === 1;
+        const ledig = s < 0 ? true : tp < 0.6 || Math.floor((tp - 0.6) / 1.96) % 2 === 1;
         grøn.color.set(ledig ? "#3aff7a" : "#1b3a26"); rød.color.set(ledig ? "#3a1b1b" : "#ff4a3a");
         haloG.visible = ledig; haloR.visible = !ledig;
       },
@@ -414,21 +432,23 @@ export default function build(ctx) {
       tick(s) {
         // 0–1 gavlen foldes ned · 1–5 idéen kører rundt · 5,5– vurderingen · 10 forfra
         // forløbet kører én gang og bliver stående med vurderingen, så slutbilledet viser pointen
-        const p = s < 0 ? -1 : Math.min(s, 30);
-        const åben = s < 0 ? 0 : p < 1 ? ease(p) : 1;
+        // gavlen foldes ned ved "rækker processen ud af skolen", idéen kører ud ved "udvikler en prototype",
+        // vurderingen kommer ved "dækker" (flueben) og "overser" (spørgsmålstegn). Slutbilledet bliver stående.
+        const p = s < 0 ? -1 : s;
+        const åben = s < 0 ? 0 : ease((p - Q.ud + 0.3) / 1.0);
         gavl.object3D.rotation.z = -åben * 88 * D;
         indeLys.opacity = 0.9 * åben;
         // idéens rute
-        const u = s < 0 ? 0 : clamp((p - 1.1) / 4.2) * (rute.length - 1);
+        const u = s < 0 ? 0 : clamp((p - Q.rute + 0.2) / 3.8) * (rute.length - 1);
         const k = Math.min(rute.length - 2, Math.floor(u)), f = u - k;
         const [ax, az] = rute[k], [bx, bz] = rute[k + 1];
         pos.set(ax + (bx - ax) * f, Y + 0.06 + Math.abs(Math.sin(u * Math.PI)) * 0.03, az + (bz - az) * f);
-        ide.object3D.position.copy(pos); ide.object3D.visible = s >= 0 && p > 0.6;
+        ide.object3D.position.copy(pos); ide.object3D.visible = s >= 0 && åben > 0.5;
         ideGlød.object3D.position.copy(pos); ideGlødM.opacity = ide.object3D.visible ? 0.8 : 0;
         const nået = [3, 6, 8].map(n => u >= n - 0.05);
         vinduer.forEach((m, i) => { const v = s < 0 ? 0 : nået[i] ? (DÆKKER[i] ? 1 : 0.25) : 0; m.color.setRGB(0.23 + 0.77 * v, 0.2 + 0.65 * v, 0.15 + 0.4 * v); });
         tags.forEach((tg, i) => { tg.object3D.visible = s >= 0 && nået[i]; });
-        vurd.forEach((v, i) => { const kk = s < 0 ? 0 : clamp((p - 5.6 - i * 0.6) / 0.35); v.m.opacity = kk; v.e.object3D.scale.setScalar(0.5 + 0.5 * ease(kk)); });
+        vurd.forEach((v, i) => { const kk = s < 0 ? 0 : clamp((p - (DÆKKER[i] ? Q.dækker : Q.overser) + 0.3 + (DÆKKER[i] ? -i * 0.15 : 0)) / 0.35); v.m.opacity = kk; v.e.object3D.scale.setScalar(0.5 + 0.5 * ease(kk)); });
       },
     };
   }
@@ -541,9 +561,11 @@ export default function build(ctx) {
         if (s >= 0) {
           if (valgt >= 0 && (tNu - tValgt) / 1000 < 7) { i = valgt; ls = (tNu - tValgt) / 1000; }
           else {
-            const ORDEN = [3, 0, 1, 2, 4, 5], VAR = [6, 3, 3, 3, 3.4, 3.4];   // afstandssensoren først og længst
-            let t = s % VAR.reduce((a, b) => a + b, 0), k = 0; while (t > VAR[k]) { t -= VAR[k]; k++; }
-            i = ORDEN[k]; ls = t;
+            // følger speaken: før "ledende tråd" kører LED, servo, summer og lyssensor på skift;
+            // ved "ledende tråd" vises tråden, og ved "sensor kan mærke" afstandssensoren med sin rækkevidde (bliver stående)
+            if (s >= Q.sensor - 0.3) { i = 3; ls = s - Q.sensor + 0.3; }
+            else if (s >= Q.tråd - 0.3) { i = 4; ls = s - Q.tråd + 0.3; }
+            else { const ORDEN = [0, 1, 2, 5]; i = ORDEN[Math.floor(s / 3.4) % 4]; ls = s % 3.4; }
           }
         }
         komp.forEach((k, j) => {
@@ -612,8 +634,9 @@ export default function build(ctx) {
       tick(s, dt, rumLys) {
         // over 8 sekunder: lampen dæmpes, telefonen og måleren stiger. Så starter cyklussen forfra.
         const aktivN = s >= 0;
-        const p = aktivN ? (s % 10) : 0;
-        const k = aktivN ? (p < 8 ? ease(p / 8) : p < 8.8 ? 1 : 1 - ease((p - 8.8) / 1.2)) : 0.0;
+        // lampen dæmpes fra "lampe, der bliver svagere" og er helt nede ved trinnets sidste ord; derefter står den
+        const p = aktivN ? (s < Q.lampe - 0.3 ? 0 : s - Q.lampe + 0.3) : 0;
+        const k = aktivN ? ease(p / (Q.slut4 - Q.lampe)) : 0.0;
         const lampe = aktivN ? 1 - 0.95 * k : 0.35, tel = aktivN ? 0.15 + 0.85 * k : 0.2;
         pæreM.color.setRGB(0.2 + 0.8 * lampe, 0.18 + 0.76 * lampe, 0.15 + 0.66 * lampe);
         haloM.opacity = 0.8 * lampe; bordM.opacity = 0.85 * lampe; kegleM.opacity = 0.6 * lampe;
@@ -623,7 +646,7 @@ export default function build(ctx) {
         målM.color.setRGB(0.4 + 0.2 * k, 0.5 + 0.1 * k, 1);
         T.lys(lampeLys, aktivN ? 2.6 * lampe : 0);
         T.lys(rumLys, aktivN ? 0.4 : 1.1);
-        prikM.opacity = aktivN && p < 8 ? 0.9 : 0;
+        prikM.opacity = aktivN && p > 0 ? 0.9 : 0;
         prikker.forEach((e, i) => { const f = ((s * 0.5 + i / 6) % 1); e.object3D.position.set(0.34 + (LX + 0.11 - 0.34) * f, Y + 0.14 + Math.sin(f * Math.PI) * 0.22 - 0.1 * f, 0.08); });
       },
     };

@@ -316,6 +316,9 @@ export default function build(ctx) {
     motifMats[k].emissiveIntensity = 0.1 + 0.9 * g;
   }
 
+  // stikord i speaken (sekunder i trinnet). Slås op hver frame: tidskoderne hentes asynkront, når trinnet starter,
+  // så et tidligt opslag kan være et skøn, der senere bliver erstattet af den rigtige tid.
+  const Q = (id, ph, n = 1) => ctx.cue(id, ph, n);
   return {
     onStep(id) { mode = id; fresh = true;
       Object.entries(stationEls).forEach(([k, els]) => els.forEach(e => dim(e, k === id ? 1 : 0.35)));
@@ -323,8 +326,8 @@ export default function build(ctx) {
       st2.object3D.visible = id !== "b0-3"; st1.object3D.visible = id !== "b0-3"; },
     tick(t) {
       if (fresh) { t0 = t; fresh = false; }
-      // testkrog: window.__roomS låser animationstiden (bruges kun af skærmbilledværktøjet)
-      const s = typeof window.__roomS === "number" ? window.__roomS : (t - t0) / 1000;
+      // fortællingens tid (følger speaken); testkrogen window.__roomS låser den til stillbilleder
+      const s = typeof window.__roomS === "number" ? window.__roomS : ctx.time();
 
       // datapakkerne stiger altid i en langsom spiral; i b0-2 dæmpes de, så den fremhævede pakke står frem
       packMat.opacity = mode === "b0-2" ? 0.25 : 0.95;
@@ -343,31 +346,32 @@ export default function build(ctx) {
       trays.object3D.visible = flowBox.object3D.visible = mode === "b0-2";
       F.forEach(f => f.capMat.opacity = 0);
       if (mode === "b0-1") {
-        // nedefra og op, én efter én; efter en pause slukker de og det gentages roligt
-        // nedefra og op, én efter én; derefter pulserer alle tre sammen, og lysforbindelser viser samspillet
-        const c = s % 11;
-        const together = ease((c - 3.6) / 0.8) * (1 - ease((c - 9.8) / 0.8));
-        FLOORS.forEach((_, k) => { const on = ease((c - 0.4 - k * 0.9) / 0.6) * (1 - ease((c - 9.8) / 0.8)); setFloor(k, 0.08 + 0.92 * on * (1 - 0.25 * together * (0.5 + 0.5 * Math.sin(t * 0.004 + k)))); });
+        // hver etage tænder, når speaken nævner sit lag; ved "samspil" pulserer alle tre sammen med lysforbindelser
+        const at = [Q("b0-1", "materielt grundlag"), Q("b0-1", "programmering og computerforståelse"), Q("b0-1", "modellering")];
+        const together = ease((s - Q("b0-1", "samspil") + 0.3) / 0.6);
+        FLOORS.forEach((_, k) => { const on = ease((s - at[k] + 0.3) / 0.5); setFloor(k, 0.08 + 0.92 * on * (1 - 0.25 * together * (0.5 + 0.5 * Math.sin(t * 0.004 + k)))); });
         linkMat.opacity = 0.8 * together;
       } else if (mode === "b0-2") {
         // én pakke følges hele vejen op; etagen blusser op, når den passerer, og lagets tekst bliver stående
         // pakken stiger og holder en lille pause ved hvert lag
-        const c = s % 11;
-        const keys = [[0, 0.5], [1.6, FLOORS[0] + 0.25], [2.9, FLOORS[0] + 0.25], [3.9, FLOORS[1] + 0.25], [5.2, FLOORS[1] + 0.25], [6.2, FLOORS[2] + 0.28], [9.0, FLOORS[2] + 0.28], [10.0, H - 0.3], [11, H - 0.3]];
-        let yy = 0.5;
-        for (let i = 1; i < keys.length; i++) if (c <= keys[i][0]) { const [ta, ya] = keys[i - 1], [tb, yb] = keys[i]; yy = ya + (yb - ya) * ease((c - ta) / (tb - ta)); break; }
+        // pakken når hvert lag lige når speaken siger det: "nederste lag", "midten", "øverst"; den bliver på øverste lag
+        const c = s;
+        const a0 = Q("b0-2", "nederste lag") - 0.2, a1 = Q("b0-2", "midten") - 0.2, a2 = Q("b0-2", "øverst") - 0.2;
+        const keys = [[0, 0.5], [a0 - 1.4, 0.5], [a0, FLOORS[0] + 0.25], [a1 - 1.0, FLOORS[0] + 0.25], [a1, FLOORS[1] + 0.25], [a2 - 1.0, FLOORS[1] + 0.25], [a2, FLOORS[2] + 0.28]];
+        let yy = FLOORS[2] + 0.28;
+        for (let i = 1; i < keys.length; i++) if (c <= keys[i][0]) { const [ta, ya] = keys[i - 1], [tb, yb] = keys[i]; yy = ya + (yb - ya) * ease((c - ta) / Math.max(0.01, tb - ta)); break; }
         hiGrp.object3D.position.set(0, yy, 0);
         hiGrp.object3D.rotation.y = t * 0.002;
         // pakkens udtryk følger det lag, den er nået til
         const lay = yy < FLOORS[0] + 0.3 ? 0 : yy < FLOORS[1] + 0.3 ? 1 : 2;
         if (hiMat.map !== hiTex[lay]) { hiMat.map = hiTex[lay]; hiMat.needsUpdate = true; }
         // på lag 3 glider pakken ud i den ene bakke (valgt som data)
-        hiGrp.object3D.position.x = c > 6.4 && c < 9.6 ? -0.7 * ease((c - 6.4) / 0.8) : 0;
+        { const b = Q("b0-2", "besluttet") - 0.3; hiGrp.object3D.position.x = -0.7 * ease((c - b) / 0.8); }
         trail.object3D.scale.set(1, Math.max(0.01, Math.min(1.8, yy - 0.3)), 1);
         halo.scale.setScalar(1.1 + 0.15 * Math.sin(t * 0.008));
         FLOORS.forEach((fy, k) => {
           const d = Math.abs(yy - fy); setFloor(k, Math.max(0.12 + 0.88 * clamp01(1 - d / 0.55), yy > fy ? 0.35 : 0.12));
-          F[k].capMat.opacity = c > 9.8 ? clamp01((10.6 - c) / 0.8) : clamp01((yy - fy) / 0.25);
+          F[k].capMat.opacity = clamp01((yy - fy) / 0.25);
         });
       } else if (mode === "b0-3") {
         FLOORS.forEach((_, k) => setFloor(k, 0.1));
@@ -380,20 +384,22 @@ export default function build(ctx) {
       shaftMats.forEach((m, k) => m.emissiveIntensity = 0.15 + 0.9 * F[k].g);
       // målpladen: deler sig, og halvdelene glider ud for de etager, de hører til, og lyser dem op
       const on = mode === "b0-3";
-      const split = on ? ease((s - 0.3) / 0.6) : 0;
-      const rise = on ? ease((s - 0.9) / 1.0) : 0;
-      const lit = on ? ease((s - 1.7) / 0.5) : 0;
+      // deler sig ved "to mål"; hver halvdel rejser sig, når den nævnes, og lyser sine etager op ved "tættest på …"
+      const split = on ? ease((s - Q("b0-3", "to mål") + 0.3) / 0.6) : 0;
+      const riseH = [on ? ease((s - Q("b0-3", "det første er") + 0.3) / 0.8) : 0, on ? ease((s - Q("b0-3", "det andet er") + 0.3) / 0.8) : 0];
+      const litH = [on ? ease((s - Q("b0-3", "tættest på programmeringen") + 0.3) / 0.5) : 0, on ? ease((s - Q("b0-3", "tættest på modelleringen") + 0.3) / 0.5) : 0];
+      const rise = Math.max(riseH[0], riseH[1]), lit = Math.max(litH[0], litH[1]);
       plateSign.object3D.position.y = 1.05 + 0.6 * rise;
       halves.forEach((hv, i) => {
-        hv.g.object3D.position.set(hv.side * (0.82 + 0.95 * split), (halfY[i] - PL[1]) * rise, 0);
+        hv.g.object3D.position.set(hv.side * (0.82 + 0.95 * split), (halfY[i] - PL[1]) * riseH[i], 0);
         hv.g.object3D.rotation.y = -hv.side * 0.12 * split;
-        hv.frame.opacity = 0.9 * lit;
-        hv.floors.forEach(([k, w]) => setFloor(k, Math.max(F[k].g, 0.1 + 0.9 * w * lit)));
+        hv.frame.opacity = 0.9 * Math.max(litH[i], 0.5 * riseH[i]);
+        hv.floors.forEach(([k, w]) => setFloor(k, Math.max(F[k].g, 0.1 + 0.9 * w * litH[i])));
       });
       root.object3D.updateMatrixWorld(true);
       beams.forEach(b => {
         const e = b.e.object3D; e.visible = lit > 0.01; if (!e.visible) return;
-        b.mat.opacity = 0.85 * lit * (b.h === 0 && b.k === 0 ? 0.5 : 1);
+        b.mat.opacity = 0.85 * litH[b.h] * (b.h === 0 && b.k === 0 ? 0.5 : 1);
         halves[b.h].g.object3D.getWorldPosition(vA);
         vA.y += b.k === 0 ? -0.25 : b.k === 1 ? 0.25 : 0;
         // strålen starter ved halvdelens kant ind mod tårnet, så den ikke krydser teksten

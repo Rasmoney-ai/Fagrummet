@@ -549,13 +549,37 @@ export default function build(ctx) {
     T.arcs = id === "s1" ? 0.35 : id === "s3" ? 0.15 : 0.5;
   }
 
-  const WING_AT = { a: 1300, b: 4300, c: 7300 };      // S1: fløjene lyser op én efter én
+  // Stikord fra speaken (ordret fra manus.json)
+  const WING_CUE = { a: "I Atelieret", b: "I Tårnet", c: "På Gaden" };                       // S1: fløjene lyser op, når de nævnes
+  const GOAL_CUE = ["I Atelieret arbejder", "bruger de programmering", "undersøger modellers", "undersøger de digitale", "tager gradvist"];  // S2
+  const LABEL_CUE = ["Gaden og kortlægger", "I Tårnet modellerer", "I Atelieret designer"];   // S3: trinmærkerne
+  const NAME_CUE = ["at skabe", "at omskabe", "forestille sig alternativer"];                // S3: erkendeformerne nævnes til sidst
+  const MILE_CUE = ["undervisning og evaluering", "efterårets afprøvning", "træder i kraft", "Prøven i valgfaget"];  // S4
+  // S3: stiens fremdrift som (stikord, forskydning i s) -> sted på stien
+  const tGadeEnd = nearestT(pathPts[2]), tTowerBase = nearestT(pathPts[4]);
+  const PATH_KEYS = [["begynder på Gaden", -0.3, 0], ["bruger feedet", 0.5, tGadeEnd], ["I Tårnet modellerer", -0.3, tTowerBase],
+    ["bygger en simpel anbefalingsalgoritme", 1.2, tTowerTop], ["I Atelieret designer", -0.3, (tTowerTop + tAtelier) / 2],
+    ["et alternativ med", 0, tAtelier], ["andre værdier", 0.6, 1]];
+  // S4: små glimt over tidslinjens punkter, der tændes, når punktet nævnes
+  const mileGlowMat = [];
+  const MILE_X = [230, 610, 990, 1370].map(x => (x / 1600 - 0.5) * FW), MILE_Y = (0.5 - 470 / 900) * FW * 900 / 1600;
+  const mileGlows = MILE_X.map(x => {
+    const m = keep(new THREE.SpriteMaterial({ map: keep(K.glowTex(C.core)), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0, toneMapped: false }));
+    const sp = new THREE.Sprite(m); sp.position.set(x, MILE_Y, 0.02); sp.scale.set(0.5, 0.5, 1); sp.renderOrder = 22; field.add(sp); mileGlowMat.push(m); return sp;
+  });
+  let darkV = 0, coreV = 1, fieldV = 0;
   const tmp = new THREE.Vector3();
   function tick(t, dt) {
     if (!step) return;
     dt = Math.min(dt, 250);
-    const el = now() - stepAt;
-    for (const k of Object.keys(T)) S[k] = approach(S[k], T[k], dt, k === "dark" || k === "core" ? 0.45 : 3.5);
+    for (const k of Object.keys(T)) S[k] = approach(S[k], T[k], dt, 3.5);
+    const tt = ctx.time();
+    const cue = ph => ctx.cue(step, ph);
+    const at = (ph, dur = 0.8, lead = 0.3) => ease((tt - (cue(ph) - lead)) / dur);
+    // S4: platformen mørkner langsomt hen over trinnet og er helt mørk, når prøven nævnes
+    if (step === "s4") { darkV = ease((tt - 1) / Math.max(2, cue("Prøven i valgfaget") - 1)); coreV = 1 - 0.97 * darkV; fieldV = at("hvad der endnu ikke er på plads", 0.8); }
+    else { darkV = approach(darkV, 0, dt, 2); coreV = approach(coreV, 1, dt, 2); fieldV = approach(fieldV, 0, dt, 5); }
+    S.dark = darkV; S.core = coreV; S.field = fieldV;
     const dark = ease(S.dark);
 
     // himmel, stjerner og terrasse bliver mørkere i S4
@@ -579,7 +603,7 @@ export default function build(ctx) {
     // fløjene
     for (const w of WINGS) {
       let lit;
-      if (step === "s1") lit = ease((el - WING_AT[w.key]) / 900);
+      if (step === "s1") lit = at(WING_CUE[w.key], 0.9);
       else if (step === "s3") lit = 0.35;
       else if (step === "s2") lit = 0.4;
       else lit = 0.3;
@@ -592,12 +616,12 @@ export default function build(ctx) {
       if (w.cableMat) w.cableMat.emissiveIntensity = (0.2 + 0.6 * L) * (1 - dark);
       w.poolMat.opacity = 0.75 * L;
       if (w.lampMat) w.lampMat.color.set("#ffe0d0").multiplyScalar(0.3 + 0.7 * (1 - dark));
-      const sv = step === "s1" ? ease((el - WING_AT[w.key] - 200) / 700) : approach(w.angleSign.material.opacity, 0, dt, 6);
+      const sv = step === "s1" ? at(WING_CUE[w.key], 0.7) : approach(w.angleSign.material.opacity, 0, dt, 6);
       w.angleSign.material.opacity = sv; w.angleSign.visible = sv > 0.01;
       w.angleLine.opacity = sv * 0.7;
     }
     // lysbuerne: tændes, når alle tre fløje er nævnt i S1 (samme samspil)
-    const arcBoost = step === "s1" ? ease((el - 9000) / 1500) : 0;
+    const arcBoost = step === "s1" ? at("Områderne supplerer hinanden", 1.2) : 0;
     arcs.forEach(a => { a.mat.opacity = (S.arcs + 0.6 * arcBoost) * (1 - dark); });
 
     // kernen
@@ -610,23 +634,28 @@ export default function build(ctx) {
     plazaGlowMat.opacity = 0.5 * cg; tetherMat.opacity = 0.25 * cg;
 
     // S2: målpladerne
-    plates.forEach(p => {
-      const k = step === "s2" ? ease((el - p.delay) / 1400) : 0;
+    plates.forEach((p, i) => {
+      const k = step === "s2" ? at(GOAL_CUE[i], 1.4) : 0;     // pladen stiger op, idet målet siges
       p.vis = step === "s2" ? k : approach(p.vis || 0, 0, dt, 6);      // egen tilstand, så udfadningen ikke modvirkes
       p.m.visible = p.vis > 0.01; p.m.material.opacity = Math.min(1, p.vis * 1.4);
       if (step === "s2") { p.curve.getPoint(k, tmp); p.m.position.copy(tmp); p.m.quaternion.copy(ringQ); p.m.scale.setScalar(0.35 + 0.65 * k); }
       const pa = p.str.geometry.attributes.position; pa.setXYZ(0, p.from.x, p.from.y, p.from.z); pa.setXYZ(1, p.m.position.x, p.m.position.y - 0.3 * p.m.scale.y, p.m.position.z); pa.needsUpdate = true;
       p.strMat.opacity = p.vis * 0.55; p.str.visible = p.vis > 0.01;
     });
-    ringMat.opacity = (step === "s2" ? ease((el - 3200) / 1000) : 0) * 0.45; ring.visible = ringMat.opacity > 0.01;
+    ringMat.opacity = (step === "s2" ? at("Målene er korte og brede", 1.0) : 0) * 0.45; ring.visible = ringMat.opacity > 0.01;
 
     // S3: stien vokser frem
-    const pk = step === "s3" ? ease((el - 300) / 7000) : 0;
+    let pk = 0;
+    if (step === "s3") {   // stien følger fortællingen: Gaden, så Tårnet, så Atelieret
+      const ks = PATH_KEYS.map(([ph, off, v]) => [cue(ph) + off, v]);
+      if (tt >= ks[ks.length - 1][0]) pk = 1;
+      else if (tt > ks[0][0]) for (let j = 0; j < ks.length - 1; j++) if (tt <= ks[j + 1][0]) { const u = (tt - ks[j][0]) / Math.max(0.01, ks[j + 1][0] - ks[j][0]); pk = ks[j][1] + (ks[j + 1][1] - ks[j][1]) * ease(u); break; }
+    }
     const cnt = Math.floor(pathCount * pk / 3) * 3;
     pathGeo.setDrawRange(0, cnt); pathMesh.visible = cnt > 0;
     head.visible = step === "s3" && pk > 0.001 && pk < 0.999;
     if (head.visible) { pathCurve.getPointAt(Math.min(pk, 1), tmp); head.position.copy(tmp); headMat.opacity = 0.9; }
-    pathLabels.forEach(l => { const o = step === "s3" ? ease((pk - l.t + 0.08) / 0.1) : 0; l.m.material.opacity = o; l.m.visible = o > 0.01; });
+    pathLabels.forEach((l, i) => { const o = step === "s3" ? at(LABEL_CUE[i], 0.5) : 0; l.m.material.opacity = o; l.m.visible = o > 0.01; });
 
     // erkendeformernes tegn
     const onPath = ease(S.path), sat = ease(S.sat), hideI = ease(S.hideIcons);
@@ -638,7 +667,9 @@ export default function build(ctx) {
       const litNow = step === "s3" && pk >= ICON_T[i] ? 1 : 0;
       ic.lit = approach(ic.lit, litNow, dt, 6);
       const base = 0.26 + 0.12 * onPath;
-      const pulse = ic.lit > 0.5 ? 1 + 0.08 * Math.sin(t * 0.006 + i) : 1;
+      // til sidst nævnes erkendeformerne: tegnet bliver kort ekstra stort, idet det siges
+      const named = step === "s3" ? at(NAME_CUE[i], 0.4) * (1 - ease((tt - cue(NAME_CUE[i]) - 1.2) / 0.6)) : 0;
+      const pulse = (ic.lit > 0.5 ? 1 + 0.08 * Math.sin(t * 0.006 + i) : 1) * (1 + 0.35 * named);
       const sz = (base + 0.5 * onPath * (0.5 + 0.5 * ic.lit) + 0.35 * ic.lit) * pulse;
       const ssz = sz * (1 - sat) + 0.62 * sat;
       ic.s.scale.set(ssz, ssz, 1);
@@ -648,6 +679,9 @@ export default function build(ctx) {
 
     // S4: det stiplede felt; stregerne "løber"
     const fv = ease((S.field - 0.05) / 0.95);
+    mileGlows.forEach((sp, i) => { const k = step === "s4" ? at(MILE_CUE[i], 0.5) : 0;
+      const flash = step === "s4" ? k * (1 - 0.6 * ease((tt - cue(MILE_CUE[i]) - 0.8) / 1.0)) : 0;
+      mileGlowMat[i].opacity = flash * fv; sp.visible = mileGlowMat[i].opacity > 0.01; sp.scale.setScalar(0.4 + 0.25 * flash); });
     field.material.opacity = fv * (0.9 + 0.1 * Math.sin(t * 0.003)); field.visible = fv > 0.01;
     // udgangen: gløden står tilbage, når platformen bliver mørk
     exitGlowMat.opacity = 0.12 + 0.1 * dark; exitFloorMat.opacity = 0.08 + 0.06 * dark;     // udgangen ses, men er aldrig klarere end feltet

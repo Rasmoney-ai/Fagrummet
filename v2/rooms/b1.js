@@ -453,6 +453,9 @@ export default function build(ctx) {
   const toBits = n => n.toString(2).padStart(8, "0");
   const measures = [214, 216, 215, 218];
 
+  // stikord i speaken (sekunder i trinnet). Slås op hver frame: tidskoderne hentes asynkront, når trinnet starter,
+  // så et tidligt opslag kan være et skøn, der senere bliver erstattet af den rigtige tid.
+  const Q = (id, ph, n = 1) => ctx.cue(id, ph, n);
   return {
     onStep(id) { mode = id; fresh = true;
       Object.entries(stationEls).forEach(([k, els]) => els.forEach(e => dim(e, k === id ? 1 : 0.3)));
@@ -460,12 +463,13 @@ export default function build(ctx) {
     tick(t, dt) {
       if (fresh) { t0 = t; fresh = false; lastNum = 0; }
       // testkrog: window.__roomS låser animationstiden (bruges kun af skærmbilledværktøjet)
-      const s = typeof window.__roomS === "number" ? window.__roomS : (t - t0) / 1000;
+      const s = typeof window.__roomS === "number" ? window.__roomS : ctx.time();   // fortællingens tid (følger speaken)
       const k = Math.min(dt || 16, 50) / 1000;
 
       /* kabler: i b1-0 flyder lyset i alle kabler; ellers kun i den aktive stations kabel */
       cables.forEach(c => {
-        const on = mode === "b1-0" ? ease(s / 0.8) : (c.id === mode ? 1 : 0);
+        // i b1-0 tænder kablerne, når speaken siger "systemiske samspil"
+        const on = mode === "b1-0" ? ease((s - Q("b1-0", "systemiske samspil") + 0.3) / 0.8) : (c.id === mode ? 1 : 0);
         c.tex.offset.x -= k * (0.25 + 0.7 * on);
         c.m.color.setRGB(0.22 + 0.78 * on, 0.25 + 0.75 * on, 0.3 + 0.7 * on);
       });
@@ -474,8 +478,10 @@ export default function build(ctx) {
       beaconMat.color.setScalar((Math.sin(t * 0.004) > 0.6) ? 1 : 0.25);
       fanBlades.forEach((f, i) => f.object3D.rotation.y = t * 0.004 + i);
       // systemkæden: råstoffer → strøm → datacenter → net lyser op i rækkefølge i b1-0
-      const a0 = mode === "b1-0", c0 = a0 ? s % 10 : 0;
-      const L = i => a0 ? ease((c0 - 0.8 - i * 1.1) / 0.5) : 0;
+      // leddene tænder i den rækkefølge, speaken nævner dem: net, servere (datacentret), strøm, råstoffer
+      const a0 = mode === "b1-0";
+      const chainCue = ["råstoffer", "strøm", "servere", "net"];
+      const L = i => a0 ? ease((s - Q("b1-0", chainCue[i]) + 0.3) / 0.4) : 0;
       oreMat.opacity = 0.25 + 0.75 * L(0);
       pwMat.opacity = 0.2 + 0.8 * L(1);
       pTex.offset.x -= k * (0.2 + 1.2 * L(1));
@@ -485,8 +491,10 @@ export default function build(ctx) {
       [oreLbl, pwLbl, dcLabel, netLbl].forEach((lb, i) => lb.getObject3D("mesh").material.opacity = a0 ? 0.25 + 0.75 * L(i) : 0.25);
 
       /* mikrocontrolleren åbner sig i b1-1 */
-      const open = mode === "b1-1" ? ease((s - 0.3) / 1.2) : 0;
-      const expl = mode === "b1-1" ? ease((s - 1.2) / 1.0) : 0;
+      // åbner sig ved "lille mikrocontroller"; delene løftes lige efter
+      const mo = Q("b1-1", "lille mikrocontroller") - 0.3;
+      const open = mode === "b1-1" ? ease((s - mo) / 1.0) : 0;
+      const expl = mode === "b1-1" ? ease((s - mo - 0.8) / 0.9) : 0;
       lidPivot.object3D.rotation.x = -open * 1.85;
       lidPivot.object3D.position.y = 0.03 + open * 0.08;
       cpuLid.object3D.position.y = 0.095 + expl * 0.32;
@@ -495,9 +503,10 @@ export default function build(ctx) {
       dieMat.color.setScalar(0.5 + 0.5 * expl);
       pinMat.emissiveIntensity = 0.05 + 0.9 * expl;
       wireMat.color.set(expl > 0.5 ? B : "#2a5a57");
-      mcLabels.forEach((l, i) => { const a = mode === "b1-1" ? ease((s - 1.8 - i * 0.35) / 0.4) : 0; l.e.object3D.visible = a > 0.02; l.e.object3D.scale.setScalar(0.6 + 0.4 * a); });
+      mcLabels.forEach((l, i) => { const a = mode === "b1-1" ? ease((s - mo - 1.4 - i * 0.35) / 0.4) : 0; l.e.object3D.visible = a > 0.02; l.e.object3D.scale.setScalar(0.6 + 0.4 * a); });
       // udgangene svarer, når benene er tændt
-      const run = mode === "b1-1" && s > 2.2;
+      // udgangene svarer, når speaken siger "ser reagere"
+      const run = mode === "b1-1" && s > Q("b1-1", "ser reagere") - 0.3;
       prop.object3D.rotation.y += run ? k * 14 : 0;
       lampMat.emissiveIntensity = run ? 0.6 + 0.5 * (Math.sin(t * 0.006) > 0 ? 1 : 0) : 0.1;
       ledMat.emissiveIntensity = run ? 0.4 + 0.6 * ((Math.floor(t / 400) % 2)) : 0.3;
@@ -528,7 +537,15 @@ export default function build(ctx) {
 
       /* målebordet i b1-3: måling → tal → bits → lager, i en løkke på 7 sekunder */
       const ms = mode === "b1-3";
-      const cyc = ms ? Math.floor(s / 7) : 0, c = ms ? s % 7 : 0;
+      // første gennemløb følger speaken: måling → række tal → bits → hukommelseskort; fra "logge temperaturen" gentages det som en log
+      let cyc = 0, c = 0;
+      if (ms) {
+        const k0 = Q("b1-3", "en måling") - 0.3, k1 = Q("b1-3", "række tal") - 0.3, k2 = Q("b1-3", "til bits") - 0.3, k3 = Q("b1-3", "hukommelseskort") - 0.3, kl = Q("b1-3", "logge temperaturen") - 0.3;
+        const map = [[k0, 0], [k1, 1.2], [k2, 1.6], [k2 + 1.2, 2.8], [k3, 4.2], [k3 + 1.8, 6.0], [k3 + 2.6, 7.0]];
+        if (s >= kl) { const u = (s - kl) / 3.5; cyc = 1 + Math.floor(u); c = (u % 1) * 7; }
+        else if (s <= k0) c = 0;
+        else { c = 6.99; for (let i = 1; i < map.length; i++) if (s <= map[i][0]) { const [ta, ca] = map[i - 1], [tb, cb] = map[i]; c = ca + (cb - ca) * (s - ta) / Math.max(0.01, tb - ta); break; } }
+      }
       const val = measures[cyc % measures.length], bits = toBits(val);
       pulse.object3D.scale.setScalar(1 + 2.5 * ((c % 1.2) / 1.2));
       pulseMat.opacity = ms && c < 2.4 ? 0.8 * (1 - (c % 1.2) / 1.2) : 0;

@@ -422,25 +422,31 @@ export default function build(ctx) {
     onStep(id) { cur = id; t0 = null; ang = cur === "c3-0" ? 0 : 0; vel = 0; back.place(id); },
     tick(t, dt) {
       if (t0 === null) t0 = t;
-      const e = (t - t0) / 1000, s = t / 1000, h = Math.min(0.05, (dt || 16) / 1000);
+      // e følger speaken (ctx.time); fremhævninger starter 0,2 s før deres stikord (ctx.cue)
+      const e = ctx.time(), s = t / 1000, h = Math.min(0.05, (dt || 16) / 1000), CQ = (ph, n) => ctx.cue(cur, ph, n) - 0.2;
       const A0 = cur === "c3-0";
       /* vægten: skålene fyldes skiftevis; vægten tipper mod den tunge side og finder balancen, når begge er fyldt */
-      const LOAD_T = i => 1.0 + i * 1.2;            // klods i: 0,8 1,55 2,3 … ; boble i: +0,375
+      // klodserne kommer på "praktiske undersøgelse", boblerne på "principielle diskussioner"
+      const qc = A0 ? CQ("praktiske undersøgelse") : 0, qb = A0 ? CQ("principielle diskussioner") : 0;
+      const CUBE_T = i => qc + i * 0.9, BUB_T = i => qb + i * 0.9;
       let nc = NLOAD, nb = NLOAD;
-      if (A0) { nc = 0; nb = 0; for (let i = 0; i < NLOAD; i++) { if (e > LOAD_T(i)) nc++; if (e > LOAD_T(i) + 0.6) nb++; } }
-      const target = 13 * D * (nc - nb);
-      // dæmpet fjeder mod målet
-      const acc = -18 * (ang - target) - 3.2 * vel; vel += acc * h; ang += vel * h;
+      if (A0) { nc = 0; nb = 0; for (let i = 0; i < NLOAD; i++) { if (e > CUBE_T(i)) nc++; if (e > BUB_T(i)) nb++; } }
+      // vægtens vinkel som sum af dæmpede trinsvar (uafhængig af billedfrekvens, og rigtig hvis man hopper ind midt i trinnet):
+      // hver klods tipper +13°, hver boble −13°; vægten svinger og falder til ro, og står i balance, når begge skåle er fyldt
+      const stepResp = tau => tau <= 0 ? 0 : 1 - Math.exp(-2.2 * tau) * Math.cos(4.2 * tau);
+      if (A0) { ang = 0; for (let i = 0; i < NLOAD; i++) ang += 13 * D * (stepResp(e - CUBE_T(i)) - stepResp(e - BUB_T(i))); }
+      else ang = 2 * D * Math.sin(s * 0.6) * 0.15;
       beam.rotation.z = ang;
       pans.forEach(p => { p.hang.rotation.z = -ang; });
       for (let i = 0; i < NLOAD; i++) {
-        const kc = A0 ? ease((e - LOAD_T(i)) / 0.3) : 1, kb = A0 ? ease((e - LOAD_T(i) - 0.6) / 0.3) : 1;
+        const kc = A0 ? ease((e - CUBE_T(i)) / 0.3) : 1, kb = A0 ? ease((e - BUB_T(i)) / 0.3) : 1;
         const pc = cubeAt(i), pb = bubAt(i);
         M4.compose(pc.clone().setY(pc.y + (1 - kc) * 0.5), Q0, kc > 0 ? V1.clone().multiplyScalar(kc) : V0); cubes.setMatrixAt(i, M4);
         M4.compose(pb.clone().setY(pb.y + (1 - kb) * 0.5), Q0, kb > 0 ? V1.clone().multiplyScalar(kb) : V0); bubs.setMatrixAt(i, M4);
       }
       cubes.instanceMatrix.needsUpdate = true; bubs.instanceMatrix.needsUpdate = true;
-      const balanced = A0 ? e - (LOAD_T(NLOAD - 1) + 0.6 + 1.4) : 99;     // sekunder siden balancen
+      // tråden og knuden: "opbygge en stillingtagen"; pilen mod handling: "nye handlinger"
+      const balanced = A0 ? e - CQ("opbygge en stillingtagen") : 99;
       const kl = A0 ? ease(balanced / 1.0) : 1;
       link.geometry.setDrawRange(0, Math.floor(LINK_N * kl / 6) * 6); link.visible = kl > 0;
       linkMat.opacity = (A0 ? 0.95 : 0.35);
@@ -449,11 +455,12 @@ export default function build(ctx) {
       knotGlow.material.opacity = (A0 ? 0.85 : 0.25) * kk;
       knotGlow.quaternion.copy(root.sceneEl.camera.getWorldQuaternion(new THREE.Quaternion()));
       // pilen mod handling: først når der er en stillingtagen
-      const ak = A0 ? ease((balanced - 1.3) / 1.4) : 0;
+      const ak = A0 ? ease((e - CQ("nye handlinger")) / 1.4) : 0;
       arrow.geometry.setDrawRange(0, ak >= 1 ? ARROW_TRIS : Math.floor((ARROW_TRIS - 3) * ak / 6) * 6);
       arrow.visible = ak > 0;
       arrowMat.opacity = 0.7 + 0.25 * Math.sin(s * 3); arrowGlow.material.opacity = 0.6 * ak;
-      onward.material.opacity = A0 ? ease((balanced - 2.6) / 0.6) : 0;
+      onward.material.opacity = A0 ? ease((e - CQ("nye handlinger") - 0.6) / 0.6) : 0;
+      { const d = A0 ? e - CQ("konkrete handlinger") : -1; onward.scale.setScalar(0.72 * (d > 0 && d < 1.4 ? 1 + 0.12 * Math.sin(d / 1.4 * Math.PI) : 1)); }
       panLabels.forEach(q => { q.material.opacity = A0 ? 1 : DIM; });
       setSignOpacity(s30, A0 ? 1 : DIM);
 
@@ -472,18 +479,20 @@ export default function build(ctx) {
 
       /* debatten */
       const A1 = cur === "c3-1";
-      heads.forEach((q, i) => { q.material.opacity = A1 ? ease((e - 0.8 - i * 0.25) / 0.5) : 0.6; });
+      const D1Q = A1 ? { h: CQ("aktuelle samfundsdebatter", 2), age: CQ("aldersgrænser"), ai: CQ("kunstig intelligens"), own: CQ("egne undersøgelser"), arg: CQ("argumenter"), pos: CQ("forstå positioner") } : null;
+      heads.forEach((q, i) => { q.material.opacity = A1 ? ease((e - D1Q.h - i * 0.25) / 0.5) : 0.6; });
       quotes.forEach((q, i) => {
-        const k = A1 ? ease((e - 1.6 - i * 0.6) / 0.5) : 0;
+        // aldersgrænse-boblerne (0, 2) på "aldersgrænser", AI-boblerne (1, 3) på "kunstig intelligens"
+        const k = A1 ? ease((e - (i % 2 ? D1Q.ai : D1Q.age) - (i > 1 ? 0.3 : 0)) / 0.5) : 0;
         const [bx, by, bz] = q.userData.base, [rx, ry, rz] = q.userData.rot;
         q.position.set(bx + Math.sin(s * 0.7 + i) * 0.02, by + Math.sin(s * 0.9 + i * 2) * 0.03 - (1 - k) * 0.15, bz);
         q.rotation.set(rx * D, ry * D, rz * D); q.material.opacity = k; q.scale.setScalar(0.75 + 0.25 * k);
       });
-      const km = A1 ? ease((e - 4.4) / 0.6) : 0;
+      const km = A1 ? ease((e - D1Q.own) / 0.6) : 0;
       mine.material.opacity = km; mine.scale.setScalar(0.8 + 0.2 * km); mine.position.y = 1.45 + Math.sin(s) * 0.02;
-      argDisc.material.opacity = A1 ? ease((e - 5.0) / 0.5) : 0; argDisc.rotation.z = s * 0.4;
+      argDisc.material.opacity = A1 ? ease((e - D1Q.arg) / 0.5) : 0; argDisc.rotation.z = s * 0.4;
       threads.forEach((l, i) => {
-        const k = A1 ? ease((e - 5.4 - i * 0.25) / 0.5) : 0;
+        const k = A1 ? ease((e - D1Q.pos - i * 0.25) / 0.5) : 0;
         if (k > 0) { const sx = Math.sign(SIDES[i].x); const a = mine.position.clone().add(new THREE.Vector3(sx * 0.64, (i % 2 ? -0.12 : 0.12), -0.05)); const b = quotes[i].position.clone().add(new THREE.Vector3(-sx * 0.46, 0, -0.02)); setThread(l, a, a.clone().lerp(b, k)); }
         l.material.opacity = 0.85 * k; l.visible = k > 0;
       });
@@ -491,20 +500,28 @@ export default function build(ctx) {
       /* arkivet: plakaterne trækkes op af kasserne og hænges på tidslinjen; til sidst lyser "nu"-feltet */
       const A2 = cur === "c3-2";
       archive.forEach((q, i) => {
-        const k = A2 ? ease((e - 0.9 - i * 0.6) / 0.8) : 1;
+        // plakaterne hænges op, når de nævnes: bilen som teknologiforestilling, halvfemserne, trykpressen, vævestolen
+        const k = A2 ? ease((e - CQ(["trykpressen", "vævestolen", "teknologiforestilling", "halvfemserne"][i])) / 0.8) : 1;
         const [tx, ty, tz] = SLOT(i), fx = (i % 2 ? 0.85 : -0.85), fy = 0.5, fz = -0.6;
         q.position.set(lerp(fx, tx, k), lerp(fy, ty, k) + Math.sin(k * Math.PI) * 0.3, lerp(fz, tz, k));
         q.rotation.set(0, 0, (1 - k) * (i % 2 ? -20 : 20) * D + ((i * 37) % 5 - 2) * D * k);
         q.material.opacity = A2 ? Math.min(1, k * 3) : 0.8;
       });
-      nowCard.material.opacity = A2 ? ease((e - 4.0) / 0.8) * (0.75 + 0.25 * Math.sin(s * 2.5)) : 0.3;
+      nowCard.material.opacity = A2 ? ease((e - CQ("forestille sig alternativer")) / 0.8) * (0.75 + 0.25 * Math.sin(s * 2.5)) : 0.3;
 
       /* samtalekredsen */
       const A3 = cur === "c3-3";
-      const qi = A3 ? Math.floor(Math.max(0, e - 0.5) / 4.5) % ASKS.length : 0;
+      // det svævende spørgsmål skifter, når speaken stiller det næste; efter "filosofisk samtale" går de tre i løkke
+      let qi = 0, qop = 0.5;
+      if (A3) {
+        const c = [CQ("hvem har ansvaret"), CQ("må en maskine"), CQ("er en digital dobbeltgænger")], loop0 = CQ("filosofisk samtale");
+        if (e < c[0]) { qi = 0; qop = 0.35; }
+        else if (e < loop0) { qi = e < c[1] ? 0 : e < c[2] ? 1 : 2; const from = c[qi], to = qi < 2 ? c[qi + 1] : loop0 + 4.5; qop = Math.min(ease((e - from) / 0.3), ease((to - e) / 0.2)); }
+        else { const n = (e - loop0) / 4.5 + 3, ph = n % 1; qi = Math.floor(n) % 3; qop = Math.min(ease(ph / 0.07), ease((1 - ph) / 0.05)); }
+        const d = e - CQ("fænomen"); tableDisc.scale.setScalar(d > 0 && d < 1.5 ? 1.25 : 1);
+      }
       if (askQ.material.map !== askTex[qi]) { askQ.material.map = askTex[qi]; askQ.material.needsUpdate = true; }
-      const ph = A3 ? ((Math.max(0, e - 0.5)) % 4.5) / 4.5 : 0.5;
-      askQ.material.opacity = A3 ? Math.min(ease(ph / 0.12), ease((1 - ph) / 0.12)) : 0.5;
+      askQ.material.opacity = qop;
       askQ.position.y = 2.45 + Math.sin(s * 1.1) * 0.04;
       qOrb.position.y = 1.85 + Math.sin(s * 1.4) * 0.05; qMark.position.y = qOrb.position.y; qGlow.position.y = qOrb.position.y;
       qGlow.material.opacity = (A3 ? 0.7 : 0.3) + 0.12 * Math.sin(s * 3);

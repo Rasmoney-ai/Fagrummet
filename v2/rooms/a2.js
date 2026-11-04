@@ -413,85 +413,116 @@ export default function build(ctx) {
   const STATIONER = ["a2-1", "a2-2", "a2-3", "a2-4"];
   const LYSPOS = { "a2-1": [IR.x + 0.4, 2.4, IR.z + 0.6], "a2-2": [SP.x, 3.4, SP.z + 1.6], "a2-3": [-4.2, 2.6, -2.0], "a2-4": [TR.x - 0.6, 2.3, TR.z + 0.7] };
   let aktiv = null, t0 = 0, tNu = 0, sidsteVer = -1, sidsteKort = -1;
+  // stikord fra speaken (sekunder i trinnet). Tidskoderne hentes asynkront, når et trin starter,
+  // så stikordene slås op igen i hver frame (billigt) i stedet for én gang ved opbygningen.
+  const mkQ = () => { const Q = {
+    fire: ctx.cue("a2-0", "fire stationer"),
+    st: [ctx.cue("a2-0", "indramning"), ctx.cue("a2-0", "afprøvninger", 2), ctx.cue("a2-0", "metoder til kreativitet"), ctx.cue("a2-0", "digitale benspænd")],
+    felt: [ctx.cue("a2-1", "kontekst"), ctx.cue("a2-1", "intentioner"), ctx.cue("a2-1", "ressourcer"), ctx.cue("a2-1", "gribe processen an")],
+    vurder: ctx.cue("a2-1", "virkede artefaktet"), tilbage: ctx.cue("a2-1", "vender tilbage"),
+    spiral: ctx.cue("a2-2", "Spiralen viser det"), omløb: [ctx.cue("a2-2", "prøvet af"), ctx.cue("a2-2", "næste version"), ctx.cue("a2-2", "bliver bedre")],
+    int: [ctx.cue("a2-2", "Intentionen kan også ændre sig"), ctx.cue("a2-2", "brugerne ville noget helt andet")],
+    bsA: ctx.cue("a2-3", "kreative benspænd"), spek: ctx.cue("a2-3", "Spekulation er"), bsB: ctx.cue("a2-3", "Et benspænd er en begrænsning"), mål: ctx.cue("a2-3", "passer til et mål"),
+    tilst: [ctx.cue("a2-4", "tørstig"), ctx.cue("a2-4", "tilfreds"), ctx.cue("a2-4", "druknet")], peg: ctx.cue("a2-4", "Peg på terningen"),
+  };
+    return Q; };
+  let Q = mkQ();
   return {
     onStep(id) { aktiv = id; t0 = null; autoFra = tNu; },
     tick(t, dt) {
+      Q = mkQ();
       tNu = t; if (t0 === null) t0 = t;   // forløbet starter ved første frame efter trinskiftet
-      const s = (t - t0) / 1000;
+      const s = (t - t0) / 1000, nt = ctx.time();   // nt: fortællingens tid
       erk.tick(dt, aktiv === "a2-0" ? 1 : 0.3);
       // a2-0: de fire stationer lyser op hver for sig (på skift). Ellers lyser kun den aktive.
       const intro = aktiv === "a2-0";
-      const tur = intro ? Math.floor(s / 1.6) % 4 : -1, blødt = intro ? Math.sin(Math.PI * Math.min(1, (s % 1.6) / 1.6)) : 1;
+      // a2-0: indtil "fire stationer" lyser de svagt på skift; derefter tændes hver station, når den nævnes,
+      // og bliver tændt (den senest nævnte stærkest). Til sidst lyser alle fire.
+      const iSek = intro && nt >= Q.st[0] - 0.3;
+      let tur = intro ? Math.floor(s / 1.6) % 4 : -1, blødt = intro ? 0.5 * Math.sin(Math.PI * Math.min(1, (s % 1.6) / 1.6)) : 1;
+      const vI = [0, 1, 2, 3].map(i => {
+        if (!intro) return 0;
+        if (!iSek) return i === tur ? blødt : 0.03;
+        const d = nt - Q.st[i] + 0.3; if (d < 0) return 0.03;
+        const senest = i === 3 || nt < Q.st[i + 1] - 0.3;
+        return senest ? Math.min(1, d / 0.3) : 0.55;
+      });
+      if (iSek) { tur = vI.reduce((b, v, i) => (nt >= Q.st[i] - 0.3 ? i : b), 0); blødt = 1; }
       STATIONER.forEach((id, i) => {
-        const v = intro ? (i === tur ? blødt : 0.03) : id === aktiv ? 1 : 0.04;
+        const v = intro ? vI[i] : id === aktiv ? 1 : 0.04;
         // lyskeglen er kun stemning; ved terningen næsten ingen, så den ikke farver terningen
         stationLys[id].kegleM.opacity = (0.02 + 0.12 * v) * (id === "a2-4" ? 0.25 : 1); stationLys[id].poolM.opacity = 0.02 + 0.6 * v;
         stationSkilt[id] && stationSkilt[id].forEach(e => { const m = e.getObject3D("mesh"); if (m) m.material.opacity = 0.3 + 0.7 * Math.max(v, intro ? 0.15 : 0); });
       });
       // ved a2-0 lyser terningen kun på sin tur; LEDIG-skærmen ligeså
-      const tændt4 = intro ? (tur === 3 ? blødt : 0) : aktiv === "a2-4" ? 1 : 0;
-      const tændt3 = intro ? (tur === 2 ? blødt : 0) : aktiv === "a2-3" ? 1 : 0;
+      const tændt4 = intro ? vI[3] : aktiv === "a2-4" ? 1 : 0;
+      const tændt3 = intro ? vI[2] : aktiv === "a2-3" ? 1 : 0;
       ledigM.color.setScalar(0.15 + 0.85 * tændt3);
       const lp = intro ? LYSPOS[STATIONER[tur]] : LYSPOS[aktiv];
       if (lp) { lysB.object3D.position.set(...lp); T.lys(lysB, intro ? 1.6 * blødt : 1.6); } else T.lys(lysB, 0);
 
       /* spiralen */
       const spOn = aktiv === "a2-2";
-      const CYK = 12.5;
-      const ps = spOn ? s % CYK : 0;
-      const u = spOn ? Math.min(1, ps / 10.5) : 0.0;   // 10,5 s op, så 2 s med alt tændt
+      // kuglen starter ved "Spiralen viser det" og når hvert omløb ved "prøvet af", "næste version" og "bliver bedre"
+      const K4 = [Q.spiral, ...Q.omløb].map(c => c - 0.2);
+      let u = 0;
+      if (spOn) { if (nt >= K4[3]) u = 1; else for (let k = 0; k < 3; k++) if (nt >= K4[k] && nt < K4[k + 1]) u = (k + (nt - K4[k]) / (K4[k + 1] - K4[k])) / OMLØB; }
       const [kx, ky, kz] = helix(u);
       kugle.object3D.position.set(kx * 0.6, ky + 0.12, kz * 0.6);
       kugle.object3D.visible = spOn || intro;
       kugle.object3D.scale.setScalar(spOn && u >= 1 ? 1 + 0.15 * Math.sin(s * 5) : 1);
       sporGeo.setDrawRange(0, Math.floor(u * sporN / 3) * 3);
-      sporM.opacity = spOn ? (ps > 11 ? 1 - (ps - 11) / 1.5 : 0.9) : 0;
-      const ver = spOn ? Math.min(2, Math.floor(u * OMLØB + 0.02) - (u >= 1 ? 1 : 0)) : 2;
+      sporM.opacity = spOn ? 0.9 : 0;
       const nåetN = spOn ? Math.floor(u * OMLØB + 0.001) : 3;   // hvor mange omløb er gennemført
       versioner.forEach((vv, k) => {
         const nået = k < Math.max(1, nåetN) || !spOn;
-        const nyt = spOn && k === nåetN - 1 ? Math.max(0, 1 - (ps - (k + 1) / OMLØB * 10.5) / 1.2) : 0;
+        const nyt = spOn && k === nåetN - 1 ? Math.max(0, 1 - (nt - K4[k + 1]) / 1.2) : 0;
         vv.m.opacity = nået ? 1 : 0.18;
         vv.m.emissiveIntensity = nået ? 0.12 + 0.6 * nyt : 0;
         vv.g.object3D.scale.setScalar(1.5 * (1 + 0.25 * nyt));
       });
-      const kortV = spOn ? Math.max(0, Math.min(2, nåetN === 0 ? 0 : nåetN - 1)) : 2;
+      // intentionskortet skrives om ved "Intentionen kan også ændre sig" og igen ved "brugerne ville noget helt andet"
+      const kortV = spOn ? (nt >= Q.int[1] - 0.3 ? 2 : nt >= Q.int[0] - 0.3 ? 1 : 0) : 2;
       if (kortV !== sidsteVer) { kortM.map = kortTex[kortV]; kortM.needsUpdate = true; sidsteVer = kortV; }
-      kortM.color.setScalar(spOn ? 1 : intro && tur === 1 ? 0.5 + 0.5 * blødt : 0.38);
+      kortM.color.setScalar(spOn ? 1 : intro ? 0.38 + 0.62 * vI[1] : 0.38);
       // kortet "vipper" kort, når det skrives om
-      const skift = spOn && nåetN >= 1 ? Math.max(0, 1 - (ps - Math.min(nåetN, 3) / OMLØB * 10.5) / 0.6) : 0;
+      const skift = spOn && kortV > 0 ? Math.max(0, 1 - (nt - Q.int[kortV - 1] + 0.3) / 0.6) : 0;
       // når kortet skrives om, løftes det lidt og lyser op (det drejer ikke, så det aldrig skæres af)
       kortE.object3D.position.y = 1.5 + Math.sin(skift * Math.PI) * 0.06;
       kortE.object3D.scale.setScalar(1 + Math.sin(skift * Math.PI) * 0.08);
 
       /* indramningsarket */
       const irOn = aktiv === "a2-1";
-      arkM.color.setScalar(irOn ? 1 : intro && tur === 0 ? 0.45 + 0.55 * blødt : 0.4);
-      // 0–9 felterne udfyldes · 9,5–11 tilbage til intentionen, den streges over og skrives om · holdes til 15
-      const ip = irOn ? s % 15 : 99;
-      skrift.forEach((f, i) => { f.m.opacity = irOn ? clamp((ip - 0.6 - i * 2.2) / 1.2) : 1; });
-      const retK = irOn ? clamp((ip - 9.8) / 0.6) : 1, nyK = irOn ? clamp((ip - 10.4) / 0.8) : 1;
+      arkM.color.setScalar(irOn ? 1 : intro ? 0.4 + 0.6 * vI[0] : 0.4);
+      // hvert felt skrives, når speaken nævner det (kontekst, intentioner, ressourcer, gribe processen an);
+      // ved "virkede artefaktet" ses der tilbage på konteksten, og ved "vender tilbage" rettes intentionen
+      const ip = irOn ? nt : 99, FC = Q.felt.map(c => c - 0.2);
+      skrift.forEach((f, i) => { f.m.opacity = irOn ? clamp((ip - FC[i]) / 0.9) : 1; });
+      const retK = irOn ? clamp((ip - Q.tilbage + 0.2) / 0.4) : 1, nyK = irOn ? clamp((ip - Q.tilbage - 0.2) / 0.6) : 1;
       stregM.opacity = retK; nyM.opacity = nyK;
-      const felt = irOn ? (ip < 9.2 ? Math.min(3, Math.floor((ip - 0.3) / 2.2)) : 1) : -1;
+      const fase1 = !irOn ? -1 : ip >= Q.tilbage - 0.2 ? 5 : ip >= Q.vurder - 0.2 ? 4 : FC.reduce((b, c, i) => (ip >= c ? i : b), 0);
+      const felt = fase1 < 0 ? -1 : fase1 === 5 ? 1 : fase1 === 4 ? 0 : fase1;
       if (felt >= 0) {
         const f = skrift[Math.max(0, felt)];
         mark.object3D.position.set(f.px, 0.008, f.pz - 0.06);
-        markM.opacity = ip < 9.2 ? 0.9 : 0.6 + 0.4 * Math.sin(ip * 5);   // til sidst: tilbage til intentionen
-        const skriv = ip < 9.2 ? (ip - 0.6 - felt * 2.2) / 1.2 : ip < 11.2 ? (ip - 9.8) / 1.4 : 1;
+        markM.opacity = fase1 < 4 ? 0.9 : 0.6 + 0.4 * Math.sin(ip * 5);   // vurdering og rettelse: markeringen pulserer
+        const skriv = fase1 < 4 ? (ip - FC[felt]) / 0.9 : fase1 === 5 ? (ip - Q.tilbage) / 0.8 : 1;
         blyant.object3D.position.set(f.px - 0.18 + 0.36 * clamp(skriv) , 0.03 + 0.01 * Math.abs(Math.sin(ip * 18)), f.pz - 0.02 + 0.03 * Math.sin(ip * 9));
         blyant.object3D.visible = true;
       } else { markM.opacity = 0; blyant.object3D.position.set(0.5, 0.03, 0.2); }
 
       /* benspændsvæggen */
       const bsOn = aktiv === "a2-3";
-      const bp = bsOn ? s % 14 : -1;
-      // 0–1 ingen kort, 1–2.2 kort A trækkes, 2.2–6.2 holdes (prototypen ændrer sig), 6.2–7 tilbage, 7–8.2 kort B, … 13.2–14 tilbage
+      // kort A ("uden skærm") trækkes ved "kreative benspænd" og lægges tilbage ved "Spekulation er";
+      // kort B ("til en bedstemor") trækkes ved "Et benspænd er en begrænsning" og bliver; målkortet lyser ved "passer til et mål"
       let kortIdx = -1, ud = 0;
       if (bsOn) {
-        const fase = bp < 7 ? 0 : 1, lp2 = bp < 7 ? bp : bp - 7;
-        ud = lp2 < 1 ? 0 : lp2 < 2.2 ? ease((lp2 - 1) / 1.2) : lp2 < 6.2 ? 1 : 1 - ease((lp2 - 6.2) / 0.8);
-        kortIdx = VALGT[fase];
+        if (nt >= Q.bsB - 0.3) { kortIdx = VALGT[1]; ud = ease((nt - Q.bsB + 0.3) / 1.0); }
+        else if (nt >= Q.bsA - 0.3) { kortIdx = VALGT[0]; ud = nt < Q.spek ? ease((nt - Q.bsA + 0.3) / 1.0) : 1 - ease((nt - Q.spek) / 0.8); }
       }
+      const målK = bsOn ? clamp((nt - Q.mål + 0.3) / 0.4) : 0;
+      målKort.getObject3D("mesh").material.color.setScalar(bsOn ? 0.55 + 0.45 * målK : 0.5);
+      målKort.object3D.scale.setScalar(1.4 * (1 + 0.12 * Math.sin(Math.PI * clamp((nt - Q.mål + 0.3) / 0.8)) * (bsOn ? 1 : 0)));
       kort.forEach((k, i) => {
         const o = k.e.object3D;
         if (i === kortIdx) {
@@ -516,7 +547,13 @@ export default function build(ctx) {
 
       /* terningen og potten */
       const tOn = aktiv === "a2-4";
-      if (tOn && tNu - sidstKlik > 7000 && tNu - autoFra > 2600) { tilstand = (tilstand + 1) % 3; autoFra = tNu; pop = 1; }   // kører selv, til nogen peger
+      // de tre tilstande vises, mens speaken nævner dem (tørstig, tilfreds, druknet); ellers skifter terningen selv,
+      // til nogen peger på den (et klik har altid forrang i 7 s)
+      const fri = tNu - sidstKlik > 7000;
+      if (tOn && fri && nt >= Q.tilst[0] - 0.3 && nt < Q.peg + 1.5) {
+        const ny = nt >= Q.tilst[2] - 0.3 ? 2 : nt >= Q.tilst[1] - 0.3 ? 1 : 0;
+        if (ny !== tilstand) { tilstand = ny; pop = 1; } autoFra = tNu;
+      } else if (tOn && fri && tNu - autoFra > 2600) { tilstand = (tilstand + 1) % 3; autoFra = tNu; pop = 1; }
       if (!tOn) tilstand = 1;
       const st = TILST[tilstand];
       // uden for trinnet står terningen næsten slukket og grå; i a2-0 lyser den kort på sin tur
@@ -529,6 +566,7 @@ export default function build(ctx) {
       tNavne.forEach((n, i) => { n.object3D.visible = tOn && i === tilstand; });
       lamper.forEach((m, i) => m.color.set(i === tilstand ? TILST[i].farve : "#2a3358"));
       hint.object3D.visible = tOn;
+      { const d = nt - Q.peg + 0.3, hp = tOn && d > 0 && d < 1.6 ? 1 + 0.25 * Math.sin(d / 1.6 * Math.PI * 3) ** 2 : 1; hint.object3D.scale.setScalar(hp); }   // hintet blinker ved "Peg på terningen"
       pop = Math.max(0, pop - dt / 350);
       const ts = s;
       const ti = tInner.object3D;

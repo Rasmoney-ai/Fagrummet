@@ -343,7 +343,7 @@ export default function build(ctx) {
       const ltq = quad(0.8, 0.18, basic({ map: lt })); ltq.position.set(0.62, 2.08, 0.45); g.add(ltq);
     }
     const sparks = m.key === "gen" ? (() => { const n = 18, geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3), 3)); const p = new THREE.Points(geo, new THREE.PointsMaterial({ map: K.glowTex("#ffffff"), color: "#ffe2a0", size: 0.06, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); g.add(p); return p; })() : null;
-    return { ...m, g, lamp, inp, outs, loop, sparks };
+    return { ...m, g, lamp, inp, outs, loop, sparks, plate };
   });
   // samme input: en fælles skinne over de tre tragte med et skilt
   {
@@ -543,24 +543,32 @@ export default function build(ctx) {
     tick(t, dt) {
       now = t; if (t0 === null) t0 = t;
       const kf = 1 - Math.exp(-(dt || 16) / 1000 * 7);   // tidsbaseret udjævning (uafhængig af billedfrekvens)
-      const e = (t - t0) / 1000, s = t / 1000;
+      // e følger speaken (ctx.time); fremhævninger starter 0,2 s før deres stikord (ctx.cue)
+      const e = ctx.time(), s = t / 1000, CQ = (ph, n) => ctx.cue(cur, ph, n) - 0.2;
       /* lagene: samlet i c2-0's begyndelse, ellers foldet ud */
-      const unfold = cur === "c2-0" ? Math.min(1, Math.max(0, (e - 0.5) / 2.2)) : 1;
+      const A0 = cur === "c2-0";
+      const unfold = A0 ? Math.min(1, Math.max(0, (e - CQ("åbner teknologien")) / 2.2)) : 1;   // "Den anden del åbner teknologien"
+      const TAGQ = ["brugspraksis", "algoritmer", "data", "opbygget"];                          // app, algoritme, data, hardware
       setLayers(unfold);
       layerObjs.forEach((o, i) => {
         const lit = cur === "c2-0" || cur === "c2-1";
         o.face.material.opacity = lit ? 0.95 : 0.55; o.edge.material.opacity = lit ? 0.35 : 0.15;
-        o.tag.material.opacity = (cur === "c2-0" ? ease((e - 1.6 - i * 0.35) / 0.4) : lit ? 1 : 0.5);
-        o.tag.scale.setScalar(cur === "c2-0" ? 0.6 + 0.4 * ease((e - 1.6 - i * 0.35) / 0.4) : 1);
+        const kt = A0 ? ease((e - CQ(TAGQ[i])) / 0.4) : 1;     // hvert lag får sit mærke, når det nævnes
+        o.tag.material.opacity = A0 ? kt : lit ? 1 : 0.5;
+        o.tag.scale.setScalar(A0 ? 0.6 + 0.4 * kt : 1);
         // usynlige klikplaner følger lagene
         if (o.hit) { o.hit.object3D.position.copy(o.grp.position); o.hit.object3D.quaternion.copy(o.grp.quaternion); }
       });
       // Hjorths fem spørgsmål på hulpladen
-      qCards.forEach((q, i) => { q.material.opacity = cur === "c2-0" ? ease((e - 3.2 - i * 0.3) / 0.4) : 0.55; });
+      // Hjorths fem spørgsmål: hvert kort tændes, når ordet siges
+      qCards.forEach((q, i) => { q.material.opacity = A0 ? ease((e - CQ(QWORDS[i])) / 0.4) : 0.55; });
 
       /* luppen */
       const L1 = cur === "c2-1";
-      let qi = Math.floor(Math.max(0, e - 1.0) / 2.4) % QUEST.length;
+      // luppen går til det lag, hvis spørgsmål speaken stiller (den bevæger sig 0,4 s før, boblen lyser på ordet)
+      const QCUE = [["hvad sker der", 1], ["hvornår fandt den", 1], ["hvad ved appen", 1], ["hvad sker der", 2]];
+      const qt = L1 ? QCUE.map(([ph, n]) => CQ(ph, n)) : [0, 0, 0, 0];
+      let qi = 0; qt.forEach((c, i) => { if (L1 && e >= c - 0.4 && c >= qt[qi]) qi = i; });
       if (pointed >= 0 && t - pointedAt < 6000) qi = pointed;
       const target = QUEST[qi];
       const lo = layerObjs[target.layer];
@@ -572,10 +580,10 @@ export default function build(ctx) {
         lens.quaternion.slerp(lo.grp.getWorldQuaternion(tmpQ), kf);
       } else { lens.visible = cur === "c2-0" ? false : true; lens.position.set(TBL.x + 0.95, TBL.y + 0.05, TBL.z + 0.3); lens.rotation.set(-90 * D, 0, 30 * D); }
       // hvert lag får sit spørgsmål; et spørgsmål, luppen har været ved, bliver hængende (svagere), så alle fire ses til sidst
-      const visited = L1 ? Math.min(QUEST.length, Math.floor(Math.max(0, e - 1.0) / 2.4) + 1) : 0;
+      const visited = qt.map(c => L1 && e >= c);
       QUEST.forEach((Q, i) => {
-        const on = L1 && i === qi && lens.position.distanceTo(tp) < 0.15;
-        const seen = L1 && i < visited;
+        const on = L1 && i === qi && visited[i] && lens.position.distanceTo(tp) < 0.2;
+        const seen = L1 && visited[i];
         Q.mark.material.opacity = L1 ? (on ? 1 : seen ? 0.7 : 0.3) : 0;
         Q.mark.scale.setScalar(on ? 1 + 0.12 * Math.sin(s * 6) : 0.8);
         const bo = Q.bubble.material.opacity; Q.bubble.material.opacity = lerp(bo, on ? 1 : seen ? 0.8 : 0, kf);
@@ -587,7 +595,9 @@ export default function build(ctx) {
 
       /* maskinerne */
       const L2 = cur === "c2-2";
-      const cycle = 2.2, run = L2 ? Math.max(0, e - 0.8) / cycle : 4.2;
+      // fire kørsler fra "tre slags"; hver maskines navneplade pulserer, når dens slags nævnes
+      const cycle = 4.2, run = L2 ? Math.max(0, e - CQ("tre slags")) / cycle : 4.2;
+      const PLQ = { det: ["deterministiske", "deterministisk algoritme"], ada: ["adaptive", "adaptiv algoritme"], gen: ["generative", "generativ algoritme"] };
       const r = Math.floor(run), ph = run - r;
       machines.forEach((m, mi) => {
         // input: tre ens hvide kugler kører samtidig ud langs skinnen og falder ned i hver sin tragt
@@ -601,6 +611,8 @@ export default function build(ctx) {
         else if (!L2) { m.inp.visible = true; m.inp.position.set(0.1, 2.33, 0); }
         else m.inp.visible = false;
         m.lamp.material.color.set(L2 && ph > 0.3 && ph < 0.65 && r < 4 ? C.c : "#3a3f4a");
+        const named = L2 && PLQ[m.key].some(q => { const d = e - CQ(q); return d >= 0 && d < 1.6; });
+        m.plate.scale.setScalar(named ? 1.18 : 1);
         m.outs.forEach((o, j) => {
           const shown = !L2 || j < r || (j === r && ph > 0.6);
           o.visible = shown && j < 4;
@@ -614,9 +626,10 @@ export default function build(ctx) {
           o.rotation.y = s * 0.6 + j;
         });
         if (m.loop) {
-          const k = L2 ? 0.85 : 0.25; m.loop.material.opacity = k; m.loop.userData.head.material.opacity = k;
-          // brugerens valg: en rosa kugle løber fra brugerens hånd langs løkken op i tragten (efter hvert output)
-          const ch = m.loop.userData.choice, u = L2 && r >= 0 && r < 4 && ph > 0.75 ? (ph - 0.75) / 0.25 : -1;
+          // løkken tændes på "ændrer sig efter brugen"; derfra sendes brugerens valg tilbage efter hvert output
+          const adapt = L2 && e >= CQ("ændrer sig efter brugen");
+          const k = adapt ? 0.9 : 0.25; m.loop.material.opacity = k; m.loop.userData.head.material.opacity = k;
+          const ch = m.loop.userData.choice, u = adapt && r >= 0 && r < 4 && ph > 0.75 ? (ph - 0.75) / 0.25 : -1;
           ch.visible = u >= 0; if (u >= 0) ch.position.copy(m.loop.userData.curve.getPoint(u));
         }
         if (m.sparks) {
@@ -628,24 +641,33 @@ export default function build(ctx) {
 
       /* spejlet */
       const L3 = cur === "c2-3";
-      const build3 = L3 ? ease((e - 0.6) / 4.5) : 1;
+      const b0 = L3 ? CQ("model af dig") : 0;      // "den model af dig, som en tjeneste bygger ud fra dine data"
+      const build3 = L3 ? ease((e - b0) / 5.0) : 1;
       twinGeo.setDrawRange(0, Math.floor(NPTS * build3));
       twin.material.opacity = L3 ? 1 : 0.5;
       chips.forEach((q, i) => {
-        const k = L3 ? ((e - 0.4 - i * 0.55) / 1.2) : -1;
+        const k = L3 ? ((e - b0 - i * 0.6) / 1.2) : -1;
         q.material.opacity = k > 0 && k < 1 ? Math.sin(k * Math.PI) : 0;
         const kk = ease(k); q.position.set(lerp(q.userData.from[0], q.userData.to[0], kk), lerp(q.userData.from[1], q.userData.to[1], kk), 0.14);
         q.scale.setScalar(1 - 0.6 * kk);
       });
-      outline.material.opacity = L3 ? ease((e - 5.4) / 0.8) : 0.0;
-      diffRings.forEach((rg, i) => { const k = L3 ? ease((e - 6.2 - i * 0.7) / 0.4) : 0; rg.r.material.opacity = k * (0.7 + 0.3 * Math.sin(s * 5 + i)); rg.lab.material.opacity = k; rg.ln.material.opacity = k; });
+      // "dig" lægges ovenpå på "sammenligner med"; forskellene på "hvem de selv mener, de er"
+      outline.material.opacity = L3 ? ease((e - CQ("sammenligner med")) / 0.6) : 0.0;
+      const DQ = [CQ("hvem de selv mener"), CQ("hvem de selv mener") + 0.35, CQ("mener de er")];
+      diffRings.forEach((rg, i) => { const k = L3 ? ease((e - DQ[i]) / 0.4) : 0; rg.r.material.opacity = k * (0.7 + 0.3 * Math.sin(s * 5 + i)); rg.lab.material.opacity = k; rg.ln.material.opacity = k; });
 
       /* de to apps */
       // ét designvalg ad gangen, i en løkke; kun det aktive er tændt (også når alle er vist én gang)
       const L4 = cur === "c2-4";
-      const SLOT = 3.2, ci = L4 ? Math.floor(Math.max(0, e - 0.8) / SLOT) % CHOICES.length : -1;
-      const ph4 = L4 ? (Math.max(0, e - 0.8) % SLOT) / SLOT : 0;
-      const fade4 = L4 ? Math.min(ease(ph4 / 0.1), ease((1 - ph4) / 0.08)) : 0;
+      // fra "designvalg" skifter scroll og notifikationer; "sorteres efter tid" viser sorteringen, "lever af reklamer" indtægten,
+      // og fra "hvilke valg" går alle fire i løkke (hele tiden kun ét ad gangen)
+      let ci = -1, fade4 = 0;
+      if (L4) {
+        const a0 = CQ("designvalg"), a1 = CQ("sorteres efter tid"), a2 = CQ("lever af reklamer"), a3 = CQ("hvilke valg");
+        const loop = (from, list, slot) => { const n = Math.max(0, e - from) / slot; const ph = n % 1; return [list[Math.floor(n) % list.length], Math.min(ease(ph / 0.1), ease((1 - ph) / 0.08))]; };
+        const hold = (from, to, i) => [i, Math.min(ease((e - from) / 0.3), ease((to - e) / 0.2))];
+        [ci, fade4] = e < a0 ? [-1, 0] : e < a1 ? loop(a0, [2, 3], (a1 - a0) / 4) : e < a2 ? hold(a1, a2, 0) : e < a3 ? hold(a2, a3, 1) : loop(a3, [0, 1, 2, 3], 3.2);
+      }
       CHOICES.forEach((ch, i) => {
         const on = L4 && ci === i;
         mids[i].material.opacity = on ? fade4 : 0;
@@ -654,7 +676,7 @@ export default function build(ctx) {
       });
       // zoom: det fremhævede område forstørres ved siden af hver telefon
       [zoomA, zoomB].forEach((z, k) => {
-        if (!L4) { z.material.opacity = 0; zoomFrames[k].material.opacity = 0; return; }
+        if (!L4 || ci < 0) { z.material.opacity = 0; zoomFrames[k].material.opacity = 0; return; }
         const r = k ? CHOICES[ci].rb : CHOICES[ci].ra, map = z.material.map;
         map.offset.set(r[0], 1 - r[3]); map.repeat.set(r[2] - r[0], r[3] - r[1]);
         const wq = (r[2] - r[0]) * AP.w, hq = (r[3] - r[1]) * AP.h, sc = Math.min(1.6 / wq, 0.62 / hq, 2.4);

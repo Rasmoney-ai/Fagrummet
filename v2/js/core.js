@@ -298,6 +298,8 @@ async function init() {
   STEPS = await (await fetch(`manus.json?v=${APP_VERSION}`)).json();
   STEPS.forEach(s => BYID[s.id] = s); ROUTE = buildRoute(STEPS);
   try { const r = await fetch("audio/index.json", { cache: "no-store" }); if (r.ok) (await r.json()).forEach(id => AUDIO.add(id)); } catch (e) {}
+  // Hent alle tidskoder før første rum bygges, så ctx.cue() giver de rigtige tider allerede i build/onStep.
+  await Promise.all([...AUDIO].map(id => fetch(`audio/${id}.json`).then(r => r.ok ? r.json() : null).then(j => { TIMINGS[id] = j && j.words ? j.words : null; }).catch(() => { TIMINGS[id] = null; })));
   if ("speechSynthesis" in window) pickVoice();
   $("ver").textContent = APP_VERSION;
   $("prev").onclick = prev; $("next").onclick = next;
